@@ -3,7 +3,6 @@ import { useTemplateStore } from "@/lib/stores/template-store"
 import { useAILogsStore } from "@/lib/stores/ai-logs-store"
 import { useModelStore, type ApplicationPhase } from "@/lib/stores/model-store"
 import type { Shot } from "@/lib/types"
-import crypto from "crypto"
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -634,18 +633,23 @@ Each chapter builds on the themes of memory as identity, the ethics of technolog
 // Add a new function to generate structured shot list
 export async function generateStructuredShotList(script: string): Promise<Shot[]> {
   const aiResponse = await generateAIResponse("Generate a shot list from this script", script)
+  console.log("Raw AI response for shot list:", aiResponse)
 
   try {
     // Try to parse the response as JSON
     const parsedResponse = JSON.parse(aiResponse)
+    console.log("Parsed JSON response:", parsedResponse)
 
     // Check if the response has the expected structure
     if (parsedResponse && Array.isArray(parsedResponse.shotList)) {
       // Add IDs to each shot
-      return parsedResponse.shotList.map((shot: Omit<Shot, "id">) => ({
+      const shots = parsedResponse.shotList.map((shot: Omit<Shot, "id">) => ({
         ...shot,
-        id: crypto.randomUUID(),
+        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
       }))
+
+      console.log("Processed shots with IDs:", shots)
+      return shots
     } else {
       console.error("Unexpected response structure:", parsedResponse)
       throw new Error("The AI response did not contain a valid shot list structure")

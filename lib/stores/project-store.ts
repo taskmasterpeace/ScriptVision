@@ -500,7 +500,6 @@ export const useProjectStore = create<ProjectState>()(
         scriptCompleted: false,
         shotListCompleted: false,
         subjectsCompleted: false,
-        stylesCompleted: false,
         promptsCompleted: false,
       },
 

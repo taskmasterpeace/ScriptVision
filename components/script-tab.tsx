@@ -1,19 +1,38 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useProjectStore } from "@/lib/stores/project-store"
-import { Loader2, FileText, List } from "lucide-react"
+import { Loader2, FileText, List, CheckCircle2 } from "lucide-react"
 import { useLoadingStore } from "@/lib/stores/loading-store"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 export default function ScriptTab() {
   const { toast } = useToast()
-  const { script, setScript, generateShotList } = useProjectStore()
+  const { script, setScript, generateShotList, shotList } = useProjectStore()
   const { isLoading } = useLoadingStore()
   const [localScript, setLocalScript] = useState(script)
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  // Update local script when the store changes
+  useEffect(() => {
+    setLocalScript(script)
+  }, [script])
+
+  // Show success message when shot list is generated
+  useEffect(() => {
+    if (shotList.length > 0) {
+      setShowSuccess(true)
+      // Hide the success message after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSuccess(false)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [shotList])
 
   const handleSaveScript = () => {
     setScript(localScript)
@@ -40,8 +59,13 @@ export default function ScriptTab() {
       await generateShotList()
       toast({
         title: "Shot List Generated",
-        description: "Your shot list has been generated successfully.",
+        description: "Your shot list has been generated successfully. You can now view it in the Shot List tab.",
       })
+      setShowSuccess(true)
+      // Hide the success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccess(false)
+      }, 5000)
     } catch (error) {
       toast({
         title: "Generation Failed",
@@ -64,6 +88,16 @@ export default function ScriptTab() {
           value={localScript}
           onChange={(e) => setLocalScript(e.target.value)}
         />
+
+        {showSuccess && shotList.length > 0 && (
+          <Alert className="mt-4 bg-green-50 border-green-200">
+            <CheckCircle2 className="h-4 w-4 text-green-600" />
+            <AlertTitle className="text-green-600">Shot List Generated Successfully</AlertTitle>
+            <AlertDescription>
+              Your shot list has been generated and is ready to view in the Shot List tab.
+            </AlertDescription>
+          </Alert>
+        )}
       </CardContent>
       <CardFooter className="flex flex-col space-y-4">
         <div className="flex flex-col sm:flex-row w-full gap-4">
