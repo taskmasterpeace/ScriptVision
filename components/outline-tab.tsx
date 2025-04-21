@@ -65,6 +65,7 @@ export default function OutlineTab() {
     perspective: "third-person", // first-person, third-person, multiple-pov
     tone: "neutral", // light, dark, neutral
     additionalNotes: "",
+    customPrompt: "", // Add this new field
   })
 
   const handleGenerateOutline = async () => {
@@ -216,7 +217,7 @@ export default function OutlineTab() {
 
   // Update the handleOutlineWizardNext function to use the store's outlineDirections
   const handleOutlineWizardNext = () => {
-    if (outlineWizardStep < 3) {
+    if (outlineWizardStep < 4) {
       setOutlineWizardStep(outlineWizardStep + 1)
     } else {
       // On the final step, update the store's outlineDirections and generate the outline
@@ -286,7 +287,16 @@ export default function OutlineTab() {
                       >
                         3
                       </div>
-                      <span className={outlineWizardStep >= 3 ? "font-medium" : "text-muted-foreground"}>Details</span>
+                      <span className={outlineWizardStep >= 3 ? "font-medium" : "text-muted-foreground"}>Tone</span>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center ${outlineWizardStep >= 4 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}
+                      >
+                        4
+                      </div>
+                      <span className={outlineWizardStep >= 4 ? "font-medium" : "text-muted-foreground"}>Prompt</span>
                     </div>
                   </div>
 
@@ -388,43 +398,74 @@ export default function OutlineTab() {
 
                   {outlineWizardStep === 3 && (
                     <div className="space-y-4">
-                      <h3 className="text-lg font-medium">Tone and Additional Details</h3>
+                      <h3 className="text-lg font-medium">Story Tone</h3>
+                      <p className="text-sm text-muted-foreground mb-4">Choose the overall tone for your story.</p>
 
-                      <div className="space-y-3 mb-4">
-                        <p className="text-sm text-muted-foreground">Choose the overall tone for your story.</p>
-                        <RadioGroup
-                          value={outlineDirections.tone}
-                          onValueChange={(value) => setOutlineDirections({ ...outlineDirections, tone: value })}
-                          className="space-y-3"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="light" id="light" />
-                            <Label htmlFor="light">Light/Uplifting</Label>
+                      <RadioGroup
+                        value={outlineDirections.tone}
+                        onValueChange={(value) => setOutlineDirections({ ...outlineDirections, tone: value })}
+                        className="space-y-3"
+                      >
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value="light" id="light" />
+                          <div className="grid gap-1.5">
+                            <Label htmlFor="light" className="font-medium">
+                              Light/Uplifting
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Optimistic, hopeful, and positive emotional tone.
+                            </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="neutral" id="neutral" />
-                            <Label htmlFor="neutral">Neutral/Balanced</Label>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value="neutral" id="neutral" />
+                          <div className="grid gap-1.5">
+                            <Label htmlFor="neutral" className="font-medium">
+                              Neutral/Balanced
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Balanced emotional tone with both light and serious moments.
+                            </p>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="dark" id="dark" />
-                            <Label htmlFor="dark">Dark/Serious</Label>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <RadioGroupItem value="dark" id="dark" />
+                          <div className="grid gap-1.5">
+                            <Label htmlFor="dark" className="font-medium">
+                              Dark/Serious
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              More serious, dramatic, or intense emotional tone.
+                            </p>
                           </div>
-                        </RadioGroup>
-                      </div>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  )}
+
+                  {outlineWizardStep === 4 && (
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Custom Story Prompt</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Define your story in your own words. You can specify exactly what kind of story you want to
+                        create.
+                      </p>
 
                       <div className="space-y-2">
-                        <Label htmlFor="additional-notes" className="text-sm font-medium">
-                          Additional Notes or Directions
+                        <Label htmlFor="custom-prompt" className="text-sm font-medium">
+                          Custom Prompt
                         </Label>
                         <Textarea
-                          id="additional-notes"
-                          placeholder="Add any specific themes, elements, or directions you want included in your outline..."
-                          className="min-h-[100px]"
-                          value={outlineDirections.additionalNotes}
-                          onChange={(e) =>
-                            setOutlineDirections({ ...outlineDirections, additionalNotes: e.target.value })
-                          }
+                          id="custom-prompt"
+                          placeholder="Examples: 'Create a compelling news story about climate change activism', 'Craft an engaging narrative about a detective solving a mysterious case', 'Tell a heartwarming story about reconnecting with family'..."
+                          className="min-h-[150px]"
+                          value={outlineDirections.customPrompt}
+                          onChange={(e) => setOutlineDirections({ ...outlineDirections, customPrompt: e.target.value })}
                         />
+                        <p className="text-xs text-muted-foreground">
+                          This prompt will guide the AI in creating your outline. Be as specific or open-ended as you
+                          like.
+                        </p>
                       </div>
 
                       <div className="pt-2">
@@ -467,6 +508,14 @@ export default function OutlineTab() {
                             <span className="font-medium">Transcripts:</span>{" "}
                             {useScriptCreationStore.getState().selectedTranscripts.length} selected
                           </p>
+                          {outlineDirections.customPrompt && (
+                            <p>
+                              <span className="font-medium">Custom Prompt:</span>{" "}
+                              {outlineDirections.customPrompt.length > 100
+                                ? `${outlineDirections.customPrompt.substring(0, 100)}...`
+                                : outlineDirections.customPrompt}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -480,7 +529,7 @@ export default function OutlineTab() {
                     </Button>
                   )}
                   <Button onClick={handleOutlineWizardNext}>
-                    {outlineWizardStep < 3 ? "Next" : "Generate Outline"}
+                    {outlineWizardStep < 4 ? "Next" : "Generate Outline"}
                   </Button>
                 </DialogFooter>
               </DialogContent>

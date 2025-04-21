@@ -11,11 +11,9 @@ import MusicLabTab from "@/components/music-lab-tab"
 import DeveloperTab from "@/components/developer-tab"
 import ProjectManager from "@/components/project-manager"
 import { EnhancedWorkflowNavigation } from "@/components/enhanced-workflow-navigation"
+import { ProgressJourneyMap } from "@/components/progress-journey-map"
 import { Settings } from "lucide-react"
 import { ScriptVisionLogo } from "@/components/script-vision-logo"
-import { PhaseTransitionBanner } from "@/components/phase-transition-banner"
-import { AnimatedTabIndicator } from "@/components/animated-tab-indicator"
-import { motion, AnimatePresence } from "framer-motion"
 
 // Import new script creation components
 import StoryThemeTab from "@/components/story-theme-tab"
@@ -26,26 +24,10 @@ import EnhanceTab from "@/components/enhance-tab"
 
 export default function Page() {
   const [activeTab, setActiveTab] = useState("story-theme")
-  const [previousTab, setPreviousTab] = useState("")
+  const [showWorkflowNav, setShowWorkflowNav] = useState(true)
 
   const handleTabChange = (value: string) => {
-    setPreviousTab(activeTab)
     setActiveTab(value)
-  }
-
-  // Determine if the current tab is in the creation or production phase
-  const isCreationPhase = ["story-theme", "research", "outline", "write", "enhance"].includes(activeTab)
-  const isProductionPhase = ["script", "shotlist", "subjects", "styles", "prompts", "musiclab"].includes(activeTab)
-
-  // Determine the direction of the animation
-  const getAnimationDirection = () => {
-    const creationTabs = ["story-theme", "research", "outline", "write", "enhance"]
-    const productionTabs = ["script", "shotlist", "subjects", "styles", "prompts", "musiclab"]
-
-    const prevIndex = [...creationTabs, ...productionTabs].indexOf(previousTab)
-    const currentIndex = [...creationTabs, ...productionTabs].indexOf(activeTab)
-
-    return prevIndex < currentIndex ? 1 : -1
   }
 
   return (
@@ -59,152 +41,102 @@ export default function Page() {
 
       <ProjectManager />
 
-      <PhaseTransitionBanner activeTab={activeTab} onTabChange={handleTabChange} />
+      {/* Toggle between navigation styles */}
+      <div className="flex justify-end mb-2">
+        <button
+          onClick={() => setShowWorkflowNav(!showWorkflowNav)}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          Switch to {showWorkflowNav ? "Journey Map" : "Workflow Navigation"}
+        </button>
+      </div>
 
-      <EnhancedWorkflowNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+      {showWorkflowNav ? (
+        <EnhancedWorkflowNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+      ) : (
+        <ProgressJourneyMap activeTab={activeTab} onTabChange={handleTabChange} />
+      )}
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <div className="relative">
-          <TabsList className="grid grid-cols-12 w-full">
-            <TabsTrigger
-              id="story-theme-tab-trigger"
-              value="story-theme"
-              className={isCreationPhase ? "data-[state=active]:text-purple-800 data-[state=active]:font-medium" : ""}
-            >
-              Story Theme
-            </TabsTrigger>
-            <TabsTrigger
-              id="research-tab-trigger"
-              value="research"
-              className={isCreationPhase ? "data-[state=active]:text-purple-800 data-[state=active]:font-medium" : ""}
-            >
-              Research
-            </TabsTrigger>
-            <TabsTrigger
-              id="outline-tab-trigger"
-              value="outline"
-              className={isCreationPhase ? "data-[state=active]:text-purple-800 data-[state=active]:font-medium" : ""}
-            >
-              Outline
-            </TabsTrigger>
-            <TabsTrigger
-              id="write-tab-trigger"
-              value="write"
-              className={isCreationPhase ? "data-[state=active]:text-purple-800 data-[state=active]:font-medium" : ""}
-            >
-              Write
-            </TabsTrigger>
-            <TabsTrigger
-              id="enhance-tab-trigger"
-              value="enhance"
-              className={isCreationPhase ? "data-[state=active]:text-purple-800 data-[state=active]:font-medium" : ""}
-            >
-              Enhance
-            </TabsTrigger>
-            <TabsTrigger
-              id="script-tab-trigger"
-              value="script"
-              className={isProductionPhase ? "data-[state=active]:text-amber-800 data-[state=active]:font-medium" : ""}
-            >
-              Script
-            </TabsTrigger>
-            <TabsTrigger
-              id="shotlist-tab-trigger"
-              value="shotlist"
-              className={isProductionPhase ? "data-[state=active]:text-amber-800 data-[state=active]:font-medium" : ""}
-            >
-              Shot List
-            </TabsTrigger>
-            <TabsTrigger
-              id="subjects-tab-trigger"
-              value="subjects"
-              className={isProductionPhase ? "data-[state=active]:text-amber-800 data-[state=active]:font-medium" : ""}
-            >
-              Subjects
-            </TabsTrigger>
-            <TabsTrigger
-              id="styles-tab-trigger"
-              value="styles"
-              className={isProductionPhase ? "data-[state=active]:text-amber-800 data-[state=active]:font-medium" : ""}
-            >
-              Styles
-            </TabsTrigger>
-            <TabsTrigger
-              id="prompts-tab-trigger"
-              value="prompts"
-              className={isProductionPhase ? "data-[state=active]:text-amber-800 data-[state=active]:font-medium" : ""}
-            >
-              Prompts
-            </TabsTrigger>
-            <TabsTrigger
-              id="musiclab-tab-trigger"
-              value="musiclab"
-              className={isProductionPhase ? "data-[state=active]:text-amber-800 data-[state=active]:font-medium" : ""}
-            >
-              Music Lab
-            </TabsTrigger>
-            <TabsTrigger
-              id="developer-tab-trigger"
-              value="developer"
-              className="flex items-center gap-1 data-[state=active]:text-gray-800 data-[state=active]:font-medium"
-            >
-              <Settings className="h-4 w-4" />
-              <span className="hidden sm:inline">Developer</span>
-            </TabsTrigger>
-          </TabsList>
+        <TabsList className="grid grid-cols-12 w-full">
+          <TabsTrigger id="story-theme-tab-trigger" value="story-theme">
+            Story Theme
+          </TabsTrigger>
+          <TabsTrigger id="research-tab-trigger" value="research">
+            Research
+          </TabsTrigger>
+          <TabsTrigger id="outline-tab-trigger" value="outline">
+            Outline
+          </TabsTrigger>
+          <TabsTrigger id="write-tab-trigger" value="write">
+            Write
+          </TabsTrigger>
+          <TabsTrigger id="enhance-tab-trigger" value="enhance">
+            Enhance
+          </TabsTrigger>
+          <TabsTrigger id="script-tab-trigger" value="script">
+            Script
+          </TabsTrigger>
+          <TabsTrigger id="shotlist-tab-trigger" value="shotlist">
+            Shot List
+          </TabsTrigger>
+          <TabsTrigger id="subjects-tab-trigger" value="subjects">
+            Subjects
+          </TabsTrigger>
+          <TabsTrigger id="styles-tab-trigger" value="styles">
+            Styles
+          </TabsTrigger>
+          <TabsTrigger id="prompts-tab-trigger" value="prompts">
+            Prompts
+          </TabsTrigger>
+          <TabsTrigger id="musiclab-tab-trigger" value="musiclab">
+            Music Lab
+          </TabsTrigger>
+          <TabsTrigger id="developer-tab-trigger" value="developer" className="flex items-center gap-1">
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Developer</span>
+          </TabsTrigger>
+        </TabsList>
 
-          <AnimatedTabIndicator activeTab={activeTab} />
-        </div>
+        {/* Script Creation Tabs */}
+        <TabsContent value="story-theme">
+          <StoryThemeTab />
+        </TabsContent>
+        <TabsContent value="research">
+          <ResearchTab />
+        </TabsContent>
+        <TabsContent value="outline">
+          <OutlineTab />
+        </TabsContent>
+        <TabsContent value="write">
+          <WriteTab />
+        </TabsContent>
+        <TabsContent value="enhance">
+          <EnhanceTab />
+        </TabsContent>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, x: 20 * getAnimationDirection() }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 * getAnimationDirection() }}
-            transition={{ duration: 0.2 }}
-          >
-            {/* Script Creation Tabs */}
-            <TabsContent value="story-theme">
-              <StoryThemeTab />
-            </TabsContent>
-            <TabsContent value="research">
-              <ResearchTab />
-            </TabsContent>
-            <TabsContent value="outline">
-              <OutlineTab />
-            </TabsContent>
-            <TabsContent value="write">
-              <WriteTab />
-            </TabsContent>
-            <TabsContent value="enhance">
-              <EnhanceTab />
-            </TabsContent>
-
-            {/* Original Tabs */}
-            <TabsContent value="script">
-              <ScriptTab />
-            </TabsContent>
-            <TabsContent value="shotlist">
-              <ShotListTab />
-            </TabsContent>
-            <TabsContent value="subjects">
-              <SubjectsTab />
-            </TabsContent>
-            <TabsContent value="styles">
-              <StylesTab />
-            </TabsContent>
-            <TabsContent value="prompts">
-              <PromptsTab />
-            </TabsContent>
-            <TabsContent value="musiclab">
-              <MusicLabTab />
-            </TabsContent>
-            <TabsContent value="developer">
-              <DeveloperTab />
-            </TabsContent>
-          </motion.div>
-        </AnimatePresence>
+        {/* Original Tabs */}
+        <TabsContent value="script">
+          <ScriptTab />
+        </TabsContent>
+        <TabsContent value="shotlist">
+          <ShotListTab />
+        </TabsContent>
+        <TabsContent value="subjects">
+          <SubjectsTab />
+        </TabsContent>
+        <TabsContent value="styles">
+          <StylesTab />
+        </TabsContent>
+        <TabsContent value="prompts">
+          <PromptsTab />
+        </TabsContent>
+        <TabsContent value="musiclab">
+          <MusicLabTab />
+        </TabsContent>
+        <TabsContent value="developer">
+          <DeveloperTab />
+        </TabsContent>
       </Tabs>
     </div>
   )

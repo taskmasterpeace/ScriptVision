@@ -92,6 +92,7 @@ interface ScriptCreationState {
     perspective: "first-person" | "third-person" | "multiple-pov"
     tone: "light" | "dark" | "neutral"
     additionalNotes: string
+    customPrompt: string // Add this new field
   }
 
   // Write
@@ -166,6 +167,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
         perspective: "third-person",
         tone: "neutral",
         additionalNotes: "",
+        customPrompt: "", // Add this with empty initial value
       },
 
       generatedChapters: [],
@@ -301,6 +303,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             perspective: outlineDirections.perspective,
             tone: outlineDirections.tone,
             additionalNotes: outlineDirections.additionalNotes,
+            customPrompt: outlineDirections.customPrompt, // Add this line
           }
 
           // Call the AI service
