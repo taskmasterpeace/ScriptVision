@@ -2,6 +2,7 @@
 import { useTemplateStore } from "@/lib/stores/template-store"
 import { useAILogsStore } from "@/lib/stores/ai-logs-store"
 import { useModelStore, type ApplicationPhase } from "@/lib/stores/model-store"
+import type { Shot } from "@/lib/types"
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -190,7 +191,7 @@ export async function generateAIResponse(prompt: string, context: string): Promi
       }
 
       // Create the request payload following OpenAI API format
-      const payload = {
+      let payload: any = {
         model: modelId,
         messages: [
           {
@@ -204,6 +205,26 @@ export async function generateAIResponse(prompt: string, context: string): Promi
         ],
         temperature: 0.7,
         max_tokens: 2000, // Increased token limit for longer responses
+      }
+
+      // For shot list generation, use structured output
+      if (templateId === "shot-list-generation") {
+        payload = {
+          model: modelId,
+          messages: [
+            {
+              role: "system",
+              content: "You are a helpful assistant specialized in film production and shot list creation.",
+            },
+            {
+              role: "user",
+              content: processedPrompt,
+            },
+          ],
+          temperature: 0.7,
+          response_format: { type: "json_object" },
+          max_tokens: 4000,
+        }
       }
 
       console.log(`Calling OpenAI API with model: ${modelId}`)
@@ -339,6 +360,32 @@ Please format your response as follows:
 `
   }
 
+  // Add specific instructions for shot list generation to use structured output
+  if (templateId === "shot-list-generation") {
+    processedTemplate = `${processedTemplate}
+
+Please analyze the script and create a detailed shot list. Return your response as a JSON object with the following structure:
+
+{
+  "shotList": [
+    {
+      "scene": "1",
+      "shot": "1",
+      "shotSize": "MS",
+      "description": "Brief description of the shot",
+      "people": "Characters in the shot",
+      "action": "What happens in the shot",
+      "dialogue": "Any dialogue in the shot",
+      "location": "Where the shot takes place"
+    },
+    // more shots...
+  ]
+}
+
+For shot size, use standard abbreviations: ECU (Extreme Close-Up), CU (Close-Up), MCU (Medium Close-Up), MS (Medium Shot), MLS (Medium Long Shot), LS (Long Shot), ELS (Extreme Long Shot).
+`
+  }
+
   // Process variables
   template.variables.forEach((variable) => {
     const variablePlaceholder = `{{${variable.name}}}`
@@ -351,7 +398,7 @@ Please format your response as follows:
       // For disabled variables, we need to handle different cases:
 
       // Case 1: Variable is on its own line with label (e.g., "Label: {{variable}}")
-      processedTemplate = processedTemplate.replace(new RegExp(`^.*?${variablePlaceholder}.*?$`, "gm"), "")
+      processedTemplate = processedTemplate.replace(new RegExp(`^.*?${variablePlaceholder}.*?\n`, "gm"), "")
 
       // Case 2: Variable is part of a line but not the only content
       processedTemplate = processedTemplate.replace(new RegExp(`\\s*\\w+:\\s*${variablePlaceholder}\\s*`, "g"), "")
@@ -372,37 +419,53 @@ Please format your response as follows:
     .replace(/:\s*,/g, ",") // Clean up any empty values in comma-separated lists
     .replace(/,\s*,/g, ",") // Clean up consecutive commas
     .replace(/,\s*\n/g, "\n") // Clean up trailing commas at end of lines
-    .replace(/$$\s*$$/g, "") // Remove empty parentheses
+    .replace(/$\s*$/g, "") // Remove empty parentheses
     .replace(/\[\s*\]/g, "") // Remove empty brackets
     .replace(/\s+\./g, ".") // Fix spacing before periods
 
   return processedTemplate
 }
 
+// Now let's update the mock shot list response to return a JSON string
 function mockShotListResponse(): string {
-  return `Scene 1, Shot 1
-Shot Size: ELS (Extreme Long Shot)
-Description: Establishing shot of the city skyline at dawn
-People: None
-Action: Camera pans slowly across the city skyline as the sun rises
-Dialogue: None
-Location: City skyline
-
-Scene 1, Shot 2
-Shot Size: MS (Medium Shot)
-Description: John walking down the busy street
-People: John
-Action: John walks purposefully down the busy street, checking his watch
-Dialogue: None
-Location: Downtown street
-
-Scene 1, Shot 3
-Shot Size: MLS (Medium Long Shot)
-Description: John enters the building
-People: John
-Action: John pushes through the revolving door and enters the lobby
-Dialogue: None
-Location: Office building entrance`
+  return JSON.stringify(
+    {
+      shotList: [
+        {
+          scene: "1",
+          shot: "1",
+          shotSize: "ELS",
+          description: "Establishing shot of the city skyline at dawn",
+          people: "None",
+          action: "Camera pans slowly across the city skyline as the sun rises",
+          dialogue: "None",
+          location: "City skyline",
+        },
+        {
+          scene: "1",
+          shot: "2",
+          shotSize: "MS",
+          description: "John walking down the busy street",
+          people: "John",
+          action: "John walks purposefully down the busy street, checking his watch",
+          dialogue: "None",
+          location: "Downtown street",
+        },
+        {
+          scene: "1",
+          shot: "3",
+          shotSize: "MLS",
+          description: "John enters the building",
+          people: "John",
+          action: "John pushes through the revolving door and enters the lobby",
+          dialogue: "None",
+          location: "Office building entrance",
+        },
+      ],
+    },
+    null,
+    2,
+  )
 }
 
 function mockSubjectsResponse(): string {
@@ -491,4 +554,33 @@ Reason: This would establish the relationship between these two characters and c
 Scene 3, Shot 2: Close-up of the presentation folder being opened
 Shot Size: CU
 Reason: This insert shot would emphasize the importance of the documents and create a moment of anticipation.`
+}
+
+// Add a new function to generate structured shot list
+export async function generateStructuredShotList(script: string): Promise<Shot[]> {
+  const aiResponse = await generateAIResponse("Generate a shot list from this script", script)
+
+  try {
+    // Try to parse the response as JSON
+    const parsedResponse = JSON.parse(aiResponse)
+
+    // Check if the response has the expected structure
+    if (parsedResponse && Array.isArray(parsedResponse.shotList)) {
+      // Add IDs to each shot
+      return parsedResponse.shotList.map((shot: Omit<Shot, "id">) => ({
+        ...shot,
+        id: crypto.randomUUID(),
+      }))
+    } else {
+      console.error("Unexpected response structure:", parsedResponse)
+      throw new Error("The AI response did not contain a valid shot list structure")
+    }
+  } catch (error) {
+    console.error("Failed to parse AI response as JSON:", error)
+    console.error("Raw response:", aiResponse)
+
+    // Fall back to the regex parser as a last resort
+    const { parseAIShotList } = await import("@/lib/stores/project-store")
+    return parseAIShotList(aiResponse)
+  }
 }

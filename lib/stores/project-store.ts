@@ -48,7 +48,6 @@ interface ProjectState {
     scriptCompleted: boolean
     shotListCompleted: boolean
     subjectsCompleted: boolean
-    stylesCompleted: boolean
     promptsCompleted: boolean
   }
 
@@ -133,33 +132,84 @@ function parseAIShotList(shotListText: string): Shot[] {
   const shots: Shot[] = []
   console.log("Raw shot list text:", shotListText)
 
-  // Split the text by double newlines to separate shots
-  const shotBlocks = shotListText.split(/\n\s*\n/).filter((block) => block.trim())
-  console.log(`Found ${shotBlocks.length} shot blocks`)
+  // First, try to identify scene blocks
+  const sceneRegex = /#{1,3}\s*Scene\s+(\d+)[^#]*?(?=#{1,3}\s*Scene|$)/gi
+  let sceneMatch
+  const sceneMatches = []
 
-  // Process each shot block
-  shotBlocks.forEach((block, index) => {
-    console.log(`Processing block ${index + 1}:`, block)
+  while ((sceneMatch = sceneRegex.exec(shotListText)) !== null) {
+    sceneMatches.push({
+      sceneNumber: sceneMatch[1],
+      content: sceneMatch[0],
+      index: sceneMatch.index,
+    })
+  }
 
-    // Extract scene and shot numbers from the first line
-    const sceneMatch = block.match(/^Scene\s+(\d+),\s+Shot\s+(\d+)/i)
+  // If we couldn't find scene blocks with the regex, try an alternative approach
+  if (sceneMatches.length === 0) {
+    // Split by double newlines and look for "Scene" headers
+    const blocks = shotListText.split(/\n\s*\n/).filter((block) => block.trim())
 
-    if (sceneMatch) {
-      const sceneNumber = sceneMatch[1]
-      const shotNumber = sceneMatch[2]
+    for (const block of blocks) {
+      const sceneHeaderMatch = block.match(/^(?:Scene|SCENE)\s+(\d+)/i)
 
-      // Extract other properties using regex
-      const shotSizeMatch = block.match(/Shot\s+Size:\s*([^\n]+)/i)
-      const descriptionMatch = block.match(/Description:\s*([^\n]+)/i)
-      const peopleMatch = block.match(/People:\s*([^\n]+)/i)
-      const actionMatch = block.match(/Action:\s*([^\n]+)/i)
-      const dialogueMatch = block.match(/Dialogue:\s*([^\n]+)/i)
-      const locationMatch = block.match(/Location:\s*([^\n]+)/i)
+      if (sceneHeaderMatch) {
+        sceneMatches.push({
+          sceneNumber: sceneHeaderMatch[1],
+          content: block,
+          index: shotListText.indexOf(block),
+        })
+      }
+    }
+  }
 
-      // Create the shot object
+  console.log(`Found ${sceneMatches.length} scene blocks`)
+
+  // Process each scene block
+  for (const scene of sceneMatches) {
+    // Look for shot blocks within the scene
+    const shotBlockRegex =
+      /(?:Shot|#{1,4})\s+(\d+)[^\n]*\n(?:-\s*\*\*Scene[^]*?(?=(?:Shot|#{1,4})|$)|[^]*?(?=(?:Shot|#{1,4})|$))/gi
+    let shotMatch
+    let shotContent = scene.content
+
+    // If we can't find shots with the regex, try to split by bullet points or numbered items
+    if (!shotContent.match(shotBlockRegex)) {
+      // Try to find shots by looking for "Shot" or "Shot Number" patterns
+      const alternativeShotRegex =
+        /[-*•]?\s*(?:\*\*)?(?:Shot(?:\s+Number)?:?\s*|Shot\s+Size:?\s*|Description:?\s*)[^]*/gi
+      shotContent = shotContent.replace(alternativeShotRegex, (match) => `\n\nShot ${match}`)
+    }
+
+    while ((shotMatch = shotBlockRegex.exec(shotContent)) !== null) {
+      const shotNumber = shotMatch[1]
+      const shotBlock = shotMatch[0]
+
+      // Extract shot details using various patterns to handle different formats
+      const shotSizeMatch =
+        shotBlock.match(/Shot\s+Size:?\s*([^\n]+)/i) ||
+        shotBlock.match(/\*\*Shot\s+Size:?\*\*\s*([^\n]+)/i) ||
+        shotBlock.match(/Size:?\s*([^\n]+)/i)
+
+      const descriptionMatch =
+        shotBlock.match(/Description:?\s*([^\n]+)/i) || shotBlock.match(/\*\*Description:?\*\*\s*([^\n]+)/i)
+
+      const peopleMatch =
+        shotBlock.match(/People(?:\s+in\s+the\s+Shot)?:?\s*([^\n]+)/i) ||
+        shotBlock.match(/\*\*People(?:\s+in\s+the\s+Shot)?:?\*\*\s*([^\n]+)/i)
+
+      const actionMatch = shotBlock.match(/Action:?\s*([^\n]+)/i) || shotBlock.match(/\*\*Action:?\*\*\s*([^\n]+)/i)
+
+      const dialogueMatch =
+        shotBlock.match(/Dialogue:?\s*([^\n]+)/i) || shotBlock.match(/\*\*Dialogue:?\*\*\s*([^\n]+)/i)
+
+      const locationMatch =
+        shotBlock.match(/Location:?\s*([^\n]+)/i) || shotBlock.match(/\*\*Location:?\*\*\s*([^\n]+)/i)
+
+      // Create the shot object with extracted information
       const shot: Shot = {
         id: uuidv4(),
-        scene: sceneNumber,
+        scene: scene.sceneNumber,
         shot: shotNumber,
         shotSize: shotSizeMatch ? shotSizeMatch[1].trim() : "",
         description: descriptionMatch ? descriptionMatch[1].trim() : "",
@@ -169,15 +219,202 @@ function parseAIShotList(shotListText: string): Shot[] {
         location: locationMatch ? locationMatch[1].trim() : "",
       }
 
+      // If we couldn't extract a description but have other content, use that
+      if (!shot.description) {
+        // Try to extract a description from the content
+        const lines = shotBlock
+          .split("\n")
+          .filter(
+            (line) =>
+              !line.match(/Shot\s+\d+/i) &&
+              !line.match(/Scene\s+\d+/i) &&
+              !line.match(/Shot\s+Size/i) &&
+              !line.match(/People/i) &&
+              !line.match(/Action/i) &&
+              !line.match(/Dialogue/i) &&
+              !line.match(/Location/i) &&
+              line.trim(),
+          )
+
+        if (lines.length > 0) {
+          shot.description = lines[0].replace(/^[-*•\s]+/, "").trim()
+        }
+      }
+
       console.log("Created shot:", shot)
       shots.push(shot)
-    } else {
-      console.warn("Could not extract scene/shot numbers from block:", block)
     }
-  })
+
+    // If we couldn't find any shots with the regex, try a more direct approach
+    if (shots.length === 0 || !shots.some((s) => s.scene === scene.sceneNumber)) {
+      // Look for patterns like "Shot 1" or "#### Shot 1" or bullet points
+      const lines = scene.content.split("\n")
+      let currentShot: Partial<Shot> | null = null
+
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+        if (!trimmedLine) continue
+
+        // Check if this is a new shot
+        const shotHeaderMatch = trimmedLine.match(/(?:#{1,4}\s*)?(?:Shot|SHOT)\s+(\d+)/i)
+
+        if (shotHeaderMatch) {
+          // Save previous shot if exists
+          if (currentShot?.scene && currentShot?.shot) {
+            shots.push({
+              id: uuidv4(),
+              scene: currentShot.scene,
+              shot: currentShot.shot,
+              shotSize: currentShot.shotSize || "",
+              description: currentShot.description || "",
+              people: currentShot.people || "",
+              action: currentShot.action || "",
+              dialogue: currentShot.dialogue || "",
+              location: currentShot.location || "",
+            })
+          }
+
+          // Start new shot
+          currentShot = {
+            scene: scene.sceneNumber,
+            shot: shotHeaderMatch[1],
+          }
+        }
+        // Check for shot properties
+        else if (currentShot) {
+          if (trimmedLine.match(/Shot\s+Size:?\s*/i)) {
+            currentShot.shotSize = trimmedLine.replace(/Shot\s+Size:?\s*/i, "").trim()
+          } else if (trimmedLine.match(/Description:?\s*/i)) {
+            currentShot.description = trimmedLine.replace(/Description:?\s*/i, "").trim()
+          } else if (trimmedLine.match(/People(?:\s+in\s+the\s+Shot)?:?\s*/i)) {
+            currentShot.people = trimmedLine.replace(/People(?:\s+in\s+the\s+Shot)?:?\s*/i, "").trim()
+          } else if (trimmedLine.match(/Action:?\s*/i)) {
+            currentShot.action = trimmedLine.replace(/Action:?\s*/i, "").trim()
+          } else if (trimmedLine.match(/Dialogue:?\s*/i)) {
+            currentShot.dialogue = trimmedLine.replace(/Dialogue:?\s*/i, "").trim()
+          } else if (trimmedLine.match(/Location:?\s*/i)) {
+            currentShot.location = trimmedLine.replace(/Location:?\s*/i, "").trim()
+          }
+          // If line doesn't match any property but starts with a bullet or dash, it might be a description
+          else if (trimmedLine.match(/^[-*•]/) && !currentShot.description) {
+            currentShot.description = trimmedLine.replace(/^[-*•\s]+/, "").trim()
+          }
+        }
+      }
+
+      // Save the last shot if exists
+      if (currentShot?.scene && currentShot?.shot) {
+        shots.push({
+          id: uuidv4(),
+          scene: currentShot.scene,
+          shot: currentShot.shot,
+          shotSize: currentShot.shotSize || "",
+          description: currentShot.description || "",
+          people: currentShot.people || "",
+          action: currentShot.action || "",
+          dialogue: currentShot.dialogue || "",
+          location: currentShot.location || "",
+        })
+      }
+    }
+  }
+
+  // If we still couldn't extract any shots, try a last-resort approach
+  if (shots.length === 0) {
+    console.log("Using last-resort shot extraction approach")
+
+    // Look for any patterns that might indicate a shot
+    const shotPatterns = [
+      // Pattern: "Scene X, Shot Y: Description"
+      /Scene\s+(\d+),\s+Shot\s+(\d+)(?::\s*|\s+)([^\n]+)/gi,
+      // Pattern: "Shot Y (Scene X): Description"
+      /Shot\s+(\d+)\s+$$Scene\s+(\d+)$$(?::\s*|\s+)([^\n]+)/gi,
+      // Pattern: "Shot Y: Description" (assume Scene 1 if not specified)
+      /Shot\s+(\d+)(?::\s*|\s+)([^\n]+)/gi,
+    ]
+
+    for (const pattern of shotPatterns) {
+      let match
+      while ((match = pattern.exec(shotListText)) !== null) {
+        // Extract scene and shot numbers based on the pattern
+        let sceneNumber, shotNumber, description
+
+        if (pattern.source.includes("\\(Scene")) {
+          // Pattern: "Shot Y (Scene X): Description"
+          shotNumber = match[1]
+          sceneNumber = match[2]
+          description = match[3]
+        } else if (pattern.source.includes("Scene\\s+$$\\d+$$")) {
+          // Pattern: "Scene X, Shot Y: Description"
+          sceneNumber = match[1]
+          shotNumber = match[2]
+          description = match[3]
+        } else {
+          // Pattern: "Shot Y: Description" (assume Scene 1)
+          shotNumber = match[1]
+          sceneNumber = "1"
+          description = match[2]
+        }
+
+        // Create a basic shot object
+        const shot: Shot = {
+          id: uuidv4(),
+          scene: sceneNumber,
+          shot: shotNumber,
+          description: description.trim(),
+          shotSize: "",
+          people: "",
+          action: "",
+          dialogue: "",
+          location: "",
+        }
+
+        // Try to extract additional details from surrounding text
+        const shotIndex = match.index
+        const nextShotIndex = shotListText.indexOf("Shot", shotIndex + 5)
+        const contextText =
+          nextShotIndex > shotIndex
+            ? shotListText.substring(shotIndex, nextShotIndex)
+            : shotListText.substring(shotIndex, shotIndex + 500)
+
+        // Extract shot size
+        const sizeMatch = contextText.match(/(?:Shot\s+Size|Size):\s*([^\n]+)/i)
+        if (sizeMatch) shot.shotSize = sizeMatch[1].trim()
+
+        // Extract people
+        const peopleMatch = contextText.match(/People(?:\s+in\s+the\s+Shot)?:\s*([^\n]+)/i)
+        if (peopleMatch) shot.people = peopleMatch[1].trim()
+
+        // Extract action
+        const actionMatch = contextText.match(/Action:\s*([^\n]+)/i)
+        if (actionMatch) shot.action = actionMatch[1].trim()
+
+        // Extract dialogue
+        const dialogueMatch = contextText.match(/Dialogue:\s*([^\n]+)/i)
+        if (dialogueMatch) shot.dialogue = dialogueMatch[1].trim()
+
+        // Extract location
+        const locationMatch = contextText.match(/Location:\s*([^\n]+)/i)
+        if (locationMatch) shot.location = locationMatch[1].trim()
+
+        console.log("Created shot (last resort):", shot)
+        shots.push(shot)
+      }
+
+      // If we found shots with this pattern, stop trying others
+      if (shots.length > 0) break
+    }
+  }
 
   console.log(`Total shots parsed: ${shots.length}`)
   return shots
+}
+
+// Add this at the end of the file, after the parseAIShotList function:
+
+// Expose the parseAIShotList function to the window object for debugging
+if (typeof window !== "undefined") {
+  ;(window as any).parseAIShotList = parseAIShotList
 }
 
 // Helper function to extract shot details from a text block
@@ -483,18 +720,15 @@ export const useProjectStore = create<ProjectState>()(
         useLoadingStore.getState().setLoading("generateShotList", true)
 
         try {
-          // Call the AI service to generate a shot list
-          const shotListText = await generateAIResponse("Generate a shot list from this script", script)
-          console.log("Shot list response:", shotListText)
+          // Use the new structured output function
+          const { generateStructuredShotList } = await import("@/lib/ai-service")
+          const shots = await generateStructuredShotList(script)
 
-          // Parse the AI response into structured data
-          const shots = parseAIShotList(shotListText)
-          console.log("Parsed shots:", shots)
+          console.log("Structured shots:", shots)
 
           // If no shots were parsed, throw an error
           if (shots.length === 0) {
-            console.error("Failed to parse shot list from AI response:", shotListText)
-            throw new Error("Failed to parse shot list from AI response. Please try again.")
+            throw new Error("Failed to generate shot list. Please try again.")
           }
 
           const workflowProgress = get().workflowProgress

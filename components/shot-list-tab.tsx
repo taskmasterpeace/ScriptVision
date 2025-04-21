@@ -25,7 +25,9 @@ import { AlertCircle, ArrowLeft, FileText, Loader2 } from "lucide-react"
 // Import the loading store at the top of the file
 import { useLoadingStore } from "@/lib/stores/loading-store"
 import ShotSuggestions from "@/components/shot-suggestions"
-import DebugPanel from "@/components/debug-panel"
+
+// And replace it with:
+import ShotListDebug from "@/components/shot-list-debug"
 
 // Replace the existing component with this updated version
 export default function ShotListTab() {
@@ -269,7 +271,7 @@ export default function ShotListTab() {
       </Card>
 
       {/* Add the Debug Panel */}
-      <DebugPanel />
+      <ShotListDebug />
 
       {/* Add the Shot Suggestions component if we have a shot list */}
       {localShotList.length > 0 && <ShotSuggestions />}
