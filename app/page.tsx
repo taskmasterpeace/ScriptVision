@@ -10,12 +10,19 @@ import PromptsTab from "@/components/prompts-tab"
 import MusicLabTab from "@/components/music-lab-tab"
 import DeveloperTab from "@/components/developer-tab"
 import ProjectManager from "@/components/project-manager"
-import { WorkflowNavigation } from "@/components/workflow-navigation"
+import { EnhancedWorkflowNavigation } from "@/components/enhanced-workflow-navigation"
 import { Settings } from "lucide-react"
 import { ScriptVisionLogo } from "@/components/script-vision-logo"
 
+// Import new script creation components
+import StoryThemeTab from "@/components/story-theme-tab"
+import ResearchTab from "@/components/research-tab"
+import OutlineTab from "@/components/outline-tab"
+import WriteTab from "@/components/write-tab"
+import EnhanceTab from "@/components/enhance-tab"
+
 export default function Page() {
-  const [activeTab, setActiveTab] = useState("script")
+  const [activeTab, setActiveTab] = useState("story-theme")
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
@@ -32,10 +39,25 @@ export default function Page() {
 
       <ProjectManager />
 
-      <WorkflowNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+      <EnhancedWorkflowNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-7 w-full">
+        <TabsList className="grid grid-cols-12 w-full">
+          <TabsTrigger id="story-theme-tab-trigger" value="story-theme">
+            Story Theme
+          </TabsTrigger>
+          <TabsTrigger id="research-tab-trigger" value="research">
+            Research
+          </TabsTrigger>
+          <TabsTrigger id="outline-tab-trigger" value="outline">
+            Outline
+          </TabsTrigger>
+          <TabsTrigger id="write-tab-trigger" value="write">
+            Write
+          </TabsTrigger>
+          <TabsTrigger id="enhance-tab-trigger" value="enhance">
+            Enhance
+          </TabsTrigger>
           <TabsTrigger id="script-tab-trigger" value="script">
             Script
           </TabsTrigger>
@@ -59,6 +81,25 @@ export default function Page() {
             <span className="hidden sm:inline">Developer</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Script Creation Tabs */}
+        <TabsContent value="story-theme">
+          <StoryThemeTab />
+        </TabsContent>
+        <TabsContent value="research">
+          <ResearchTab />
+        </TabsContent>
+        <TabsContent value="outline">
+          <OutlineTab />
+        </TabsContent>
+        <TabsContent value="write">
+          <WriteTab />
+        </TabsContent>
+        <TabsContent value="enhance">
+          <EnhanceTab />
+        </TabsContent>
+
+        {/* Original Tabs */}
         <TabsContent value="script">
           <ScriptTab />
         </TabsContent>
