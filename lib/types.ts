@@ -24,6 +24,7 @@ export interface Subject {
   description: string
   alias: string
   active: boolean
+  loraTrigger?: string // Added LORA trigger word field
 }
 
 export interface Style {

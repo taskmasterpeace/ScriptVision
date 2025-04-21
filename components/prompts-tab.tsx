@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { useProjectStore } from "@/lib/stores/project-store"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import type { Shot } from "@/lib/types"
+import type { Shot, Subject } from "@/lib/types"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Copy, Loader2, AlertCircle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -49,8 +49,51 @@ export default function PromptsTab() {
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
   const [activeTab, setActiveTab] = useState("shot-selection")
 
+  // Track the number of prompts to detect changes
+  const [promptCount, setPromptCount] = useState(generatedPrompts.length)
+
+  // Update currentPromptIndex when new prompts are generated
+  useEffect(() => {
+    if (generatedPrompts.length > promptCount) {
+      setCurrentPromptIndex(generatedPrompts.length - 1)
+      setPromptCount(generatedPrompts.length)
+    }
+  }, [generatedPrompts.length, promptCount])
+
   // Check if the minimum requirements are met to generate a prompt
   const canGeneratePrompt = selectedShot !== null && selectedStyle !== null
+
+  // Helper function to apply LORA replacements to a prompt
+  const applyLoraReplacements = (prompt: string, activeSubjects: Subject[]): string => {
+    // Start with an empty array of LORA triggers
+    const loraTriggers: string[] = []
+    let modifiedPrompt = prompt
+
+    // Process each subject with a LORA trigger
+    activeSubjects.forEach((subject) => {
+      if (subject.loraTrigger && subject.loraTrigger.trim()) {
+        // Add to the beginning LORA triggers
+        loraTriggers.push(subject.loraTrigger.trim())
+
+        // Replace the subject name with the LORA trigger in the prompt
+        const nameRegex = new RegExp(`\\b${subject.name}\\b`, "gi")
+        modifiedPrompt = modifiedPrompt.replace(nameRegex, subject.loraTrigger.trim())
+
+        // Also replace aliases if they exist
+        if (subject.alias) {
+          const aliasRegex = new RegExp(`\\b${subject.alias}\\b`, "gi")
+          modifiedPrompt = modifiedPrompt.replace(aliasRegex, subject.loraTrigger.trim())
+        }
+      }
+    })
+
+    // Combine all LORA triggers at the beginning of the prompt
+    if (loraTriggers.length > 0) {
+      return `${loraTriggers.join(", ")} ${modifiedPrompt}`
+    }
+
+    return modifiedPrompt
+  }
 
   const handleGeneratePrompt = async () => {
     if (!selectedShot) {
@@ -81,6 +124,7 @@ export default function PromptsTab() {
 
       await generatePrompt(selectedShot, activeSubjects, filteredCameraSettings)
 
+      // Update the current prompt index to show the newly generated prompt
       setCurrentPromptIndex(generatedPrompts.length)
 
       // Switch to the generated prompts tab
@@ -107,6 +151,20 @@ export default function PromptsTab() {
     })
   }
 
+  // Get the active subjects for the current selection
+  const activeSelectedSubjects = subjects.filter((subject) => subject.active && selectedSubjects.includes(subject.id))
+
+  // Apply LORA replacements to the current prompt if it exists
+  const currentPrompt = generatedPrompts[currentPromptIndex]
+  const processedPrompt = currentPrompt
+    ? {
+        ...currentPrompt,
+        concise: applyLoraReplacements(currentPrompt.concise, activeSelectedSubjects),
+        normal: applyLoraReplacements(currentPrompt.normal, activeSelectedSubjects),
+        detailed: applyLoraReplacements(currentPrompt.detailed, activeSelectedSubjects),
+      }
+    : null
+
   return (
     <Card>
       <CardHeader>
@@ -119,7 +177,9 @@ export default function PromptsTab() {
             <TabsTrigger value="shot-selection">Shot Selection</TabsTrigger>
             <TabsTrigger value="style-selection">Style Selection</TabsTrigger>
             <TabsTrigger value="camera-settings">Camera Settings (Optional)</TabsTrigger>
-            <TabsTrigger value="generated-prompts">Generated Prompts</TabsTrigger>
+            <TabsTrigger value="generated-prompts">
+              Generated Prompts {generatedPrompts.length > 0 && `(${generatedPrompts.length})`}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="shot-selection">
@@ -197,6 +257,9 @@ export default function PromptsTab() {
                           />
                           <label htmlFor={`subject-${subject.id}`} className="text-sm">
                             {subject.name} ({subject.category})
+                            {subject.loraTrigger && (
+                              <span className="ml-2 text-xs text-blue-500 font-mono">{subject.loraTrigger}</span>
+                            )}
                           </label>
                         </div>
                       ))
@@ -494,16 +557,19 @@ export default function PromptsTab() {
                           <SelectValue placeholder="Select a prompt" />
                         </SelectTrigger>
                         <SelectContent>
-                          {generatedPrompts.map((prompt, index) => (
-                            <SelectItem key={index} value={index.toString() || "none"}>
-                              Prompt {index + 1}
-                            </SelectItem>
-                          ))}
+                          {generatedPrompts.map((prompt, index) => {
+                            const shot = shotList.find((s) => s.id === prompt.shotId)
+                            return (
+                              <SelectItem key={index} value={index.toString()}>
+                                {shot ? `Scene ${shot.scene}, Shot ${shot.shot}` : `Prompt ${index + 1}`}
+                              </SelectItem>
+                            )
+                          })}
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {generatedPrompts[currentPromptIndex] && (
+                    {processedPrompt && (
                       <Accordion type="single" collapsible defaultValue="concise">
                         <AccordionItem value="concise">
                           <AccordionTrigger className="font-medium">
@@ -514,15 +580,15 @@ export default function PromptsTab() {
                               className="ml-auto h-8 w-8"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                copyToClipboard(generatedPrompts[currentPromptIndex].concise, "Concise")
+                                copyToClipboard(processedPrompt.concise, "Concise")
                               }}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="p-3 bg-muted rounded-md">
-                              {generatedPrompts[currentPromptIndex].concise}
+                            <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
+                              {processedPrompt.concise}
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -536,14 +602,16 @@ export default function PromptsTab() {
                               className="ml-auto h-8 w-8"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                copyToClipboard(generatedPrompts[currentPromptIndex].normal, "Normal")
+                                copyToClipboard(processedPrompt.normal, "Normal")
                               }}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="p-3 bg-muted rounded-md">{generatedPrompts[currentPromptIndex].normal}</div>
+                            <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
+                              {processedPrompt.normal}
+                            </div>
                           </AccordionContent>
                         </AccordionItem>
 
@@ -556,15 +624,15 @@ export default function PromptsTab() {
                               className="ml-auto h-8 w-8"
                               onClick={(e) => {
                                 e.stopPropagation()
-                                copyToClipboard(generatedPrompts[currentPromptIndex].detailed, "Detailed")
+                                copyToClipboard(processedPrompt.detailed, "Detailed")
                               }}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
                           </AccordionTrigger>
                           <AccordionContent>
-                            <div className="p-3 bg-muted rounded-md">
-                              {generatedPrompts[currentPromptIndex].detailed}
+                            <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
+                              {processedPrompt.detailed}
                             </div>
                           </AccordionContent>
                         </AccordionItem>
@@ -616,6 +684,22 @@ export default function PromptsTab() {
                     )}
                   </div>
                 </div>
+
+                {activeSelectedSubjects.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-sm mb-2">Selected Subjects with LORA</h4>
+                    <div className="space-y-1">
+                      {activeSelectedSubjects
+                        .filter((subject) => subject.loraTrigger)
+                        .map((subject) => (
+                          <div key={subject.id} className="flex items-center">
+                            <span className="text-sm">{subject.name}:</span>
+                            <span className="ml-2 text-xs font-mono text-blue-500">{subject.loraTrigger}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex justify-end mt-4">
                   <Button onClick={handleGeneratePrompt} disabled={isLoading("generatePrompt") || !canGeneratePrompt}>

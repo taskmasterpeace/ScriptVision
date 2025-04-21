@@ -1,9 +1,7 @@
-"use client"
-
 import type { ColumnDef } from "@tanstack/react-table"
-import type { Subject } from "@/lib/types"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle } from "lucide-react"
+import type { Subject } from "@/lib/types"
+import { CheckCircle2, XCircle } from "lucide-react"
 
 export const SubjectsColumns: ColumnDef<Subject>[] = [
   {
@@ -16,7 +14,7 @@ export const SubjectsColumns: ColumnDef<Subject>[] = [
     cell: ({ row }) => {
       const category = row.getValue("category") as string
       return (
-        <Badge variant={category === "People" ? "default" : category === "Places" ? "secondary" : "outline"}>
+        <Badge variant="outline" className="capitalize">
           {category}
         </Badge>
       )
@@ -35,11 +33,23 @@ export const SubjectsColumns: ColumnDef<Subject>[] = [
     header: "Alias",
   },
   {
+    accessorKey: "loraTrigger",
+    header: "LORA Trigger",
+    cell: ({ row }) => {
+      const loraTrigger = row.original.loraTrigger
+      return loraTrigger ? (
+        <div className="max-w-[200px] truncate font-mono text-xs">{loraTrigger}</div>
+      ) : (
+        <span className="text-muted-foreground text-xs">None</span>
+      )
+    },
+  },
+  {
     accessorKey: "active",
     header: "Active",
     cell: ({ row }) => {
       const active = row.getValue("active") as boolean
-      return active ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />
+      return active ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />
     },
   },
 ]

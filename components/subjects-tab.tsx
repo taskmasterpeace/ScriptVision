@@ -45,6 +45,7 @@ export default function SubjectsTab() {
     category: "People",
     description: "",
     alias: "",
+    loraTrigger: "",
     active: true,
   })
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -94,6 +95,7 @@ export default function SubjectsTab() {
       category: newSubject.category || "People",
       description: newSubject.description || "",
       alias: newSubject.alias || "",
+      loraTrigger: newSubject.loraTrigger || "",
       active: newSubject.active !== undefined ? newSubject.active : true,
     } as Subject)
 
@@ -102,6 +104,7 @@ export default function SubjectsTab() {
       category: "People",
       description: "",
       alias: "",
+      loraTrigger: "",
       active: true,
     })
 
@@ -287,7 +290,9 @@ export default function SubjectsTab() {
                   <Label htmlFor="category">Category</Label>
                   <Select
                     value={selectedSubject.category}
-                    onValueChange={(value) => setSelectedSubject({ ...selectedSubject, category: value })}
+                    onValueChange={(value) =>
+                      setSelectedSubject({ ...selectedSubject, category: value as "People" | "Places" | "Props" })
+                    }
                   >
                     <SelectTrigger id="category">
                       <SelectValue placeholder="Select category" />
@@ -316,6 +321,21 @@ export default function SubjectsTab() {
                     value={selectedSubject.alias}
                     onChange={(e) => setSelectedSubject({ ...selectedSubject, alias: e.target.value })}
                   />
+                </div>
+
+                {/* Add LORA Trigger field */}
+                <div className="space-y-2">
+                  <Label htmlFor="loraTrigger">LORA Trigger Word</Label>
+                  <Input
+                    id="loraTrigger"
+                    value={selectedSubject.loraTrigger || ""}
+                    onChange={(e) => setSelectedSubject({ ...selectedSubject, loraTrigger: e.target.value })}
+                    placeholder="e.g., <lora:character_name:1.0>"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    If provided, this trigger word will be inserted at the beginning of prompts and replace the
+                    subject's name.
+                  </p>
                 </div>
 
                 <div className="flex items-center space-x-2">
@@ -365,7 +385,9 @@ export default function SubjectsTab() {
                 <Label htmlFor="new-category">Category</Label>
                 <Select
                   value={newSubject.category}
-                  onValueChange={(value) => setNewSubject({ ...newSubject, category: value })}
+                  onValueChange={(value) =>
+                    setNewSubject({ ...newSubject, category: value as "People" | "Places" | "Props" })
+                  }
                 >
                   <SelectTrigger id="new-category">
                     <SelectValue placeholder="Select category" />
@@ -394,6 +416,21 @@ export default function SubjectsTab() {
                   value={newSubject.alias}
                   onChange={(e) => setNewSubject({ ...newSubject, alias: e.target.value })}
                 />
+              </div>
+
+              {/* Add LORA Trigger field */}
+              <div className="space-y-2">
+                <Label htmlFor="new-loraTrigger">LORA Trigger Word</Label>
+                <Input
+                  id="new-loraTrigger"
+                  value={newSubject.loraTrigger}
+                  onChange={(e) => setNewSubject({ ...newSubject, loraTrigger: e.target.value })}
+                  placeholder="e.g., <lora:character_name:1.0>"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  If provided, this trigger word will be inserted at the beginning of prompts and replace the subject's
+                  name.
+                </p>
               </div>
 
               <div className="flex items-center space-x-2">

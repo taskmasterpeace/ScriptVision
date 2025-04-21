@@ -994,15 +994,9 @@ export const useProjectStore = create<ProjectState>()(
         useLoadingStore.getState().setLoading("generatePrompt", true)
 
         try {
-          // Filter out empty camera settings
-          const filteredCameraSettings = Object.entries(cameraSettings).reduce(
-            (acc, [key, value]) => {
-              if (value) {
-                acc[key] = value
-              }
-              return acc
-            },
-            {} as Record<string, string>,
+          // Filter out "none" values from camera settings
+          const filteredCameraSettings = Object.fromEntries(
+            Object.entries(cameraSettings).filter(([_, value]) => value !== "none"),
           )
 
           // In a real implementation, this would call an AI service
