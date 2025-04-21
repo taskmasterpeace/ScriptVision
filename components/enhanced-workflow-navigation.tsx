@@ -4,9 +4,23 @@ import type React from "react"
 
 import { useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { CheckCircle2, Circle, Settings, BookOpen, Youtube, FileText, List, Sparkles } from "lucide-react"
+import {
+  CheckCircle2,
+  Circle,
+  Settings,
+  BookOpen,
+  Youtube,
+  FileText,
+  List,
+  Sparkles,
+  Camera,
+  Users,
+  Palette,
+  Wand2,
+} from "lucide-react"
 import { useProjectStore } from "@/lib/stores/project-store"
 import { useScriptCreationStore } from "@/lib/stores/script-creation-store"
+import { Badge } from "@/components/ui/badge"
 
 interface WorkflowStep {
   id: string
@@ -15,6 +29,7 @@ interface WorkflowStep {
   tabValue: string
   isCompleted: (state: any) => boolean
   icon?: React.ReactNode
+  phase: "creation" | "production"
 }
 
 export function EnhancedWorkflowNavigation({
@@ -36,6 +51,7 @@ export function EnhancedWorkflowNavigation({
       tabValue: "story-theme",
       isCompleted: (state) => Boolean(scriptCreationState.storyTheme && scriptCreationState.storyTheme.length > 0),
       icon: <BookOpen className="h-4 w-4" />,
+      phase: "creation",
     },
     {
       id: "research",
@@ -44,6 +60,7 @@ export function EnhancedWorkflowNavigation({
       tabValue: "research",
       isCompleted: (state) => scriptCreationState.selectedTranscripts.length > 0,
       icon: <Youtube className="h-4 w-4" />,
+      phase: "creation",
     },
     {
       id: "outline",
@@ -52,6 +69,7 @@ export function EnhancedWorkflowNavigation({
       tabValue: "outline",
       isCompleted: (state) => scriptCreationState.chapters.length > 0,
       icon: <List className="h-4 w-4" />,
+      phase: "creation",
     },
     {
       id: "write",
@@ -60,6 +78,7 @@ export function EnhancedWorkflowNavigation({
       tabValue: "write",
       isCompleted: (state) => scriptCreationState.generatedChapters.length > 0,
       icon: <FileText className="h-4 w-4" />,
+      phase: "creation",
     },
     {
       id: "enhance",
@@ -68,6 +87,7 @@ export function EnhancedWorkflowNavigation({
       tabValue: "enhance",
       isCompleted: (state) => scriptCreationState.enhancedChapters.length > 0,
       icon: <Sparkles className="h-4 w-4" />,
+      phase: "creation",
     },
     {
       id: "script",
@@ -75,6 +95,8 @@ export function EnhancedWorkflowNavigation({
       description: "Review final script",
       tabValue: "script",
       isCompleted: (state) => Boolean(projectState.script && projectState.script.length > 0),
+      icon: <FileText className="h-4 w-4" />,
+      phase: "production",
     },
     {
       id: "shotlist",
@@ -82,6 +104,8 @@ export function EnhancedWorkflowNavigation({
       description: "Generate and refine shot list",
       tabValue: "shotlist",
       isCompleted: (state) => projectState.shotList.length > 0,
+      icon: <Camera className="h-4 w-4" />,
+      phase: "production",
     },
     {
       id: "subjects",
@@ -89,6 +113,8 @@ export function EnhancedWorkflowNavigation({
       description: "Manage characters, locations, props",
       tabValue: "subjects",
       isCompleted: (state) => projectState.subjects.length > 0,
+      icon: <Users className="h-4 w-4" />,
+      phase: "production",
     },
     {
       id: "styles",
@@ -96,6 +122,8 @@ export function EnhancedWorkflowNavigation({
       description: "Select visual and director styles",
       tabValue: "styles",
       isCompleted: (state) => Boolean(projectState.selectedStyle),
+      icon: <Palette className="h-4 w-4" />,
+      phase: "production",
     },
     {
       id: "prompts",
@@ -103,6 +131,8 @@ export function EnhancedWorkflowNavigation({
       description: "Generate visual prompts",
       tabValue: "prompts",
       isCompleted: (state) => projectState.generatedPrompts.length > 0,
+      icon: <Wand2 className="h-4 w-4" />,
+      phase: "production",
     },
     {
       id: "developer",
@@ -111,6 +141,7 @@ export function EnhancedWorkflowNavigation({
       tabValue: "developer",
       isCompleted: () => true,
       icon: <Settings className="h-4 w-4" />,
+      phase: "production",
     },
   ]
 
@@ -130,25 +161,47 @@ export function EnhancedWorkflowNavigation({
   }, [activeTab, projectState, scriptCreationState])
 
   // Group steps into categories for better UI organization
-  const scriptCreationSteps = workflowSteps.slice(0, 5)
-  const productionSteps = workflowSteps.slice(5, 10)
-  const utilitySteps = workflowSteps.slice(10)
+  const scriptCreationSteps = workflowSteps.filter((step) => step.phase === "creation")
+  const productionSteps = workflowSteps.filter((step) => step.phase === "production" && step.id !== "developer")
+  const utilitySteps = workflowSteps.filter((step) => step.id === "developer")
 
   return (
-    <div className="mb-6 bg-card border rounded-lg p-4 shadow-sm">
+    <div className="mb-6 bg-card border rounded-lg p-4 shadow-md">
       <div className="text-sm text-muted-foreground mb-4">
         Follow these steps to create your script and visual prompts:
       </div>
 
-      <div className="space-y-4">
-        <div className="border-b pb-2">
-          <h3 className="text-sm font-medium mb-2">Script Creation</h3>
-          <div className="flex flex-wrap gap-2">{scriptCreationSteps.map((step) => renderWorkflowStep(step))}</div>
+      <div className="space-y-6">
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-indigo-500/10 rounded-lg -m-2 p-2 blur-sm"></div>
+          <div className="relative border-b pb-4 rounded-t-lg bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge
+                variant="outline"
+                className="bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/50"
+              >
+                Phase 1
+              </Badge>
+              <h3 className="text-base font-semibold text-purple-800 dark:text-purple-300">Script Creation</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">{scriptCreationSteps.map((step) => renderWorkflowStep(step))}</div>
+          </div>
         </div>
 
-        <div className="border-b pb-2">
-          <h3 className="text-sm font-medium mb-2">Production</h3>
-          <div className="flex flex-wrap gap-2">{productionSteps.map((step) => renderWorkflowStep(step))}</div>
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-orange-500/10 rounded-lg -m-2 p-2 blur-sm"></div>
+          <div className="relative border-b pb-4 rounded-t-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge
+                variant="outline"
+                className="bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800/50"
+              >
+                Phase 2
+              </Badge>
+              <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300">Production</h3>
+            </div>
+            <div className="flex flex-wrap gap-2">{productionSteps.map((step) => renderWorkflowStep(step))}</div>
+          </div>
         </div>
 
         <div>
@@ -163,17 +216,37 @@ export function EnhancedWorkflowNavigation({
     const isActive = activeTab === step.tabValue
     const isCompleted = step.isCompleted(state)
 
+    // Different styling based on the phase
+    const phaseColors = {
+      creation: {
+        active: "bg-purple-600 text-white hover:bg-purple-700",
+        completed:
+          "text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900/30 dark:hover:bg-purple-800/40",
+        default: "text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20",
+      },
+      production: {
+        active: "bg-amber-600 text-white hover:bg-amber-700",
+        completed:
+          "text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-800/40",
+        default: "text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/20",
+      },
+    }
+
+    const colorClass = isActive
+      ? phaseColors[step.phase].active
+      : isCompleted
+        ? phaseColors[step.phase].completed
+        : phaseColors[step.phase].default
+
     return (
       <button
         key={step.id}
         onClick={() => onTabChange(step.tabValue)}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative",
-          isActive
-            ? "bg-primary text-primary-foreground"
-            : isCompleted
-              ? "text-primary hover:bg-primary/10"
-              : "text-muted-foreground hover:bg-muted",
+          "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative shadow-sm",
+          colorClass,
+          isActive && "ring-2 ring-offset-1",
+          step.phase === "creation" ? "ring-purple-400" : "ring-amber-400",
         )}
       >
         <span className="flex-shrink-0">
