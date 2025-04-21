@@ -3,104 +3,172 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { useProjectStore } from "@/lib/stores/project-store"
-import { ChevronDown, ChevronUp, Bug, RefreshCw } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
+import { useProjectStore } from "@/lib/stores/project-store"
+import { v4 as uuidv4 } from "uuid"
+import type { Shot } from "@/lib/types"
 import { useToast } from "@/hooks/use-toast"
 
 export default function ShotListDebug() {
   const [isOpen, setIsOpen] = useState(false)
   const [rawShotList, setRawShotList] = useState("")
-  const { shotList, script } = useProjectStore()
+  const { addShots } = useProjectStore()
   const { toast } = useToast()
 
-  // Function to manually parse the shot list
-  const handleManualParse = async () => {
-    if (!rawShotList.trim()) {
-      toast({
-        title: "No Shot List Text",
-        description: "Please enter the raw shot list text to parse.",
-        variant: "destructive",
-      })
-      return
-    }
-
+  const testParser = () => {
     try {
-      // We'll use the window object to access the parseAIShotList function
-      // This is just for debugging purposes
-      const parsedShots = (window as any).parseAIShotList(rawShotList)
+      // Access the parseAIShotList function from the window object
+      const parseAIShotList = (window as any).parseAIShotList
 
-      console.log("Manually parsed shots:", parsedShots)
+      if (!parseAIShotList) {
+        toast({
+          title: "Parser not available",
+          description: "The shot list parser function is not available on the window object.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const shots = parseAIShotList(rawShotList)
+
       toast({
-        title: "Parsing Complete",
-        description: `Parsed ${parsedShots.length} shots. Check the console for details.`,
+        title: "Parser test results",
+        description: `Successfully parsed ${shots.length} shots.`,
       })
+
+      console.log("Parsed shots:", shots)
     } catch (error) {
-      console.error("Error parsing shot list:", error)
       toast({
-        title: "Parsing Failed",
-        description: error instanceof Error ? error.message : "Failed to parse shot list.",
+        title: "Parser test failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
         variant: "destructive",
       })
+
+      console.error("Parser test failed:", error)
     }
   }
 
-  return (
-    <Card className="mt-6 border-dashed border-yellow-500">
-      <CardHeader className="pb-2">
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" className="w-full flex justify-between">
-              <CardTitle className="text-md flex items-center">
-                <Bug className="h-4 w-4 mr-2" /> Shot List Debug Panel
-              </CardTitle>
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-            </Button>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <CardContent className="pt-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium mb-2">Current Shot List State ({shotList.length} shots)</h3>
-                  <div className="bg-muted p-3 rounded-md overflow-auto max-h-[200px]">
-                    <pre className="text-xs">{JSON.stringify(shotList, null, 2)}</pre>
-                  </div>
-                </div>
+  const importRawShots = () => {
+    try {
+      // Try to parse as JSON first
+      try {
+        const jsonShots = JSON.parse(rawShotList)
 
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Manual Shot List Parser</h3>
-                  <p className="text-xs text-muted-foreground">
-                    Paste the raw shot list text below to test the parser function.
-                  </p>
-                  <Textarea
-                    value={rawShotList}
-                    onChange={(e) => setRawShotList(e.target.value)}
-                    placeholder="Paste raw shot list text here..."
-                    className="min-h-[200px] font-mono text-xs"
-                  />
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        console.log("Current shot list:", shotList)
-                        console.log("Current script:", script)
-                      }}
-                    >
-                      Log State to Console
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={handleManualParse}>
-                      <RefreshCw className="h-3 w-3 mr-1" />
-                      Test Parser
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </CollapsibleContent>
-        </Collapsible>
+        // Check if it's an array
+        if (Array.isArray(jsonShots)) {
+          // Ensure each shot has an ID
+          const shotsWithIds = jsonShots.map((shot: Partial<Shot>) => ({
+            ...shot,
+            id: shot.id || uuidv4(),
+          }))
+
+          addShots(shotsWithIds as Shot[])
+
+          toast({
+            title: "Shots imported",
+            description: `Successfully imported ${shotsWithIds.length} shots from JSON.`,
+          })
+
+          return
+        }
+      } catch (e) {
+        // Not valid JSON, continue with text parsing
+      }
+
+      // Access the parseAIShotList function from the window object
+      const parseAIShotList = (window as any).parseAIShotList
+
+      if (!parseAIShotList) {
+        toast({
+          title: "Parser not available",
+          description: "The shot list parser function is not available on the window object.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      const shots = parseAIShotList(rawShotList)
+
+      if (shots.length === 0) {
+        toast({
+          title: "Import failed",
+          description: "No shots could be parsed from the input.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      addShots(shots)
+
+      toast({
+        title: "Shots imported",
+        description: `Successfully imported ${shots.length} shots.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred.",
+        variant: "destructive",
+      })
+
+      console.error("Import failed:", error)
+    }
+  }
+
+  if (!isOpen) {
+    return (
+      <div className="mt-4">
+        <Button variant="outline" onClick={() => setIsOpen(true)}>
+          Show Shot List Debug Panel
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <Card className="mt-4">
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
+          Shot List Debug Panel
+          <Button variant="outline" size="sm" onClick={() => setIsOpen(false)}>
+            Hide
+          </Button>
+        </CardTitle>
       </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm text-muted-foreground mb-2">
+              Paste raw shot list text here to test the parser or import shots directly:
+            </p>
+            <Textarea
+              value={rawShotList}
+              onChange={(e) => setRawShotList(e.target.value)}
+              rows={10}
+              className="font-mono text-xs"
+              placeholder="Paste raw shot list text here..."
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={testParser}>
+              Test Parser
+            </Button>
+            <Button variant="default" onClick={importRawShots}>
+              Import Shots
+            </Button>
+          </div>
+
+          <div className="text-xs text-muted-foreground">
+            <p>Debug tips:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Open the browser console to see detailed parsing logs</li>
+              <li>The parser function is exposed as window.parseAIShotList</li>
+              <li>You can also paste JSON directly if it matches the Shot interface structure</li>
+            </ul>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   )
 }
