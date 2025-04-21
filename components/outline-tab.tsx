@@ -44,6 +44,7 @@ export default function OutlineTab() {
     analyzeAndSuggestChapters,
     toggleChapterSuggestionSelection,
     applySelectedChapterSuggestions,
+    setOutlineDirections,
   } = useScriptCreationStore()
 
   const [newChapterTitle, setNewChapterTitle] = useState("")
@@ -60,7 +61,7 @@ export default function OutlineTab() {
 
   // New state for the outline wizard
   const [outlineWizardStep, setOutlineWizardStep] = useState(1)
-  const [outlineDirections, setOutlineDirections] = useState({
+  const [outlineDirectionsLocal, setOutlineDirectionsLocal] = useState({
     storyStructure: "three-act", // three-act, hero-journey, five-act
     perspective: "third-person", // first-person, third-person, multiple-pov
     tone: "neutral", // light, dark, neutral
@@ -215,13 +216,13 @@ export default function OutlineTab() {
     })
   }
 
-  // Update the handleOutlineWizardNext function to use the store's outlineDirections
+  // Update the handleOutlineWizardNext function to use the store's setOutlineDirections
   const handleOutlineWizardNext = () => {
     if (outlineWizardStep < 4) {
       setOutlineWizardStep(outlineWizardStep + 1)
     } else {
       // On the final step, update the store's outlineDirections and generate the outline
-      useScriptCreationStore.getState().setOutlineDirections(outlineDirections)
+      setOutlineDirections(outlineDirectionsLocal)
       setIsOutlineWizardOpen(false)
       handleGenerateOutline()
     }
@@ -308,8 +309,10 @@ export default function OutlineTab() {
                       </p>
 
                       <RadioGroup
-                        value={outlineDirections.storyStructure}
-                        onValueChange={(value) => setOutlineDirections({ ...outlineDirections, storyStructure: value })}
+                        value={outlineDirectionsLocal.storyStructure}
+                        onValueChange={(value) =>
+                          setOutlineDirectionsLocal({ ...outlineDirectionsLocal, storyStructure: value })
+                        }
                         className="space-y-3"
                       >
                         <div className="flex items-start space-x-2">
@@ -355,8 +358,10 @@ export default function OutlineTab() {
                       <p className="text-sm text-muted-foreground mb-4">Choose the point of view for your story.</p>
 
                       <RadioGroup
-                        value={outlineDirections.perspective}
-                        onValueChange={(value) => setOutlineDirections({ ...outlineDirections, perspective: value })}
+                        value={outlineDirectionsLocal.perspective}
+                        onValueChange={(value) =>
+                          setOutlineDirectionsLocal({ ...outlineDirectionsLocal, perspective: value })
+                        }
                         className="space-y-3"
                       >
                         <div className="flex items-start space-x-2">
@@ -402,8 +407,8 @@ export default function OutlineTab() {
                       <p className="text-sm text-muted-foreground mb-4">Choose the overall tone for your story.</p>
 
                       <RadioGroup
-                        value={outlineDirections.tone}
-                        onValueChange={(value) => setOutlineDirections({ ...outlineDirections, tone: value })}
+                        value={outlineDirectionsLocal.tone}
+                        onValueChange={(value) => setOutlineDirectionsLocal({ ...outlineDirectionsLocal, tone: value })}
                         className="space-y-3"
                       >
                         <div className="flex items-start space-x-2">
@@ -459,8 +464,10 @@ export default function OutlineTab() {
                           id="custom-prompt"
                           placeholder="Examples: 'Create a compelling news story about climate change activism', 'Craft an engaging narrative about a detective solving a mysterious case', 'Tell a heartwarming story about reconnecting with family'..."
                           className="min-h-[150px]"
-                          value={outlineDirections.customPrompt}
-                          onChange={(e) => setOutlineDirections({ ...outlineDirections, customPrompt: e.target.value })}
+                          value={outlineDirectionsLocal.customPrompt}
+                          onChange={(e) =>
+                            setOutlineDirectionsLocal({ ...outlineDirectionsLocal, customPrompt: e.target.value })
+                          }
                         />
                         <p className="text-xs text-muted-foreground">
                           This prompt will guide the AI in creating your outline. Be as specific or open-ended as you
@@ -482,25 +489,25 @@ export default function OutlineTab() {
                           </p>
                           <p>
                             <span className="font-medium">Structure:</span>{" "}
-                            {outlineDirections.storyStructure === "three-act"
+                            {outlineDirectionsLocal.storyStructure === "three-act"
                               ? "Three-Act Structure"
-                              : outlineDirections.storyStructure === "hero-journey"
+                              : outlineDirectionsLocal.storyStructure === "hero-journey"
                                 ? "Hero's Journey"
                                 : "Five-Act Structure"}
                           </p>
                           <p>
                             <span className="font-medium">Perspective:</span>{" "}
-                            {outlineDirections.perspective === "first-person"
+                            {outlineDirectionsLocal.perspective === "first-person"
                               ? "First Person"
-                              : outlineDirections.perspective === "third-person"
+                              : outlineDirectionsLocal.perspective === "third-person"
                                 ? "Third Person"
                                 : "Multiple Perspectives"}
                           </p>
                           <p>
                             <span className="font-medium">Tone:</span>{" "}
-                            {outlineDirections.tone === "light"
+                            {outlineDirectionsLocal.tone === "light"
                               ? "Light/Uplifting"
-                              : outlineDirections.tone === "dark"
+                              : outlineDirectionsLocal.tone === "dark"
                                 ? "Dark/Serious"
                                 : "Neutral/Balanced"}
                           </p>
@@ -508,12 +515,12 @@ export default function OutlineTab() {
                             <span className="font-medium">Transcripts:</span>{" "}
                             {useScriptCreationStore.getState().selectedTranscripts.length} selected
                           </p>
-                          {outlineDirections.customPrompt && (
+                          {outlineDirectionsLocal.customPrompt && (
                             <p>
                               <span className="font-medium">Custom Prompt:</span>{" "}
-                              {outlineDirections.customPrompt.length > 100
-                                ? `${outlineDirections.customPrompt.substring(0, 100)}...`
-                                : outlineDirections.customPrompt}
+                              {outlineDirectionsLocal.customPrompt.length > 100
+                                ? `${outlineDirectionsLocal.customPrompt.substring(0, 100)}...`
+                                : outlineDirectionsLocal.customPrompt}
                             </p>
                           )}
                         </div>

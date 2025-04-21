@@ -65,7 +65,8 @@
     "zustand": "latest",
     "uuid": "latest",
     "@supabase/supabase-js": "latest",
-    "framer-motion": "latest"
+    "framer-motion": "latest",
+    "crypto": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

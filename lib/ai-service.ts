@@ -3,6 +3,7 @@ import { useTemplateStore } from "@/lib/stores/template-store"
 import { useAILogsStore } from "@/lib/stores/ai-logs-store"
 import { useModelStore, type ApplicationPhase } from "@/lib/stores/model-store"
 import type { Shot } from "@/lib/types"
+import crypto from "crypto"
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -38,6 +39,9 @@ export async function generateAIResponse(prompt: string, context: string): Promi
   } else if (prompt.includes("suggest") && prompt.includes("shot")) {
     templateId = "shot-suggestions"
     phase = "shotListGeneration" // Use the same model as shot list generation
+  } else if (prompt.includes("story outline") || prompt.includes("chapters and bullet points")) {
+    templateId = "outline-generation"
+    phase = "outlineGeneration" // Add this phase to your model store if needed
   }
 
   // Get the selected model for this phase
@@ -137,6 +141,23 @@ export async function generateAIResponse(prompt: string, context: string): Promi
       } catch (e) {
         console.error("Failed to parse context as JSON:", e)
       }
+    } else if (templateId === "outline-generation") {
+      // For outline generation, we're passing a JSON object as context
+      try {
+        const contextObj = JSON.parse(context)
+        variables.title = contextObj.title || ""
+        variables.genre = contextObj.genre || ""
+        variables.theme = contextObj.theme || ""
+        variables.storyStructure = contextObj.structure || "three-act"
+        variables.perspective = contextObj.perspective || "third-person"
+        variables.tone = contextObj.tone || "neutral"
+        variables.customPrompt = contextObj.customPrompt || ""
+        variables.additionalNotes = contextObj.additionalNotes || ""
+        variables.transcripts = contextObj.transcripts || ""
+        variables.chapterCount = "7" // Default chapter count
+      } catch (e) {
+        console.error("Failed to parse context as JSON:", e)
+      }
     }
 
     processedPrompt = processTemplate(templateId, variables)
@@ -183,7 +204,7 @@ export async function generateAIResponse(prompt: string, context: string): Promi
       // Use the model ID if specified, otherwise use a default model
       let modelId = selectedModelId
       if (!modelId) {
-        if (phase === "shotListGeneration" || phase === "subjectExtraction") {
+        if (phase === "shotListGeneration" || phase === "subjectExtraction" || phase === "outlineGeneration") {
           modelId = "gpt-4o" // Default to GPT-4o for these tasks if no model is selected
         } else {
           modelId = "gpt-4o" // Default fallback for any task
@@ -304,6 +325,8 @@ export async function generateAIResponse(prompt: string, context: string): Promi
     response = mockVideoTreatmentResponse()
   } else if (prompt.includes("suggest") && prompt.includes("shot")) {
     response = mockShotSuggestionsResponse()
+  } else if (prompt.includes("story outline") || prompt.includes("chapters and bullet points")) {
+    response = mockOutlineGenerationResponse()
   } else {
     response = "AI generated response based on your prompt and context."
   }
@@ -554,6 +577,58 @@ Reason: This would establish the relationship between these two characters and c
 Scene 3, Shot 2: Close-up of the presentation folder being opened
 Shot Size: CU
 Reason: This insert shot would emphasize the importance of the documents and create a moment of anticipation.`
+}
+
+// Add a new mock response for outline generation
+function mockOutlineGenerationResponse(): string {
+  return `# Story Outline: "The Memory Merchant"
+
+## Synopsis
+In a near-future where memories can be bought, sold, and transferred between people, Maya Chen, a skilled memory technician, discovers a corrupted memory file that shouldn't exist. As she investigates, she uncovers a conspiracy that threatens not just her career but her own identity. Set against the backdrop of Neo-Tokyo in 2087, this story explores themes of memory, identity, and the commodification of human experience.
+
+## Chapter 1: The Forgotten Memory
+- Maya discovers an anomalous memory file during a routine procedure
+- Introduction to Neo-Tokyo and the memory technology industry
+- Establish Maya's expertise and her troubled past
+- First hint that something is wrong with the memory system
+
+## Chapter 2: The Client
+- Maya meets a mysterious client seeking to recover lost memories
+- Introduction of Elias Vorn, CEO of MemoryCorp
+- Maya's growing suspicion about corporate practices
+- Discovery of a pattern in corrupted memory files
+
+## Chapter 3: Beneath the Surface
+- Maya begins unauthorized investigation into the corrupted files
+- Flashback to Maya's personal loss that led her to this career
+- Introduction of Maya's ally, a rogue AI system
+- First direct threat from unknown forces warning her to stop
+
+## Chapter 4: The Hidden Truth
+- Maya accesses a restricted memory and sees something she shouldn't
+- Major revelation about how memories are being manipulated
+- Confrontation with Elias reveals partial truth
+- Maya realizes her own memories may have been altered
+
+## Chapter 5: The Escape
+- Maya goes on the run with critical evidence
+- Pursuit through the undercity of Neo-Tokyo
+- Maya connects with underground resistance movement
+- Discovery that the conspiracy goes beyond MemoryCorp to government level
+
+## Chapter 6: The Real Memory
+- Maya undergoes dangerous procedure to recover her own altered memories
+- Emotional confrontation with her true past
+- Understanding of why she was targeted
+- Plan formed to expose the conspiracy
+
+## Chapter 7: The Upload
+- Final confrontation at MemoryCorp headquarters
+- Maya's plan to broadcast the truth to everyone
+- Climactic showdown with Elias
+- Bittersweet resolution as the memory system is reformed but at personal cost
+
+Each chapter builds on the themes of memory as identity, the ethics of technology, and the power of truth in a world of manufactured experiences.`
 }
 
 // Add a new function to generate structured shot list
