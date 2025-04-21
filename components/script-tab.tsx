@@ -7,17 +7,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useProjectStore } from "@/lib/stores/project-store"
 import { Loader2, FileText, List } from "lucide-react"
-import { useModelStore } from "@/lib/stores/model-store"
-// Import the loading store at the top of the file
 import { useLoadingStore } from "@/lib/stores/loading-store"
 
-// Replace the existing component with this updated version
 export default function ScriptTab() {
   const { toast } = useToast()
   const { script, setScript, generateShotList } = useProjectStore()
   const { isLoading } = useLoadingStore()
   const [localScript, setLocalScript] = useState(script)
-  const { apiStatus } = useModelStore()
 
   const handleSaveScript = () => {
     setScript(localScript)
@@ -78,7 +74,7 @@ export default function ScriptTab() {
           <Button
             onClick={handleGenerateShotList}
             className="w-full sm:w-auto"
-            disabled={isLoading("generateShotList") || apiStatus === "disconnected" || apiStatus === "unknown"}
+            disabled={isLoading("generateShotList")}
           >
             {isLoading("generateShotList") ? (
               <>
@@ -93,12 +89,6 @@ export default function ScriptTab() {
             )}
           </Button>
         </div>
-
-        {apiStatus === "disconnected" && (
-          <div className="text-sm text-red-500 mt-2">
-            API is disconnected. Please check your API key in the Developer tab.
-          </div>
-        )}
       </CardFooter>
     </Card>
   )

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
@@ -25,6 +25,7 @@ import { AlertCircle, ArrowLeft, FileText, Loader2 } from "lucide-react"
 // Import the loading store at the top of the file
 import { useLoadingStore } from "@/lib/stores/loading-store"
 import ShotSuggestions from "@/components/shot-suggestions"
+import DebugPanel from "@/components/debug-panel"
 
 // Replace the existing component with this updated version
 export default function ShotListTab() {
@@ -33,6 +34,13 @@ export default function ShotListTab() {
   const { isLoading } = useLoadingStore()
   const [selectedShot, setSelectedShot] = useState<Shot | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [localShotList, setLocalShotList] = useState<Shot[]>([])
+
+  // Update local shot list when the store changes
+  useEffect(() => {
+    setLocalShotList(shotList)
+    console.log("Shot list updated:", shotList)
+  }, [shotList])
 
   const handleRowClick = (shot: Shot) => {
     setSelectedShot(shot)
@@ -51,7 +59,7 @@ export default function ShotListTab() {
   }
 
   const handleGenerateBulkNotes = async () => {
-    if (shotList.length === 0) {
+    if (localShotList.length === 0) {
       toast({
         title: "No Shots Available",
         description: "Please generate a shot list first.",
@@ -85,8 +93,15 @@ export default function ShotListTab() {
           </div>
         </CardHeader>
         <CardContent>
-          {shotList.length > 0 ? (
-            <DataTable columns={ShotListColumns} data={shotList} onRowClick={handleRowClick} />
+          {localShotList.length > 0 ? (
+            <>
+              <div className="mb-4 p-2 bg-muted/20 rounded-md">
+                <p className="text-sm text-muted-foreground">
+                  Showing {localShotList.length} shots. Click on any row to edit details.
+                </p>
+              </div>
+              <DataTable columns={ShotListColumns} data={localShotList} onRowClick={handleRowClick} />
+            </>
           ) : (
             <div className="text-center py-12 border rounded-md bg-muted/10">
               <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -223,7 +238,7 @@ export default function ShotListTab() {
           )}
         </CardContent>
 
-        {shotList.length > 0 && (
+        {localShotList.length > 0 && (
           <CardFooter className="flex flex-col space-y-4">
             <div className="w-full p-4 border rounded-md bg-muted/30">
               <h3 className="text-lg font-medium mb-2 flex items-center">
@@ -235,7 +250,7 @@ export default function ShotListTab() {
 
               <Button
                 onClick={handleGenerateBulkNotes}
-                disabled={isLoading("generateDirectorsNotes") || shotList.length === 0}
+                disabled={isLoading("generateDirectorsNotes") || localShotList.length === 0}
                 className="w-full md:w-auto"
                 size="lg"
               >
@@ -253,8 +268,11 @@ export default function ShotListTab() {
         )}
       </Card>
 
+      {/* Add the Debug Panel */}
+      <DebugPanel />
+
       {/* Add the Shot Suggestions component if we have a shot list */}
-      {shotList.length > 0 && <ShotSuggestions />}
+      {localShotList.length > 0 && <ShotSuggestions />}
     </>
   )
 }

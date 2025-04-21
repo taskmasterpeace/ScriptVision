@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label"
 import type { Shot } from "@/lib/types"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Copy } from "lucide-react"
+import { Copy, Loader2 } from "lucide-react"
 
 // Import the loading store at the top of the file
 import { useLoadingStore } from "@/lib/stores/loading-store"
@@ -41,60 +41,12 @@ export default function PromptsTab() {
     name: "",
     lensType: "",
   })
-  // Replace the isGenerating state with the loading store
-  // Find this line:
-  // const [isGenerating, setIsGenerating] = useState(false)
 
-  // Replace with:
+  // Use the loading store
   const { isLoading } = useLoadingStore()
 
   const [currentPromptIndex, setCurrentPromptIndex] = useState(0)
 
-  // Update the handleGeneratePrompt method to use the loading store
-  // Find this code:
-  // const handleGeneratePrompt = async () => {
-  //   if (!selectedShot) {
-  //     toast({
-  //       title: "Shot Required",
-  //       description: "Please select a shot to generate a prompt.",
-  //       variant: "destructive",
-  //     })
-  //     return
-  //   }
-
-  //   if (!selectedStyle) {
-  //     toast({
-  //       title: "Style Required",
-  //       description: "Please select a visual style from the Styles tab.",
-  //       variant: "destructive",
-  //     })
-  //     return
-  //   }
-
-  //   setIsGenerating(true)
-  //   try {
-  //     const activeSubjects = subjects.filter((subject) => subject.active && selectedSubjects.includes(subject.id))
-
-  //     await generatePrompt(selectedShot, activeSubjects, cameraSettings)
-
-  //     setCurrentPromptIndex(generatedPrompts.length)
-
-  //     toast({
-  //       title: "Prompt Generated",
-  //       description: "Visual prompt has been successfully generated.",
-  //     })
-  //   } catch (error) {
-  //     toast({
-  //       title: "Generation Failed",
-  //       description: error instanceof Error ? error.message : "Failed to generate prompt.",
-  //       variant: "destructive",
-  //     })
-  //   } finally {
-  //     setIsGenerating(false)
-  //   }
-  // }
-
-  // Replace with:
   const handleGeneratePrompt = async () => {
     if (!selectedShot) {
       toast({
@@ -394,17 +346,17 @@ export default function PromptsTab() {
 
             <Button
               onClick={handleGeneratePrompt}
-              // Update the button to use the loading store
-              // Find this line:
-              // disabled={isGenerating || !selectedShot || !selectedStyle}
-
-              // Replace with:
               disabled={isLoading("generatePrompt") || !selectedShot || !selectedStyle}
               className="w-full"
             >
-              // Find this line: // {isGenerating ? "Generating..." : "Generate Prompt"}
-              // Replace with:
-              {isLoading("generatePrompt") ? "Generating..." : "Generate Prompt"}
+              {isLoading("generatePrompt") ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                "Generate Prompt"
+              )}
             </Button>
           </div>
 
