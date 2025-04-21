@@ -1,9 +1,17 @@
+"use client"
+
 import type { ColumnDef } from "@tanstack/react-table"
 import { Badge } from "@/components/ui/badge"
 import type { Subject } from "@/lib/types"
-import { CheckCircle2, XCircle } from "lucide-react"
+import { CheckCircle2, Edit, Trash, XCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
-export const SubjectsColumns: ColumnDef<Subject>[] = [
+// Change from an array to a function that returns an array
+export const SubjectsColumns = (
+  updateSubject?: (subject: Subject) => void,
+  deleteSubject?: (id: string) => void,
+  isProposed = false,
+): ColumnDef<Subject>[] => [
   {
     accessorKey: "name",
     header: "Name",
@@ -52,4 +60,43 @@ export const SubjectsColumns: ColumnDef<Subject>[] = [
       return active ? <CheckCircle2 className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />
     },
   },
+  // Add actions column if update and delete functions are provided
+  ...(updateSubject && deleteSubject
+    ? [
+        {
+          id: "actions",
+          cell: ({ row }) => {
+            const subject = row.original
+            return (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    // Create a dialog to edit the subject
+                    const updatedSubject = { ...subject }
+                    updateSubject(updatedSubject)
+                  }}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (confirm(`Are you sure you want to delete ${subject.name}?`)) {
+                      deleteSubject(subject.id)
+                    }
+                  }}
+                >
+                  <Trash className="h-4 w-4" />
+                </Button>
+              </div>
+            )
+          },
+        },
+      ]
+    : []),
 ]

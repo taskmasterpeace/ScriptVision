@@ -21,6 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Switch } from "@/components/ui/switch"
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, Plus, RefreshCw } from "lucide-react"
 import { useLoadingStore } from "@/lib/stores/loading-store"
 import type { Subject } from "@/lib/types"
@@ -40,12 +41,15 @@ export default function SubjectsTab() {
   } = useProjectStore()
   const { isLoading } = useLoadingStore()
 
+  const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [newSubject, setNewSubject] = useState<Omit<Subject, "id">>({
+  const [newSubject, setNewSubject] = useState<Partial<Subject>>({
     name: "",
     category: "People",
     description: "",
     alias: "",
+    loraTrigger: "",
     active: true,
   })
   const [showSuccess, setShowSuccess] = useState(false)
@@ -88,7 +92,7 @@ export default function SubjectsTab() {
   }
 
   const handleAddSubject = () => {
-    if (!newSubject.name.trim()) {
+    if (!newSubject.name?.trim()) {
       toast({
         title: "Name Required",
         description: "Please enter a name for the subject.",
@@ -97,19 +101,44 @@ export default function SubjectsTab() {
       return
     }
 
-    addSubject(newSubject)
+    addSubject(newSubject as Subject)
     setIsAddDialogOpen(false)
     setNewSubject({
       name: "",
       category: "People",
       description: "",
       alias: "",
+      loraTrigger: "",
       active: true,
     })
 
     toast({
       title: "Subject Added",
       description: `${newSubject.name} has been added to your subjects.`,
+    })
+  }
+
+  const handleUpdateSubject = (subject: Subject) => {
+    setSelectedSubject(subject)
+    setIsEditDialogOpen(true)
+  }
+
+  const handleSaveSubject = () => {
+    if (selectedSubject) {
+      updateSubject(selectedSubject)
+      setIsEditDialogOpen(false)
+      toast({
+        title: "Subject Updated",
+        description: `${selectedSubject.name} has been updated.`,
+      })
+    }
+  }
+
+  const handleDeleteSubject = (id: string) => {
+    deleteSubject(id)
+    toast({
+      title: "Subject Deleted",
+      description: "The subject has been deleted.",
     })
   }
 
@@ -156,7 +185,7 @@ export default function SubjectsTab() {
             </CardHeader>
             <CardContent>
               {subjects.length > 0 ? (
-                <DataTable columns={SubjectsColumns(updateSubject, deleteSubject)} data={subjects} />
+                <DataTable columns={SubjectsColumns(handleUpdateSubject, handleDeleteSubject)} data={subjects} />
               ) : (
                 <div className="text-center py-12 border rounded-md bg-muted/10">
                   <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -244,7 +273,10 @@ export default function SubjectsTab() {
               )}
 
               {proposedSubjects.length > 0 ? (
-                <DataTable columns={SubjectsColumns(updateSubject, deleteSubject, true)} data={proposedSubjects} />
+                <DataTable
+                  columns={SubjectsColumns(handleUpdateSubject, handleDeleteSubject, true)}
+                  data={proposedSubjects}
+                />
               ) : (
                 <div className="text-center py-12 border rounded-md bg-muted/10">
                   <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -339,6 +371,19 @@ export default function SubjectsTab() {
               />
             </div>
 
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="loraTrigger" className="text-right">
+                LORA Trigger
+              </Label>
+              <Input
+                id="loraTrigger"
+                value={newSubject.loraTrigger}
+                onChange={(e) => setNewSubject({ ...newSubject, loraTrigger: e.target.value })}
+                className="col-span-3"
+                placeholder="e.g., <lora:character_name:1.0>"
+              />
+            </div>
+
             <div className="grid grid-cols-4 items-start gap-4">
               <Label htmlFor="description" className="text-right pt-2">
                 Description
@@ -351,6 +396,22 @@ export default function SubjectsTab() {
                 rows={3}
               />
             </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="active" className="text-right">
+                Active
+              </Label>
+              <div className="col-span-3 flex items-center">
+                <Switch
+                  id="active"
+                  checked={newSubject.active}
+                  onCheckedChange={(checked) => setNewSubject({ ...newSubject, active: checked })}
+                />
+                <Label htmlFor="active" className="ml-2">
+                  {newSubject.active ? "Yes" : "No"}
+                </Label>
+              </div>
+            </div>
           </div>
 
           <DialogFooter>
@@ -361,6 +422,114 @@ export default function SubjectsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Edit Subject Dialog */}
+      {selectedSubject && (
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Subject</DialogTitle>
+              <DialogDescription>Edit details for subject "{selectedSubject.name}"</DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-name" className="text-right">
+                  Name
+                </Label>
+                <Input
+                  id="edit-name"
+                  value={selectedSubject.name}
+                  onChange={(e) => setSelectedSubject({ ...selectedSubject, name: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-category" className="text-right">
+                  Category
+                </Label>
+                <Select
+                  value={selectedSubject.category}
+                  onValueChange={(value) =>
+                    setSelectedSubject({ ...selectedSubject, category: value as "People" | "Places" | "Props" })
+                  }
+                >
+                  <SelectTrigger id="edit-category" className="col-span-3">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="People">People (Characters)</SelectItem>
+                    <SelectItem value="Places">Places (Locations)</SelectItem>
+                    <SelectItem value="Props">Props (Objects)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-alias" className="text-right">
+                  Alias
+                </Label>
+                <Input
+                  id="edit-alias"
+                  value={selectedSubject.alias}
+                  onChange={(e) => setSelectedSubject({ ...selectedSubject, alias: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-loraTrigger" className="text-right">
+                  LORA Trigger
+                </Label>
+                <Input
+                  id="edit-loraTrigger"
+                  value={selectedSubject.loraTrigger || ""}
+                  onChange={(e) => setSelectedSubject({ ...selectedSubject, loraTrigger: e.target.value })}
+                  className="col-span-3"
+                  placeholder="e.g., <lora:character_name:1.0>"
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="edit-description" className="text-right pt-2">
+                  Description
+                </Label>
+                <Textarea
+                  id="edit-description"
+                  value={selectedSubject.description}
+                  onChange={(e) => setSelectedSubject({ ...selectedSubject, description: e.target.value })}
+                  className="col-span-3"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="edit-active" className="text-right">
+                  Active
+                </Label>
+                <div className="col-span-3 flex items-center">
+                  <Switch
+                    id="edit-active"
+                    checked={selectedSubject.active}
+                    onCheckedChange={(checked) => setSelectedSubject({ ...selectedSubject, active: checked })}
+                  />
+                  <Label htmlFor="edit-active" className="ml-2">
+                    {selectedSubject.active ? "Yes" : "No"}
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSaveSubject}>Save Changes</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

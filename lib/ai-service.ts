@@ -2,7 +2,6 @@
 import { useTemplateStore } from "@/lib/stores/template-store"
 import { useAILogsStore } from "@/lib/stores/ai-logs-store"
 import { useModelStore, type ApplicationPhase } from "@/lib/stores/model-store"
-import type { Shot } from "@/lib/types"
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -631,35 +630,59 @@ Each chapter builds on the themes of memory as identity, the ethics of technolog
 }
 
 // Add a new function to generate structured shot list
-export async function generateStructuredShotList(script: string): Promise<Shot[]> {
-  const aiResponse = await generateAIResponse("Generate a shot list from this script", script)
-  console.log("Raw AI response for shot list:", aiResponse)
-
+export async function generateStructuredShotList(script: string): Promise<any> {
   try {
-    // Try to parse the response as JSON
-    const parsedResponse = JSON.parse(aiResponse)
-    console.log("Parsed JSON response:", parsedResponse)
+    const response = await fetch("/api/generate-shot-list", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ script }),
+    })
 
-    // Check if the response has the expected structure
-    if (parsedResponse && Array.isArray(parsedResponse.shotList)) {
-      // Add IDs to each shot
-      const shots = parsedResponse.shotList.map((shot: Omit<Shot, "id">) => ({
-        ...shot,
-        id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15),
-      }))
-
-      console.log("Processed shots with IDs:", shots)
-      return shots
-    } else {
-      console.error("Unexpected response structure:", parsedResponse)
-      throw new Error("The AI response did not contain a valid shot list structure")
+    if (!response.ok) {
+      throw new Error(`Failed to generate shot list: ${response.statusText}`)
     }
-  } catch (error) {
-    console.error("Failed to parse AI response as JSON:", error)
-    console.error("Raw response:", aiResponse)
 
-    // Fall back to the regex parser as a last resort
-    const { parseAIShotList } = await import("@/lib/stores/project-store")
-    return parseAIShotList(aiResponse)
+    const data = await response.json()
+
+    // Check if the response contains a shotList property
+    if (data.shotList) {
+      return data.shotList
+    }
+
+    // If not, try to parse the content as JSON
+    try {
+      // The response might be a string containing JSON
+      if (typeof data.content === "string") {
+        const parsedContent = JSON.parse(data.content)
+        if (parsedContent.shotList) {
+          return parsedContent.shotList
+        }
+        // If there's no shotList property but it's an array, assume it's the shot list
+        if (Array.isArray(parsedContent)) {
+          return parsedContent
+        }
+      }
+
+      // If data.content is already an object with shotList
+      if (data.content && data.content.shotList) {
+        return data.content.shotList
+      }
+
+      // If data.content is already an array
+      if (Array.isArray(data.content)) {
+        return data.content
+      }
+    } catch (error) {
+      console.error("Error parsing shot list:", error)
+    }
+
+    // If we couldn't extract the shot list, return an empty array
+    console.warn("Could not extract shot list from response, returning empty array")
+    return []
+  } catch (error) {
+    console.error("Error generating shot list:", error)
+    throw error
   }
 }
