@@ -994,6 +994,17 @@ export const useProjectStore = create<ProjectState>()(
         useLoadingStore.getState().setLoading("generatePrompt", true)
 
         try {
+          // Filter out empty camera settings
+          const filteredCameraSettings = Object.entries(cameraSettings).reduce(
+            (acc, [key, value]) => {
+              if (value) {
+                acc[key] = value
+              }
+              return acc
+            },
+            {} as Record<string, string>,
+          )
+
           // In a real implementation, this would call an AI service
           const promptContext = {
             shot,
@@ -1001,7 +1012,7 @@ export const useProjectStore = create<ProjectState>()(
             style: selectedStyle,
             directorStyle: selectedDirectorStyle,
             script,
-            cameraSettings,
+            cameraSettings: filteredCameraSettings,
           }
 
           // Generate the prompt using AI
@@ -1016,7 +1027,7 @@ export const useProjectStore = create<ProjectState>()(
             shotId: shot.id,
             concise: `${selectedStyle.prefix} Medium shot of ${shot.people} in ${shot.location}. ${selectedStyle.suffix}`,
             normal: `${selectedStyle.prefix} Medium shot of ${shot.people} ${shot.action} in ${shot.location}. Camera follows the movement. ${selectedStyle.suffix}`,
-            detailed: `${selectedStyle.prefix} Medium shot of ${shot.people} ${shot.action} in ${shot.location}. ${shot.description} Camera follows the movement with a slight handheld feel. ${cameraSettings.depthOfField} depth of field. ${selectedStyle.suffix}`,
+            detailed: `${selectedStyle.prefix} Medium shot of ${shot.people} ${shot.action} in ${shot.location}. ${shot.description} Camera follows the movement with a slight handheld feel. ${filteredCameraSettings.depthOfField ? filteredCameraSettings.depthOfField + " depth of field." : ""} ${selectedStyle.suffix}`,
             timestamp: new Date().toISOString(),
           }
 
