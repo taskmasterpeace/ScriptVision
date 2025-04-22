@@ -64,8 +64,9 @@
     "@tanstack/react-table": "latest",
     "zustand": "latest",
     "uuid": "latest",
+    "@supabase/supabase-js": "latest",
     "framer-motion": "latest",
-    "@supabase/supabase-js": "latest"
+    "papaparse": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

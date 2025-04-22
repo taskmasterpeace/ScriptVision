@@ -11,6 +11,7 @@ import type { Shot, Subject } from "@/lib/types"
 import { AlertCircle, Copy, Download, Loader2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Checkbox } from "@/components/ui/checkbox"
+import BulkPromptAnalysis from "./bulk-prompt-analysis"
 
 // Import the loading store at the top of the file
 import { useLoadingStore } from "@/lib/stores/loading-store"
@@ -348,6 +349,7 @@ export default function PromptsTab() {
             <TabsTrigger value="generated-prompts">
               Generated Prompts {generatedPrompts.length > 0 && `(${generatedPrompts.length})`}
             </TabsTrigger>
+            <TabsTrigger value="prompt-analysis">Prompt Analysis</TabsTrigger>
           </TabsList>
 
           <TabsContent value="shot-selection">
@@ -1075,6 +1077,10 @@ export default function PromptsTab() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="prompt-analysis">
+            <BulkPromptAnalysis />
           </TabsContent>
         </Tabs>
 

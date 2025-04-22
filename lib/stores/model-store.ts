@@ -24,10 +24,12 @@ export type ApplicationPhase =
 
 interface ModelState {
   apiKey: string
+  replicateApiToken: string
   useMockData: boolean
   availableModels: AIModel[]
   phaseModelMapping: Record<ApplicationPhase, string>
   setApiKey: (key: string) => void
+  setReplicateApiToken: (token: string) => void
   setUseMockData: (useMock: boolean) => void
   setModelForPhase: (phase: ApplicationPhase, modelId: string) => void
   getModelForPhase: (phase: ApplicationPhase) => string
@@ -82,6 +84,7 @@ export const useModelStore = create<ModelState>()(
   persist(
     (set, get) => ({
       apiKey: "",
+      replicateApiToken: "",
       useMockData: true, // Default to using mock data
       availableModels: [...defaultModels],
       phaseModelMapping: { ...defaultPhaseModelMapping },
@@ -92,6 +95,10 @@ export const useModelStore = create<ModelState>()(
         if (key) {
           set({ useMockData: false })
         }
+      },
+
+      setReplicateApiToken: (token: string) => {
+        set({ replicateApiToken: token })
       },
 
       setUseMockData: (useMock: boolean) => {

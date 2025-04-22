@@ -7,6 +7,7 @@ import ShotListTab from "@/components/shot-list-tab"
 import SubjectsTab from "@/components/subjects-tab"
 import StylesTab from "@/components/styles-tab"
 import PromptsTab from "@/components/prompts-tab"
+import ImageGenerationTab from "@/components/image-generation-tab"
 import MusicLabTab from "@/components/music-lab-tab"
 import DeveloperTab from "@/components/developer-tab"
 import ProjectManager from "@/components/project-manager"
@@ -58,7 +59,7 @@ export default function Page() {
       )}
 
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid grid-cols-12 w-full">
+        <TabsList className="flex flex-wrap w-full">
           <TabsTrigger id="story-theme-tab-trigger" value="story-theme">
             Story Theme
           </TabsTrigger>
@@ -88,6 +89,9 @@ export default function Page() {
           </TabsTrigger>
           <TabsTrigger id="prompts-tab-trigger" value="prompts">
             Prompts
+          </TabsTrigger>
+          <TabsTrigger id="images-tab-trigger" value="images">
+            Images
           </TabsTrigger>
           <TabsTrigger id="musiclab-tab-trigger" value="musiclab">
             Music Lab
@@ -130,6 +134,9 @@ export default function Page() {
         </TabsContent>
         <TabsContent value="prompts">
           <PromptsTab />
+        </TabsContent>
+        <TabsContent value="images">
+          <ImageGenerationTab />
         </TabsContent>
         <TabsContent value="musiclab">
           <MusicLabTab />

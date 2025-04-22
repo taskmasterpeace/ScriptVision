@@ -15,15 +15,18 @@ export default function ModelsTab() {
   const { toast } = useToast()
   const {
     apiKey,
+    replicateApiToken,
     useMockData,
     availableModels,
     phaseModelMapping,
     setApiKey,
+    setReplicateApiToken,
     setUseMockData,
     setModelForPhase,
     resetToDefaults,
   } = useModelStore()
   const [apiKeyInput, setApiKeyInput] = useState(apiKey)
+  const [replicateApiTokenInput, setReplicateApiTokenInput] = useState(replicateApiToken)
   const [activeTab, setActiveTab] = useState<string>("models")
 
   const handleSaveApiKey = () => {
@@ -31,6 +34,14 @@ export default function ModelsTab() {
     toast({
       title: "API Key Saved",
       description: "Your OpenAI API key has been saved.",
+    })
+  }
+
+  const handleSaveReplicateApiToken = () => {
+    setReplicateApiToken(replicateApiTokenInput)
+    toast({
+      title: "Replicate API Token Saved",
+      description: "Your Replicate API token has been saved.",
     })
   }
 
@@ -81,9 +92,10 @@ export default function ModelsTab() {
 
   return (
     <Tabs defaultValue="models" value={activeTab} onValueChange={setActiveTab} className="w-full">
-      <TabsList className="grid grid-cols-3 mb-4">
+      <TabsList className="grid grid-cols-4 mb-4">
         <TabsTrigger value="models">Models</TabsTrigger>
-        <TabsTrigger value="api">API Settings</TabsTrigger>
+        <TabsTrigger value="openai">OpenAI API</TabsTrigger>
+        <TabsTrigger value="replicate">Replicate API</TabsTrigger>
         <TabsTrigger value="advanced">Advanced</TabsTrigger>
       </TabsList>
 
@@ -133,7 +145,7 @@ export default function ModelsTab() {
         </div>
       </TabsContent>
 
-      <TabsContent value="api" className="space-y-6">
+      <TabsContent value="openai" className="space-y-6">
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
@@ -172,6 +184,62 @@ export default function ModelsTab() {
                   <AlertTriangle className="h-5 w-5 flex-shrink-0" />
                   <p className="text-sm">
                     No API key provided. Please enter your OpenAI API key or enable mock data mode.
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="replicate" className="space-y-6">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="replicate-api-token">Replicate API Token</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="replicate-api-token"
+                    type="password"
+                    placeholder="r8_..."
+                    value={replicateApiTokenInput}
+                    onChange={(e) => setReplicateApiTokenInput(e.target.value)}
+                  />
+                  <Button onClick={handleSaveReplicateApiToken} disabled={!replicateApiTokenInput}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Your Replicate API token is stored locally in your browser and is never sent to our servers.
+                </p>
+              </div>
+
+              <div className="mt-4 p-4 bg-blue-50 text-blue-800 rounded-md">
+                <h4 className="font-medium mb-2">About Replicate</h4>
+                <p className="text-sm mb-2">
+                  Replicate runs machine learning models in the cloud. We use it to generate images from your prompts.
+                </p>
+                <p className="text-sm">
+                  To get a Replicate API token, sign up at{" "}
+                  <a
+                    href="https://replicate.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline font-medium"
+                  >
+                    replicate.com
+                  </a>{" "}
+                  and create a token in your account settings.
+                </p>
+              </div>
+
+              {!replicateApiToken && (
+                <div className="flex items-center gap-2 mt-4 p-3 bg-amber-50 text-amber-800 rounded-md">
+                  <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                  <p className="text-sm">
+                    No Replicate API token provided. You'll need this to generate images in the Image Generation phase.
                   </p>
                 </div>
               )}

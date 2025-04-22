@@ -17,9 +17,11 @@ import {
   Users,
   Palette,
   Wand2,
+  ImageIcon,
 } from "lucide-react"
 import { useProjectStore } from "@/lib/stores/project-store"
 import { useScriptCreationStore } from "@/lib/stores/script-creation-store"
+import { useImageGenerationStore } from "@/lib/stores/image-generation-store"
 import { Badge } from "@/components/ui/badge"
 
 interface WorkflowStep {
@@ -29,7 +31,7 @@ interface WorkflowStep {
   tabValue: string
   isCompleted: (state: any) => boolean
   icon?: React.ReactNode
-  phase: "creation" | "production"
+  phase: "creation" | "production" | "generation"
 }
 
 export function EnhancedWorkflowNavigation({
@@ -41,6 +43,7 @@ export function EnhancedWorkflowNavigation({
 }) {
   const projectState = useProjectStore()
   const scriptCreationState = useScriptCreationStore()
+  const imageGenerationState = useImageGenerationStore()
 
   // Define the workflow steps including the new script creation steps
   const workflowSteps: WorkflowStep[] = [
@@ -135,6 +138,15 @@ export function EnhancedWorkflowNavigation({
       phase: "production",
     },
     {
+      id: "images",
+      label: "11. Images",
+      description: "Generate images from prompts",
+      tabValue: "images",
+      isCompleted: (state) => imageGenerationState.generatedImages.length > 0,
+      icon: <ImageIcon className="h-4 w-4" />,
+      phase: "generation",
+    },
+    {
       id: "developer",
       label: "Developer",
       description: "Advanced template editing",
@@ -151,24 +163,31 @@ export function EnhancedWorkflowNavigation({
     if (currentStepIndex >= 0) {
       const currentStep = workflowSteps[currentStepIndex]
       if (
-        currentStep.isCompleted(currentStep.id.includes("script-creation") ? scriptCreationState : projectState) &&
+        currentStep.isCompleted(
+          currentStep.phase === "creation"
+            ? scriptCreationState
+            : currentStep.phase === "generation"
+              ? imageGenerationState
+              : projectState,
+        ) &&
         currentStepIndex < workflowSteps.length - 1
       ) {
         // Current step is completed, suggest next step with a visual indicator
         // This is just visual - we don't automatically change tabs
       }
     }
-  }, [activeTab, projectState, scriptCreationState])
+  }, [activeTab, projectState, scriptCreationState, imageGenerationState])
 
   // Group steps into categories for better UI organization
   const scriptCreationSteps = workflowSteps.filter((step) => step.phase === "creation")
   const productionSteps = workflowSteps.filter((step) => step.phase === "production" && step.id !== "developer")
+  const generationSteps = workflowSteps.filter((step) => step.phase === "generation")
   const utilitySteps = workflowSteps.filter((step) => step.id === "developer")
 
   return (
     <div className="mb-6 bg-card border rounded-lg p-4 shadow-md">
       <div className="text-sm text-muted-foreground mb-4">
-        Follow these steps to create your script and visual prompts:
+        Follow these steps to create your script, visual prompts, and generate images:
       </div>
 
       <div className="space-y-6">
@@ -184,7 +203,9 @@ export function EnhancedWorkflowNavigation({
               </Badge>
               <h3 className="text-base font-semibold text-purple-800 dark:text-purple-300">Script Creation</h3>
             </div>
-            <div className="flex flex-wrap gap-2">{scriptCreationSteps.map((step) => renderWorkflowStep(step))}</div>
+            <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
+              {scriptCreationSteps.map((step) => renderWorkflowStep(step))}
+            </div>
           </div>
         </div>
 
@@ -200,19 +221,46 @@ export function EnhancedWorkflowNavigation({
               </Badge>
               <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300">Production</h3>
             </div>
-            <div className="flex flex-wrap gap-2">{productionSteps.map((step) => renderWorkflowStep(step))}</div>
+            <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
+              {productionSteps.map((step) => renderWorkflowStep(step))}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 rounded-lg -m-2 p-2 blur-sm"></div>
+          <div className="relative border-b pb-4 rounded-t-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20 p-3">
+            <div className="flex items-center gap-2 mb-3">
+              <Badge
+                variant="outline"
+                className="bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800/50"
+              >
+                Phase 3
+              </Badge>
+              <h3 className="text-base font-semibold text-emerald-800 dark:text-emerald-300">Image Generation</h3>
+            </div>
+            <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
+              {generationSteps.map((step) => renderWorkflowStep(step))}
+            </div>
           </div>
         </div>
 
         <div>
-          <div className="flex flex-wrap gap-2">{utilitySteps.map((step) => renderWorkflowStep(step))}</div>
+          <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
+            {utilitySteps.map((step) => renderWorkflowStep(step))}
+          </div>
         </div>
       </div>
     </div>
   )
 
   function renderWorkflowStep(step: WorkflowStep) {
-    const state = step.id.includes("script-creation") ? scriptCreationState : projectState
+    const state =
+      step.phase === "creation"
+        ? scriptCreationState
+        : step.phase === "generation"
+          ? imageGenerationState
+          : projectState
     const isActive = activeTab === step.tabValue
     const isCompleted = step.isCompleted(state)
 
@@ -230,6 +278,12 @@ export function EnhancedWorkflowNavigation({
           "text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-800/40",
         default: "text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/20",
       },
+      generation: {
+        active: "bg-emerald-600 text-white hover:bg-emerald-700",
+        completed:
+          "text-emerald-700 bg-emerald-100 hover:bg-emerald-200 dark:text-emerald-300 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/40",
+        default: "text-emerald-600 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-900/20",
+      },
     }
 
     const colorClass = isActive
@@ -237,6 +291,13 @@ export function EnhancedWorkflowNavigation({
       : isCompleted
         ? phaseColors[step.phase].completed
         : phaseColors[step.phase].default
+
+    const ringColor =
+      step.phase === "creation"
+        ? "ring-purple-400"
+        : step.phase === "production"
+          ? "ring-amber-400"
+          : "ring-emerald-400"
 
     return (
       <button
@@ -246,7 +307,7 @@ export function EnhancedWorkflowNavigation({
           "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative shadow-sm",
           colorClass,
           isActive && "ring-2 ring-offset-1",
-          step.phase === "creation" ? "ring-purple-400" : "ring-amber-400",
+          ringColor,
         )}
       >
         <span className="flex-shrink-0">
