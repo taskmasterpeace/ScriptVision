@@ -560,22 +560,42 @@ function mockShotSuggestionsResponse(): string {
 
 Scene 1, Shot 1.5: Close-up of John's determined expression
 Shot Size: CU
+People: John
+Location: Downtown street
+Action: John's face shows determination as he checks his watch
+Description: A tight close-up revealing John's emotional state before entering the building
 Reason: This reaction shot would emphasize John's emotional state and motivation before he enters the building.
 
 Scene 1, Shot 2.5: Insert shot of John's watch showing the time
 Shot Size: ECU
+People: None
+Location: Downtown street
+Action: Camera focuses on John's wrist as he checks the time
+Description: Extreme close-up of watch showing 8:55 AM
 Reason: This would establish the time pressure John is under and explain why he's walking purposefully.
 
 Scene 2, Shot 1: Establishing shot of the office interior
 Shot Size: LS
+People: Office workers
+Location: Corporate office
+Action: Camera pans across the busy office floor
+Description: Wide shot revealing the scale and atmosphere of the corporate environment
 Reason: An establishing shot would help orient the viewer to the new location and show the scale of the office environment.
 
 Scene 2, Shot 3.5: Over-the-shoulder shot of John looking at Sarah
 Shot Size: MS
+People: John, Sarah
+Location: Office meeting room
+Dialogue: "We need to finalize this today."
+Description: Camera positioned behind John's shoulder as he faces Sarah
 Reason: This would establish the relationship between these two characters and create visual interest through shot variety.
 
 Scene 3, Shot 2: Close-up of the presentation folder being opened
 Shot Size: CU
+People: John's hands
+Location: Conference room
+Action: Fingers slowly open the red folder revealing important documents
+Description: Dramatic reveal of the contents of the folder
 Reason: This insert shot would emphasize the importance of the documents and create a moment of anticipation.`
 }
 

@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast"
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react"
 import { useLoadingStore } from "@/lib/stores/loading-store"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import ShotSuggestions from "@/components/shot-suggestions"
 
 export default function ShotListTab() {
   const { toast } = useToast()
@@ -41,26 +42,14 @@ export default function ShotListTab() {
 
     try {
       await generateShotList()
-
-      // Check if shots were actually generated
-      if (shotList.length > 0) {
-        toast({
-          title: "Shot List Generated",
-          description: `${shotList.length} shots have been generated from your script.`,
-        })
-      } else {
-        // This shouldn't happen with our improved error handling, but just in case
-        toast({
-          title: "Generation Issue",
-          description: "The shot list was generated but no shots were created. Please try again or check your script.",
-          variant: "destructive",
-        })
-      }
+      toast({
+        title: "Shot List Generated",
+        description: `${shotList.length} shots have been generated from your script.`,
+      })
     } catch (error) {
-      console.error("Shot list generation error:", error)
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate shot list. Please try again.",
+        description: error instanceof Error ? error.message : "Failed to generate shot list.",
         variant: "destructive",
       })
     }
@@ -94,7 +83,11 @@ export default function ShotListTab() {
         )}
 
         {shotList.length > 0 ? (
-          <DataTable columns={ShotListColumns} data={shotList} />
+          <>
+            <DataTable columns={ShotListColumns} data={shotList} />
+            {/* Shot Suggestions component */}
+            <ShotSuggestions />
+          </>
         ) : (
           <div className="text-center py-12 border rounded-md bg-muted/10">
             <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
