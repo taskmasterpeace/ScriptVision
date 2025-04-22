@@ -41,14 +41,26 @@ export default function ShotListTab() {
 
     try {
       await generateShotList()
-      toast({
-        title: "Shot List Generated",
-        description: `${shotList.length} shots have been generated from your script.`,
-      })
+
+      // Check if shots were actually generated
+      if (shotList.length > 0) {
+        toast({
+          title: "Shot List Generated",
+          description: `${shotList.length} shots have been generated from your script.`,
+        })
+      } else {
+        // This shouldn't happen with our improved error handling, but just in case
+        toast({
+          title: "Generation Issue",
+          description: "The shot list was generated but no shots were created. Please try again or check your script.",
+          variant: "destructive",
+        })
+      }
     } catch (error) {
+      console.error("Shot list generation error:", error)
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate shot list.",
+        description: error instanceof Error ? error.message : "Failed to generate shot list. Please try again.",
         variant: "destructive",
       })
     }

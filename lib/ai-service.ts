@@ -2,6 +2,8 @@
 import { useTemplateStore } from "@/lib/stores/template-store"
 import { useAILogsStore } from "@/lib/stores/ai-logs-store"
 import { useModelStore, type ApplicationPhase } from "@/lib/stores/model-store"
+import type { Shot } from "@/lib/types"
+import { v4 as uuidv4 } from "uuid"
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -629,60 +631,208 @@ In a near-future where memories can be bought, sold, and transferred between peo
 Each chapter builds on the themes of memory as identity, the ethics of technology, and the power of truth in a world of manufactured experiences.`
 }
 
-// Add a new function to generate structured shot list
-export async function generateStructuredShotList(script: string): Promise<any> {
+// Update the generateStructuredShotList function to be more robust
+export async function generateStructuredShotList(script: string): Promise<Shot[]> {
   try {
-    const response = await fetch("/api/generate-shot-list", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ script }),
-    })
+    // Use the existing generateAIResponse function to get the shot list
+    const aiResponse = await generateAIResponse("Generate a shot list from this script", script)
+    console.log("Raw AI response for shot list:", aiResponse)
 
-    if (!response.ok) {
-      throw new Error(`Failed to generate shot list: ${response.statusText}`)
-    }
-
-    const data = await response.json()
-
-    // Check if the response contains a shotList property
-    if (data.shotList) {
-      return data.shotList
-    }
-
-    // If not, try to parse the content as JSON
+    // Try to parse the response as JSON
     try {
-      // The response might be a string containing JSON
-      if (typeof data.content === "string") {
-        const parsedContent = JSON.parse(data.content)
-        if (parsedContent.shotList) {
-          return parsedContent.shotList
-        }
-        // If there's no shotList property but it's an array, assume it's the shot list
-        if (Array.isArray(parsedContent)) {
-          return parsedContent
+      const parsedResponse = JSON.parse(aiResponse)
+      console.log("Parsed JSON response:", parsedResponse)
+
+      // Check if the response has the expected structure
+      if (parsedResponse && Array.isArray(parsedResponse.shotList)) {
+        // Add IDs to each shot
+        return parsedResponse.shotList.map((shot: Omit<Shot, "id">) => ({
+          ...shot,
+          id: uuidv4(),
+        }))
+      } else if (parsedResponse && typeof parsedResponse === "object") {
+        // Try to find any array in the response that might contain shots
+        const possibleShotLists = Object.values(parsedResponse).filter(
+          (value) =>
+            Array.isArray(value) &&
+            value.length > 0 &&
+            typeof value[0] === "object" &&
+            ("scene" in value[0] || "shot" in value[0] || "shotSize" in value[0]),
+        )
+
+        if (possibleShotLists.length > 0) {
+          const shotList = possibleShotLists[0] as any[]
+          return shotList.map((shot: any) => ({
+            id: uuidv4(),
+            scene: shot.scene || "1",
+            shot: shot.shot || "1",
+            shotSize: shot.shotSize || "",
+            description: shot.description || "",
+            people: shot.people || "",
+            action: shot.action || "",
+            dialogue: shot.dialogue || "",
+            location: shot.location || "",
+          }))
         }
       }
 
-      // If data.content is already an object with shotList
-      if (data.content && data.content.shotList) {
-        return data.content.shotList
+      console.error("Unexpected response structure:", parsedResponse)
+      throw new Error("The AI response did not contain a valid shot list structure")
+    } catch (jsonError) {
+      console.error("Failed to parse AI response as JSON:", jsonError)
+
+      // Try to extract JSON from the response if it's embedded in text
+      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
+      if (jsonMatch) {
+        try {
+          const extractedJson = jsonMatch[0]
+          const parsedJson = JSON.parse(extractedJson)
+
+          if (parsedJson && Array.isArray(parsedJson.shotList)) {
+            return parsedJson.shotList.map((shot: Omit<Shot, "id">) => ({
+              ...shot,
+              id: uuidv4(),
+            }))
+          } else if (parsedJson && typeof parsedJson === "object") {
+            // Try to find any array in the response that might contain shots
+            const possibleShotLists = Object.values(parsedJson).filter(
+              (value) =>
+                Array.isArray(value) &&
+                value.length > 0 &&
+                typeof value[0] === "object" &&
+                ("scene" in value[0] || "shot" in value[0] || "shotSize" in value[0]),
+            )
+
+            if (possibleShotLists.length > 0) {
+              const shotList = possibleShotLists[0] as any[]
+              return shotList.map((shot: any) => ({
+                id: uuidv4(),
+                scene: shot.scene || "1",
+                shot: shot.shot || "1",
+                shotSize: shot.shotSize || "",
+                description: shot.description || "",
+                people: shot.people || "",
+                action: shot.action || "",
+                dialogue: shot.dialogue || "",
+                location: shot.location || "",
+              }))
+            }
+          }
+        } catch (jsonError) {
+          console.error("Failed to extract JSON from response:", jsonError)
+        }
       }
 
-      // If data.content is already an array
-      if (Array.isArray(data.content)) {
-        return data.content
+      // Fall back to the regex parser as a last resort
+      console.log("Falling back to regex parser for shot list")
+      const { parseAIShotList } = await import("@/lib/stores/project-store")
+      const shots = parseAIShotList(aiResponse)
+
+      // If the regex parser also fails, try a simpler approach
+      if (shots.length === 0) {
+        console.log("Regex parser failed, trying simple line-by-line parsing")
+        return simpleParseShots(aiResponse)
       }
-    } catch (error) {
-      console.error("Error parsing shot list:", error)
+
+      return shots
     }
-
-    // If we couldn't extract the shot list, return an empty array
-    console.warn("Could not extract shot list from response, returning empty array")
-    return []
   } catch (error) {
     console.error("Error generating shot list:", error)
     throw error
   }
+}
+
+// Add a simple fallback parser that looks for lines with "Scene" and "Shot"
+function simpleParseShots(text: string): Shot[] {
+  const shots: Shot[] = []
+  const lines = text.split("\n")
+  let currentScene = "1"
+  let currentShot = "1"
+  let currentShotData: Partial<Shot> = {}
+
+  for (const line of lines) {
+    const trimmedLine = line.trim()
+    if (!trimmedLine) continue
+
+    // Check for scene markers
+    const sceneMatch = trimmedLine.match(/Scene\s+(\d+)/i)
+    if (sceneMatch) {
+      currentScene = sceneMatch[1]
+      continue
+    }
+
+    // Check for shot markers
+    const shotMatch = trimmedLine.match(/Shot\s+(\d+)/i)
+    if (shotMatch) {
+      // Save previous shot if we have one
+      if (Object.keys(currentShotData).length > 0) {
+        shots.push({
+          id: uuidv4(),
+          scene: currentShotData.scene || currentScene,
+          shot: currentShotData.shot || currentShot,
+          shotSize: currentShotData.shotSize || "",
+          description: currentShotData.description || "",
+          people: currentShotData.people || "",
+          action: currentShotData.action || "",
+          dialogue: currentShotData.dialogue || "",
+          location: currentShotData.location || "",
+        })
+      }
+
+      // Start new shot
+      currentShot = shotMatch[1]
+      currentShotData = { scene: currentScene, shot: currentShot }
+      continue
+    }
+
+    // Check for shot properties
+    if (trimmedLine.match(/Shot\s+Size:/i)) {
+      currentShotData.shotSize = trimmedLine.replace(/Shot\s+Size:\s*/i, "").trim()
+    } else if (trimmedLine.match(/Description:/i)) {
+      currentShotData.description = trimmedLine.replace(/Description:\s*/i, "").trim()
+    } else if (trimmedLine.match(/People:/i)) {
+      currentShotData.people = trimmedLine.replace(/People:\s*/i, "").trim()
+    } else if (trimmedLine.match(/Action:/i)) {
+      currentShotData.action = trimmedLine.replace(/Action:\s*/i, "").trim()
+    } else if (trimmedLine.match(/Dialogue:/i)) {
+      currentShotData.dialogue = trimmedLine.replace(/Dialogue:\s*/i, "").trim()
+    } else if (trimmedLine.match(/Location:/i)) {
+      currentShotData.location = trimmedLine.replace(/Location:\s*/i, "").trim()
+    } else if (!currentShotData.description) {
+      // If we don't have a description yet, use this line
+      currentShotData.description = trimmedLine
+    }
+  }
+
+  // Add the last shot if we have one
+  if (Object.keys(currentShotData).length > 0) {
+    shots.push({
+      id: uuidv4(),
+      scene: currentShotData.scene || currentScene,
+      shot: currentShotData.shot || currentShot,
+      shotSize: currentShotData.shotSize || "",
+      description: currentShotData.description || "",
+      people: currentShotData.people || "",
+      action: currentShotData.action || "",
+      dialogue: currentShotData.dialogue || "",
+      location: currentShotData.location || "",
+    })
+  }
+
+  // If we still have no shots, create at least one default shot
+  if (shots.length === 0) {
+    shots.push({
+      id: uuidv4(),
+      scene: "1",
+      shot: "1",
+      shotSize: "",
+      description: "Default shot created from script",
+      people: "",
+      action: "",
+      dialogue: "",
+      location: "",
+    })
+  }
+
+  return shots
 }

@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useProjectStore } from "@/lib/stores/project-store"
-import { Loader2, FileText, List, CheckCircle2 } from "lucide-react"
+import { Loader2, FileText, List, CheckCircle2, AlertTriangle } from "lucide-react"
 import { useLoadingStore } from "@/lib/stores/loading-store"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
@@ -16,6 +16,8 @@ export default function ScriptTab() {
   const { isLoading } = useLoadingStore()
   const [localScript, setLocalScript] = useState(script)
   const [showSuccess, setShowSuccess] = useState(false)
+  const [showError, setShowError] = useState(false)
+  const [errorMessage, setErrorMessage] = useState("")
 
   // Update local script when the store changes
   useEffect(() => {
@@ -26,6 +28,7 @@ export default function ScriptTab() {
   useEffect(() => {
     if (shotList.length > 0) {
       setShowSuccess(true)
+      setShowError(false)
       // Hide the success message after 5 seconds
       const timer = setTimeout(() => {
         setShowSuccess(false)
@@ -52,6 +55,10 @@ export default function ScriptTab() {
       return
     }
 
+    // Reset error state
+    setShowError(false)
+    setErrorMessage("")
+
     // Save the script first
     setScript(localScript)
 
@@ -67,11 +74,15 @@ export default function ScriptTab() {
         setShowSuccess(false)
       }, 5000)
     } catch (error) {
+      console.error("Shot list generation error:", error)
+      const errorMsg = error instanceof Error ? error.message : "Failed to generate shot list."
       toast({
         title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate shot list.",
+        description: errorMsg,
         variant: "destructive",
       })
+      setShowError(true)
+      setErrorMessage(errorMsg)
     }
   }
 
@@ -95,6 +106,16 @@ export default function ScriptTab() {
             <AlertTitle className="text-green-600">Shot List Generated Successfully</AlertTitle>
             <AlertDescription>
               Your shot list has been generated and is ready to view in the Shot List tab.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {showError && (
+          <Alert className="mt-4 bg-red-50 border-red-200">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertTitle className="text-red-600">Generation Failed</AlertTitle>
+            <AlertDescription>
+              {errorMessage || "There was an error generating the shot list. Please try again."}
             </AlertDescription>
           </Alert>
         )}

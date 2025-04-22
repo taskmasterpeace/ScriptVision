@@ -726,7 +726,7 @@ export const useProjectStore = create<ProjectState>()(
           console.log("Structured shots:", shots)
 
           // If no shots were parsed, throw an error
-          if (shots.length === 0) {
+          if (!shots || shots.length === 0) {
             throw new Error("Failed to generate shot list. Please try again.")
           }
 
