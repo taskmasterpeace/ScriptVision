@@ -29,6 +29,7 @@ import {
   SortDesc,
   List,
   Grid,
+  Info,
 } from "lucide-react"
 
 // Add a new ShotCard component for grid view
@@ -489,6 +490,13 @@ export default function ShotListManager() {
 
   const uniqueShotSizes = [...new Set(shotList.map((shot) => shot.shotSize))].filter(Boolean).sort()
 
+  // Auto-expand all scenes on initial load
+  useEffect(() => {
+    if (groupByScene && sortedScenes.length > 0) {
+      expandAllScenes()
+    }
+  }, [sortedScenes.length]) // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <Card className="mb-6">
       <CardHeader>
@@ -624,11 +632,11 @@ export default function ShotListManager() {
 
                     {groupByScene && (
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={expandAllScenes} className="h-8">
-                          <ChevronDown className="h-3 w-3 mr-1" /> Expand All
+                        <Button variant="secondary" size="sm" onClick={expandAllScenes} className="h-8">
+                          <ChevronDown className="h-3 w-3 mr-1" /> Expand All Scenes
                         </Button>
-                        <Button variant="outline" size="sm" onClick={collapseAllScenes} className="h-8">
-                          <ChevronRight className="h-3 w-3 mr-1" /> Collapse All
+                        <Button variant="secondary" size="sm" onClick={collapseAllScenes} className="h-8">
+                          <ChevronRight className="h-3 w-3 mr-1" /> Collapse All Scenes
                         </Button>
                       </div>
                     )}
@@ -808,6 +816,13 @@ export default function ShotListManager() {
               </TabsContent>
             </Tabs>
 
+            {groupByScene && (
+              <div className="mb-2 text-sm text-muted-foreground flex items-center">
+                <Info className="h-4 w-4 mr-1" />
+                <span>Click on scene headers to expand or collapse individual scenes</span>
+              </div>
+            )}
+
             {/* Shot List */}
             <div className="border rounded-md overflow-hidden">
               {filteredShots.length === 0 ? (
@@ -823,13 +838,13 @@ export default function ShotListManager() {
                       {sortedScenes.map((scene) => (
                         <div key={scene} className="border rounded-md overflow-hidden">
                           <div
-                            className="flex items-center p-3 bg-muted/20 cursor-pointer"
+                            className="flex items-center p-3 bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors"
                             onClick={() => toggleSceneExpansion(scene)}
                           >
                             {expandedScenes.has(scene) ? (
-                              <ChevronDown className="h-4 w-4 mr-2" />
+                              <ChevronDown className="h-4 w-4 mr-2 text-primary" />
                             ) : (
-                              <ChevronRight className="h-4 w-4 mr-2" />
+                              <ChevronRight className="h-4 w-4 mr-2 text-primary" />
                             )}
 
                             <h3 className="font-medium">Scene {scene}</h3>
@@ -913,13 +928,13 @@ export default function ShotListManager() {
                   {sortedScenes.map((scene) => (
                     <div key={scene} className="border-b last:border-b-0">
                       <div
-                        className="flex items-center p-3 bg-muted/20 cursor-pointer"
+                        className="flex items-center p-3 bg-muted/20 cursor-pointer hover:bg-muted/30 transition-colors"
                         onClick={() => toggleSceneExpansion(scene)}
                       >
                         {expandedScenes.has(scene) ? (
-                          <ChevronDown className="h-4 w-4 mr-2" />
+                          <ChevronDown className="h-4 w-4 mr-2 text-primary" />
                         ) : (
-                          <ChevronRight className="h-4 w-4 mr-2" />
+                          <ChevronRight className="h-4 w-4 mr-2 text-primary" />
                         )}
 
                         <h3 className="font-medium">Scene {scene}</h3>
