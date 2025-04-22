@@ -8,9 +8,9 @@ import { useProjectStore } from "@/lib/stores/project-store"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import type { Shot, Subject } from "@/lib/types"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Copy, Loader2, AlertCircle } from "lucide-react"
+import { AlertCircle, Copy, Download, Loader2 } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Checkbox } from "@/components/ui/checkbox"
 
 // Import the loading store at the top of the file
 import { useLoadingStore } from "@/lib/stores/loading-store"
@@ -51,6 +51,14 @@ export default function PromptsTab() {
 
   // Track the number of prompts to detect changes
   const [promptCount, setPromptCount] = useState(generatedPrompts.length)
+
+  // State for selected prompts for export
+  const [selectedPrompts, setSelectedPrompts] = useState<Record<string, boolean>>({})
+  const [expandedPrompts, setExpandedPrompts] = useState<string[]>([])
+  const [bulkGenerationShots, setBulkGenerationShots] = useState<string[]>([])
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false)
+  const [bulkGenerationProgress, setBulkGenerationProgress] = useState(0)
+  const [bulkGenerationTotal, setBulkGenerationTotal] = useState(0)
 
   // Update currentPromptIndex when new prompts are generated
   useEffect(() => {
@@ -165,6 +173,165 @@ export default function PromptsTab() {
       }
     : null
 
+  // Toggle prompt selection for export
+  const togglePromptSelection = (promptId: string) => {
+    setSelectedPrompts((prev) => ({
+      ...prev,
+      [promptId]: !prev[promptId],
+    }))
+  }
+
+  // Toggle expanded state for a prompt
+  const toggleExpandPrompt = (promptId: string) => {
+    setExpandedPrompts((prev) => (prev.includes(promptId) ? prev.filter((id) => id !== promptId) : [...prev, promptId]))
+  }
+
+  // Export selected prompts as CSV
+  const exportSelectedPrompts = () => {
+    const selectedPromptIds = Object.entries(selectedPrompts)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([id]) => id)
+
+    if (selectedPromptIds.length === 0) {
+      toast({
+        title: "No Prompts Selected",
+        description: "Please select at least one prompt to export.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Create CSV content
+    let csvContent = "Shot,Scene,Description,PromptType,Prompt\n"
+
+    selectedPromptIds.forEach((promptId) => {
+      const prompt = generatedPrompts.find((p) => p.id === promptId)
+      if (!prompt) return
+
+      const shot = shotList.find((s) => s.id === prompt.shotId)
+      if (!shot) return
+
+      // Add concise prompt
+      csvContent += `"${shot.shot}","${shot.scene}","${shot.description.replace(/"/g, '""')}","Concise","${prompt.concise.replace(/"/g, '""')}"\n`
+
+      // Add normal prompt
+      csvContent += `"${shot.shot}","${shot.scene}","${shot.description.replace(/"/g, '""')}","Normal","${prompt.normal.replace(/"/g, '""')}"\n`
+
+      // Add detailed prompt
+      csvContent += `"${shot.shot}","${shot.scene}","${shot.description.replace(/"/g, '""')}","Detailed","${prompt.detailed.replace(/"/g, '""')}"\n`
+    })
+
+    // Create and download the CSV file
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", "visual_prompts.csv")
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast({
+      title: "Export Successful",
+      description: `${selectedPromptIds.length} prompts exported as CSV.`,
+    })
+  }
+
+  // Toggle selection of a shot for bulk generation
+  const toggleBulkGenerationShot = (shotId: string) => {
+    setBulkGenerationShots((prev) => (prev.includes(shotId) ? prev.filter((id) => id !== shotId) : [...prev, shotId]))
+  }
+
+  // Select all shots for bulk generation
+  const selectAllShotsForBulkGeneration = () => {
+    setBulkGenerationShots(shotList.map((shot) => shot.id))
+  }
+
+  // Deselect all shots for bulk generation
+  const deselectAllShotsForBulkGeneration = () => {
+    setBulkGenerationShots([])
+  }
+
+  // Generate prompts in bulk for selected shots
+  const handleBulkGeneration = async () => {
+    if (bulkGenerationShots.length === 0) {
+      toast({
+        title: "No Shots Selected",
+        description: "Please select at least one shot for bulk generation.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!selectedStyle) {
+      toast({
+        title: "Style Required",
+        description: "Please select a visual style from the Styles tab.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsBulkGenerating(true)
+    setBulkGenerationProgress(0)
+    setBulkGenerationTotal(bulkGenerationShots.length)
+
+    try {
+      // Filter out "none" values from camera settings
+      const filteredCameraSettings = Object.fromEntries(
+        Object.entries(cameraSettings).filter(([_, value]) => value !== "none"),
+      )
+
+      const activeSubjects = subjects.filter((subject) => subject.active && selectedSubjects.includes(subject.id))
+
+      // Process each shot
+      for (let i = 0; i < bulkGenerationShots.length; i++) {
+        const shotId = bulkGenerationShots[i]
+        const shot = shotList.find((s) => s.id === shotId)
+
+        if (shot) {
+          await generatePrompt(shot, activeSubjects, filteredCameraSettings)
+          setBulkGenerationProgress(i + 1)
+        }
+      }
+
+      // Switch to the generated prompts tab
+      setActiveTab("generated-prompts")
+
+      toast({
+        title: "Bulk Generation Complete",
+        description: `Generated prompts for ${bulkGenerationProgress} shots.`,
+      })
+    } catch (error) {
+      toast({
+        title: "Bulk Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate prompts in bulk.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsBulkGenerating(false)
+    }
+  }
+
+  // Select all prompts for export
+  const selectAllPrompts = () => {
+    const allPrompts = generatedPrompts.reduce(
+      (acc, prompt) => {
+        acc[prompt.id] = true
+        return acc
+      },
+      {} as Record<string, boolean>,
+    )
+
+    setSelectedPrompts(allPrompts)
+  }
+
+  // Deselect all prompts
+  const deselectAllPrompts = () => {
+    setSelectedPrompts({})
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -177,6 +344,7 @@ export default function PromptsTab() {
             <TabsTrigger value="shot-selection">Shot Selection</TabsTrigger>
             <TabsTrigger value="style-selection">Style Selection</TabsTrigger>
             <TabsTrigger value="camera-settings">Camera Settings (Optional)</TabsTrigger>
+            <TabsTrigger value="bulk-generation">Bulk Generation</TabsTrigger>
             <TabsTrigger value="generated-prompts">
               Generated Prompts {generatedPrompts.length > 0 && `(${generatedPrompts.length})`}
             </TabsTrigger>
@@ -540,104 +708,296 @@ export default function PromptsTab() {
             </div>
           </TabsContent>
 
+          <TabsContent value="bulk-generation">
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Bulk Prompt Generation</h3>
+                  <span className="text-sm text-muted-foreground">Generate prompts for multiple shots at once</span>
+                </div>
+
+                <div className="p-4 border rounded-md bg-muted/30 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-medium">Select Shots for Bulk Generation</h4>
+                    <div className="space-x-2">
+                      <Button variant="outline" size="sm" onClick={selectAllShotsForBulkGeneration}>
+                        Select All
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={deselectAllShotsForBulkGeneration}>
+                        Deselect All
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="h-64 overflow-y-auto border rounded-md p-2">
+                    {shotList.length > 0 ? (
+                      shotList.map((shot) => (
+                        <div key={shot.id} className="flex items-center space-x-2 py-1 border-b last:border-b-0">
+                          <Checkbox
+                            id={`bulk-shot-${shot.id}`}
+                            checked={bulkGenerationShots.includes(shot.id)}
+                            onCheckedChange={() => toggleBulkGenerationShot(shot.id)}
+                          />
+                          <label htmlFor={`bulk-shot-${shot.id}`} className="text-sm flex-1">
+                            Scene {shot.scene}, Shot {shot.shot} - {shot.description.substring(0, 50)}
+                            {shot.description.length > 50 ? "..." : ""}
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-center py-4 text-muted-foreground">
+                        No shots available. Create shots in the Shot List tab.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-sm font-medium">
+                        {bulkGenerationShots.length} of {shotList.length} shots selected
+                      </span>
+                    </div>
+                    <Button
+                      onClick={handleBulkGeneration}
+                      disabled={
+                        isBulkGenerating ||
+                        bulkGenerationShots.length === 0 ||
+                        !selectedStyle ||
+                        isLoading("generatePrompt")
+                      }
+                    >
+                      {isBulkGenerating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Generating {bulkGenerationProgress} of {bulkGenerationTotal}...
+                        </>
+                      ) : (
+                        "Generate Prompts for Selected Shots"
+                      )}
+                    </Button>
+                  </div>
+
+                  {isBulkGenerating && (
+                    <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full"
+                        style={{
+                          width: `${(bulkGenerationProgress / bulkGenerationTotal) * 100}%`,
+                        }}
+                      ></div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4 border rounded-md bg-muted/30 space-y-4">
+                  <h4 className="font-medium">Style and Settings for Bulk Generation</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Bulk generation will use the style and camera settings you've configured in the previous tabs.
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Selected Style</h5>
+                      {selectedStyle ? (
+                        <p className="text-sm">{selectedStyle.name}</p>
+                      ) : (
+                        <p className="text-sm text-red-500">No style selected</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <h5 className="text-sm font-medium mb-2">Selected Director Style</h5>
+                      {selectedDirectorStyle ? (
+                        <p className="text-sm">{selectedDirectorStyle.name}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">None</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <Button variant="outline" onClick={() => setActiveTab("style-selection")} className="mt-2">
+                    Change Style Settings
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
           <TabsContent value="generated-prompts">
             <div className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Generated Prompts</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium">Generated Prompts</h3>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" onClick={selectAllPrompts}>
+                      Select All
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={deselectAllPrompts}>
+                      Deselect All
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={exportSelectedPrompts}
+                      disabled={Object.values(selectedPrompts).filter(Boolean).length === 0}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Selected
+                    </Button>
+                  </div>
+                </div>
 
                 {generatedPrompts.length > 0 ? (
-                  <div>
-                    <div className="mb-4">
-                      <Label htmlFor="prompt-select">Select Prompt</Label>
-                      <Select
-                        value={currentPromptIndex.toString()}
-                        onValueChange={(value) => setCurrentPromptIndex(Number.parseInt(value))}
-                      >
-                        <SelectTrigger id="prompt-select">
-                          <SelectValue placeholder="Select a prompt" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {generatedPrompts.map((prompt, index) => {
-                            const shot = shotList.find((s) => s.id === prompt.shotId)
-                            return (
-                              <SelectItem key={index} value={index.toString()}>
-                                {shot ? `Scene ${shot.scene}, Shot ${shot.shot}` : `Prompt ${index + 1}`}
-                              </SelectItem>
-                            )
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="space-y-6">
+                    {generatedPrompts.map((prompt, index) => {
+                      const shot = shotList.find((s) => s.id === prompt.shotId)
+                      if (!shot) return null
 
-                    {processedPrompt && (
-                      <Accordion type="single" collapsible defaultValue="concise">
-                        <AccordionItem value="concise">
-                          <AccordionTrigger className="font-medium">
-                            Concise Prompt
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="ml-auto h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                copyToClipboard(processedPrompt.concise, "Concise")
-                              }}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
-                              {processedPrompt.concise}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
+                      // Apply LORA replacements
+                      const processedPrompt = {
+                        ...prompt,
+                        concise: applyLoraReplacements(prompt.concise, activeSelectedSubjects),
+                        normal: applyLoraReplacements(prompt.normal, activeSelectedSubjects),
+                        detailed: applyLoraReplacements(prompt.detailed, activeSelectedSubjects),
+                      }
 
-                        <AccordionItem value="normal">
-                          <AccordionTrigger className="font-medium">
-                            Normal Prompt
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="ml-auto h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                copyToClipboard(processedPrompt.normal, "Normal")
-                              }}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
-                              {processedPrompt.normal}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
+                      const isExpanded = expandedPrompts.includes(prompt.id)
+                      const isSelected = selectedPrompts[prompt.id] || false
 
-                        <AccordionItem value="detailed">
-                          <AccordionTrigger className="font-medium">
-                            Detailed Prompt
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="ml-auto h-8 w-8"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                copyToClipboard(processedPrompt.detailed, "Detailed")
-                              }}
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
-                              {processedPrompt.detailed}
+                      return (
+                        <div
+                          key={prompt.id}
+                          className={`border rounded-lg overflow-hidden ${
+                            isSelected ? "border-blue-500 bg-blue-50" : ""
+                          }`}
+                        >
+                          <div className="flex items-center justify-between p-4 bg-muted/20">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id={`prompt-${prompt.id}`}
+                                checked={isSelected}
+                                onCheckedChange={() => togglePromptSelection(prompt.id)}
+                              />
+                              <div>
+                                <h4 className="font-medium">
+                                  Scene {shot.scene}, Shot {shot.shot}
+                                </h4>
+                                <p className="text-sm text-muted-foreground">{shot.description.substring(0, 50)}...</p>
+                              </div>
                             </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                    )}
+                            <Button variant="ghost" size="sm" onClick={() => toggleExpandPrompt(prompt.id)}>
+                              {isExpanded ? "Collapse" : "Expand"}
+                            </Button>
+                          </div>
+
+                          <div className={`p-4 ${isExpanded ? "" : "hidden"}`}>
+                            <div className="space-y-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-medium">Concise Prompt</h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyToClipboard(processedPrompt.concise, "Concise")}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
+                                  {processedPrompt.concise}
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-medium">Normal Prompt</h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyToClipboard(processedPrompt.normal, "Normal")}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
+                                  {processedPrompt.normal}
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="font-medium">Detailed Prompt</h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => copyToClipboard(processedPrompt.detailed, "Detailed")}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                <div className="p-3 bg-muted rounded-md font-mono text-sm whitespace-pre-wrap">
+                                  {processedPrompt.detailed}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {!isExpanded && (
+                            <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="text-sm font-medium">Concise</h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => copyToClipboard(processedPrompt.concise, "Concise")}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <div className="p-2 bg-muted rounded-md font-mono text-xs h-20 overflow-y-auto">
+                                  {processedPrompt.concise}
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="text-sm font-medium">Normal</h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => copyToClipboard(processedPrompt.normal, "Normal")}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <div className="p-2 bg-muted rounded-md font-mono text-xs h-20 overflow-y-auto">
+                                  {processedPrompt.normal}
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <h5 className="text-sm font-medium">Detailed</h5>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6"
+                                    onClick={() => copyToClipboard(processedPrompt.detailed, "Detailed")}
+                                  >
+                                    <Copy className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                                <div className="p-2 bg-muted rounded-md font-mono text-xs h-20 overflow-y-auto">
+                                  {processedPrompt.detailed}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-8 text-muted-foreground border rounded-md">
