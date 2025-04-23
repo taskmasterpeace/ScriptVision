@@ -23,10 +23,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
-import { Save, RefreshCw, Info, Play, MessageSquare, FileCode, Cpu } from "lucide-react"
+import { Save, RefreshCw, Info, Play, MessageSquare, FileCode, Cpu, ClipboardCopy } from "lucide-react"
 import AILogsTab from "./ai-logs-tab"
 import ModelsTab from "./models-tab"
 import { processTemplate } from "@/lib/ai-service"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 export default function DeveloperTab() {
   const { toast } = useToast()
@@ -139,6 +140,8 @@ export default function DeveloperTab() {
         return "Video Treatment"
       case "other":
         return "Other"
+      case "shotSuggestions":
+        return "Shot Suggestions"
       default:
         return category
     }
@@ -158,6 +161,8 @@ export default function DeveloperTab() {
         return "bg-pink-500"
       case "other":
         return "bg-slate-500"
+      case "shotSuggestions":
+        return "bg-orange-500"
       default:
         return "bg-gray-500"
     }
@@ -298,13 +303,13 @@ export default function DeveloperTab() {
                   </Dialog>
                 </div>
 
-                <div className="mb-4 flex space-x-2">
+                <div className="mb-4 flex flex-wrap gap-2">
                   <Button
                     variant={activeCategory === "all" ? "default" : "outline"}
                     onClick={() => setActiveCategory("all")}
                     size="sm"
                   >
-                    All
+                    All Templates
                   </Button>
                   <Button
                     variant={activeCategory === "shotList" ? "default" : "outline"}
@@ -314,11 +319,39 @@ export default function DeveloperTab() {
                     Shot List
                   </Button>
                   <Button
+                    variant={activeCategory === "subjects" ? "default" : "outline"}
+                    onClick={() => setActiveCategory("subjects")}
+                    size="sm"
+                  >
+                    Subjects
+                  </Button>
+                  <Button
+                    variant={activeCategory === "directorsNotes" ? "default" : "outline"}
+                    onClick={() => setActiveCategory("directorsNotes")}
+                    size="sm"
+                  >
+                    Director's Notes
+                  </Button>
+                  <Button
                     variant={activeCategory === "visualPrompt" ? "default" : "outline"}
                     onClick={() => setActiveCategory("visualPrompt")}
                     size="sm"
                   >
-                    Prompts
+                    Visual Prompts
+                  </Button>
+                  <Button
+                    variant={activeCategory === "videoTreatment" ? "default" : "outline"}
+                    onClick={() => setActiveCategory("videoTreatment")}
+                    size="sm"
+                  >
+                    Video Treatment
+                  </Button>
+                  <Button
+                    variant={activeCategory === "shotSuggestions" ? "default" : "outline"}
+                    onClick={() => setActiveCategory("shotSuggestions")}
+                    size="sm"
+                  >
+                    Shot Suggestions
                   </Button>
                 </div>
 
@@ -340,6 +373,11 @@ export default function DeveloperTab() {
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{template.description}</p>
+                          <div className="mt-2 flex items-center text-xs text-muted-foreground">
+                            <span>{template.variables.length} variables</span>
+                            <span className="mx-2">•</span>
+                            <span>{template.variables.filter((v) => v.enabled).length} enabled</span>
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -370,6 +408,7 @@ export default function DeveloperTab() {
                           id="template-name"
                           value={editedTemplate.name !== undefined ? editedTemplate.name : selectedTemplate.name}
                           onChange={(e) => setEditedTemplate({ ...editedTemplate, name: e.target.value })}
+                          aria-label="Template name"
                         />
                       </div>
 
@@ -383,7 +422,43 @@ export default function DeveloperTab() {
                               : selectedTemplate.description
                           }
                           onChange={(e) => setEditedTemplate({ ...editedTemplate, description: e.target.value })}
+                          aria-label="Template description"
                         />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="template-category">Category</Label>
+                        <Select
+                          value={
+                            editedTemplate.category !== undefined ? editedTemplate.category : selectedTemplate.category
+                          }
+                          onValueChange={(value) =>
+                            setEditedTemplate({
+                              ...editedTemplate,
+                              category: value as
+                                | "shotList"
+                                | "subjects"
+                                | "directorsNotes"
+                                | "visualPrompt"
+                                | "videoTreatment"
+                                | "shotSuggestions"
+                                | "other",
+                            })
+                          }
+                        >
+                          <SelectTrigger id="template-category" aria-label="Template category">
+                            <SelectValue placeholder="Select category" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="shotList">Shot List</SelectItem>
+                            <SelectItem value="subjects">Subjects</SelectItem>
+                            <SelectItem value="directorsNotes">Director's Notes</SelectItem>
+                            <SelectItem value="visualPrompt">Visual Prompt</SelectItem>
+                            <SelectItem value="videoTreatment">Video Treatment</SelectItem>
+                            <SelectItem value="shotSuggestions">Shot Suggestions</SelectItem>
+                            <SelectItem value="other">Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">
@@ -395,21 +470,49 @@ export default function DeveloperTab() {
                           }
                           onChange={(e) => setEditedTemplate({ ...editedTemplate, template: e.target.value })}
                           className="min-h-[300px] font-mono text-sm"
+                          aria-label="Template content"
                         />
                       </div>
 
                       <div className="pt-4">
                         <Accordion type="multiple" defaultValue={["variables", "preview"]}>
                           <AccordionItem value="variables">
-                            <AccordionTrigger>Template Variables</AccordionTrigger>
+                            <AccordionTrigger>
+                              <div className="flex items-center gap-2">
+                                Template Variables
+                                <Badge variant="outline" className="ml-2">
+                                  {selectedTemplate.variables.length} total /{" "}
+                                  {selectedTemplate.variables.filter((v) => v.enabled).length} enabled
+                                </Badge>
+                              </div>
+                            </AccordionTrigger>
                             <AccordionContent>
                               <div className="space-y-4 pt-2">
-                                <p className="text-sm text-muted-foreground">
-                                  Toggle variables to include or exclude them from the final prompt.{" "}
-                                  <span className="font-medium text-amber-600 dark:text-amber-400">
-                                    Disabled variables will be completely removed from the prompt.
-                                  </span>
-                                </p>
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm text-muted-foreground">
+                                    Toggle variables to include or exclude them from the final prompt.
+                                    <span className="font-medium text-amber-600 dark:text-amber-400 ml-1">
+                                      Disabled variables will be completely removed from the prompt.
+                                    </span>
+                                  </p>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                      // Enable all variables
+                                      if (selectedTemplate) {
+                                        selectedTemplate.variables.forEach((variable) => {
+                                          if (!variable.enabled) {
+                                            handleToggleVariable(variable)
+                                          }
+                                        })
+                                      }
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    Enable All
+                                  </Button>
+                                </div>
                                 <div className="border rounded-md overflow-hidden">
                                   <table className="w-full">
                                     <thead className="bg-muted">
@@ -422,17 +525,22 @@ export default function DeveloperTab() {
                                     </thead>
                                     <tbody className="divide-y">
                                       {selectedTemplate.variables.map((variable) => (
-                                        <tr key={variable.name}>
+                                        <tr key={variable.name} className={variable.enabled ? "" : "bg-muted/30"}>
                                           <td className="px-4 py-2 font-mono text-sm">{`{{${variable.name}}}`}</td>
                                           <td className="px-4 py-2 text-sm">{variable.description}</td>
                                           <td className="px-4 py-2 text-sm text-muted-foreground">
-                                            {variable.example}
+                                            <div className="max-w-[200px] truncate" title={variable.example}>
+                                              {variable.example}
+                                            </div>
                                           </td>
                                           <td className="px-4 py-2 text-center">
-                                            <Switch
-                                              checked={variable.enabled}
-                                              onCheckedChange={() => handleToggleVariable(variable)}
-                                            />
+                                            <div className="flex items-center justify-center">
+                                              <Switch
+                                                checked={variable.enabled}
+                                                onCheckedChange={() => handleToggleVariable(variable)}
+                                                aria-label={`Toggle ${variable.name}`}
+                                              />
+                                            </div>
                                           </td>
                                         </tr>
                                       ))}
@@ -444,7 +552,14 @@ export default function DeveloperTab() {
                           </AccordionItem>
 
                           <AccordionItem value="preview">
-                            <AccordionTrigger>Template Preview</AccordionTrigger>
+                            <AccordionTrigger>
+                              <div className="flex items-center gap-2">
+                                Template Preview
+                                <Badge variant="outline" className="ml-2">
+                                  Test your template with sample values
+                                </Badge>
+                              </div>
+                            </AccordionTrigger>
                             <AccordionContent>
                               <div className="space-y-4 pt-2">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -452,12 +567,17 @@ export default function DeveloperTab() {
                                     .filter((v) => v.enabled)
                                     .map((variable) => (
                                       <div key={variable.name} className="space-y-2">
-                                        <Label htmlFor={`preview-${variable.name}`}>{variable.name}</Label>
-                                        <Input
+                                        <Label htmlFor={`preview-${variable.name}`} className="flex items-center gap-2">
+                                          <span className="font-mono text-xs bg-muted px-1 py-0.5 rounded">{`{{${variable.name}}}`}</span>
+                                          <span>{variable.description}</span>
+                                        </Label>
+                                        <Textarea
                                           id={`preview-${variable.name}`}
                                           value={previewInput[variable.name] || ""}
                                           onChange={(e) => handlePreviewInputChange(variable.name, e.target.value)}
                                           placeholder={variable.example}
+                                          className="h-20 resize-y"
+                                          aria-label={`Preview value for ${variable.name}`}
                                         />
                                       </div>
                                     ))}
@@ -483,15 +603,59 @@ export default function DeveloperTab() {
                                   </div>
                                 )}
 
-                                <Button onClick={handleGeneratePreview} disabled={isGenerating} className="mt-4">
-                                  <Play className="h-4 w-4 mr-2" />
-                                  {isGenerating ? "Generating..." : "Generate Preview"}
-                                </Button>
+                                <div className="flex gap-2">
+                                  <Button
+                                    onClick={handleGeneratePreview}
+                                    disabled={isGenerating}
+                                    className="mt-4"
+                                    aria-label="Generate preview"
+                                  >
+                                    <Play className="h-4 w-4 mr-2" />
+                                    {isGenerating ? "Generating..." : "Generate Preview"}
+                                  </Button>
+
+                                  <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                      // Reset preview inputs to example values
+                                      const initialPreviewInput: Record<string, string> = {}
+                                      selectedTemplate.variables.forEach((variable) => {
+                                        if (variable.enabled) {
+                                          initialPreviewInput[variable.name] = variable.example
+                                        }
+                                      })
+                                      setPreviewInput(initialPreviewInput)
+                                    }}
+                                    className="mt-4"
+                                    aria-label="Reset to examples"
+                                  >
+                                    <RefreshCw className="h-4 w-4 mr-2" />
+                                    Reset to Examples
+                                  </Button>
+                                </div>
 
                                 {previewOutput && (
                                   <div className="border rounded-md p-4 bg-muted/30 mt-4">
-                                    <h4 className="font-medium mb-2">Preview Output:</h4>
-                                    <pre className="whitespace-pre-wrap text-sm font-mono overflow-auto max-h-[400px]">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <h4 className="font-medium">Preview Output:</h4>
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(previewOutput)
+                                          toast({
+                                            title: "Copied to clipboard",
+                                            description: "The preview output has been copied to your clipboard.",
+                                          })
+                                        }}
+                                        className="h-8 gap-1"
+                                        aria-label="Copy to clipboard"
+                                      >
+                                        <ClipboardCopy className="h-3.5 w-3.5" />
+                                        Copy
+                                      </Button>
+                                    </div>
+                                    <pre className="whitespace-pre-wrap text-sm font-mono overflow-auto max-h-[400px] p-2 bg-muted/50 rounded">
                                       {previewOutput}
                                     </pre>
                                   </div>

@@ -1319,6 +1319,52 @@ The formatted script should be ready for production use, with proper spacing, ca
   },
 ]
 
+// Update the getCategoryName function to ensure all categories are properly labeled
+
+const getCategoryName = (category: string) => {
+  switch (category) {
+    case "shotList":
+      return "Shot List"
+    case "subjects":
+      return "Subjects"
+    case "directorsNotes":
+      return "Director's Notes"
+    case "visualPrompt":
+      return "Visual Prompt"
+    case "videoTreatment":
+      return "Video Treatment"
+    case "shotSuggestions":
+      return "Shot Suggestions"
+    case "other":
+      return "Other"
+    default:
+      return category
+  }
+}
+
+// Update the getCategoryColor function to ensure all categories have appropriate colors
+
+const getCategoryColor = (category: string) => {
+  switch (category) {
+    case "shotList":
+      return "bg-blue-500"
+    case "subjects":
+      return "bg-green-500"
+    case "directorsNotes":
+      return "bg-purple-500"
+    case "visualPrompt":
+      return "bg-amber-500"
+    case "videoTreatment":
+      return "bg-pink-500"
+    case "shotSuggestions":
+      return "bg-cyan-500"
+    case "other":
+      return "bg-slate-500"
+    default:
+      return "bg-gray-500"
+  }
+}
+
 export const useTemplateStore = create<TemplateState>()(
   persist(
     (set, get) => ({
