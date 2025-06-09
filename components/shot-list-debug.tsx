@@ -1,58 +1,60 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { useProjectStore } from "@/lib/stores/project-store"
-import { v4 as uuidv4 } from "uuid"
-import type { Shot } from "@/lib/types"
-import { useToast } from "@/hooks/use-toast"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { useProjectStore } from '@/lib/stores/project-store';
+import { v4 as uuidv4 } from 'uuid';
+import type { Shot } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ShotListDebug() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [rawShotList, setRawShotList] = useState("")
-  const { addShots } = useProjectStore()
-  const { toast } = useToast()
+  const [isOpen, setIsOpen] = useState(false);
+  const [rawShotList, setRawShotList] = useState('');
+  const { addShots } = useProjectStore();
+  const { toast } = useToast();
 
   const testParser = () => {
     try {
       // Access the parseAIShotList function from the window object
-      const parseAIShotList = (window as any).parseAIShotList
+      const parseAIShotList = (window as any).parseAIShotList;
 
       if (!parseAIShotList) {
         toast({
-          title: "Parser not available",
-          description: "The shot list parser function is not available on the window object.",
-          variant: "destructive",
-        })
-        return
+          title: 'Parser not available',
+          description:
+            'The shot list parser function is not available on the window object.',
+          variant: 'destructive',
+        });
+        return;
       }
 
-      const shots = parseAIShotList(rawShotList)
+      const shots = parseAIShotList(rawShotList);
 
       toast({
-        title: "Parser test results",
+        title: 'Parser test results',
         description: `Successfully parsed ${shots.length} shots.`,
-      })
+      });
 
-      console.log("Parsed shots:", shots)
+      console.log('Parsed shots:', shots);
     } catch (error) {
       toast({
-        title: "Parser test failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "destructive",
-      })
+        title: 'Parser test failed',
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred.',
+        variant: 'destructive',
+      });
 
-      console.error("Parser test failed:", error)
+      console.error('Parser test failed:', error);
     }
-  }
+  };
 
   const importRawShots = () => {
     try {
       // Try to parse as JSON first
       try {
-        const jsonShots = JSON.parse(rawShotList)
+        const jsonShots = JSON.parse(rawShotList);
 
         // Check if it's an array
         if (Array.isArray(jsonShots)) {
@@ -60,60 +62,62 @@ export default function ShotListDebug() {
           const shotsWithIds = jsonShots.map((shot: Partial<Shot>) => ({
             ...shot,
             id: shot.id || uuidv4(),
-          }))
+          }));
 
-          addShots(shotsWithIds as Shot[])
+          addShots(shotsWithIds as Shot[]);
 
           toast({
-            title: "Shots imported",
+            title: 'Shots imported',
             description: `Successfully imported ${shotsWithIds.length} shots from JSON.`,
-          })
+          });
 
-          return
+          return;
         }
       } catch (e) {
         // Not valid JSON, continue with text parsing
       }
 
       // Access the parseAIShotList function from the window object
-      const parseAIShotList = (window as any).parseAIShotList
+      const parseAIShotList = (window as any).parseAIShotList;
 
       if (!parseAIShotList) {
         toast({
-          title: "Parser not available",
-          description: "The shot list parser function is not available on the window object.",
-          variant: "destructive",
-        })
-        return
+          title: 'Parser not available',
+          description:
+            'The shot list parser function is not available on the window object.',
+          variant: 'destructive',
+        });
+        return;
       }
 
-      const shots = parseAIShotList(rawShotList)
+      const shots = parseAIShotList(rawShotList);
 
       if (shots.length === 0) {
         toast({
-          title: "Import failed",
-          description: "No shots could be parsed from the input.",
-          variant: "destructive",
-        })
-        return
+          title: 'Import failed',
+          description: 'No shots could be parsed from the input.',
+          variant: 'destructive',
+        });
+        return;
       }
 
-      addShots(shots)
+      addShots(shots);
 
       toast({
-        title: "Shots imported",
+        title: 'Shots imported',
         description: `Successfully imported ${shots.length} shots.`,
-      })
+      });
     } catch (error) {
       toast({
-        title: "Import failed",
-        description: error instanceof Error ? error.message : "An unknown error occurred.",
-        variant: "destructive",
-      })
+        title: 'Import failed',
+        description:
+          error instanceof Error ? error.message : 'An unknown error occurred.',
+        variant: 'destructive',
+      });
 
-      console.error("Import failed:", error)
+      console.error('Import failed:', error);
     }
-  }
+  };
 
   if (!isOpen) {
     return (
@@ -122,7 +126,7 @@ export default function ShotListDebug() {
           Show Shot List Debug Panel
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -139,7 +143,8 @@ export default function ShotListDebug() {
         <div className="space-y-4">
           <div>
             <p className="text-sm text-muted-foreground mb-2">
-              Paste raw shot list text here to test the parser or import shots directly:
+              Paste raw shot list text here to test the parser or import shots
+              directly:
             </p>
             <Textarea
               value={rawShotList}
@@ -164,11 +169,14 @@ export default function ShotListDebug() {
             <ul className="list-disc pl-4 space-y-1">
               <li>Open the browser console to see detailed parsing logs</li>
               <li>The parser function is exposed as window.parseAIShotList</li>
-              <li>You can also paste JSON directly if it matches the Shot interface structure</li>
+              <li>
+                You can also paste JSON directly if it matches the Shot
+                interface structure
+              </li>
             </ul>
           </div>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

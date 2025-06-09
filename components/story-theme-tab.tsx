@@ -1,18 +1,31 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useToast } from "@/hooks/use-toast"
-import { useScriptCreationStore } from "@/lib/stores/script-creation-store"
-import { ArrowRight } from "lucide-react"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
+import { ArrowRight } from 'lucide-react';
 
 export default function StoryThemeTab() {
-  const { toast } = useToast()
+  const { toast } = useToast();
   const {
     storyTheme,
     storyTitle,
@@ -22,39 +35,41 @@ export default function StoryThemeTab() {
     setStoryTitle,
     setStoryGenre,
     setTargetAudience,
-  } = useScriptCreationStore()
+  } = useScriptCreationStore();
 
-  const [localTheme, setLocalTheme] = useState(storyTheme)
-  const [localTitle, setLocalTitle] = useState(storyTitle)
-  const [localGenre, setLocalGenre] = useState(storyGenre)
-  const [localAudience, setLocalAudience] = useState(targetAudience)
+  const [localTheme, setLocalTheme] = useState(storyTheme);
+  const [localTitle, setLocalTitle] = useState(storyTitle);
+  const [localGenre, setLocalGenre] = useState(storyGenre);
+  const [localAudience, setLocalAudience] = useState(targetAudience);
 
   const handleSave = () => {
     if (!localTheme.trim()) {
       toast({
-        title: "Story Theme Required",
-        description: "Please enter a story theme to continue.",
-        variant: "destructive",
-      })
-      return
+        title: 'Story Theme Required',
+        description: 'Please enter a story theme to continue.',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setStoryTheme(localTheme)
-    setStoryTitle(localTitle)
-    setStoryGenre(localGenre)
-    setTargetAudience(localAudience)
+    setStoryTheme(localTheme);
+    setStoryTitle(localTitle);
+    setStoryGenre(localGenre);
+    setTargetAudience(localAudience);
 
     toast({
-      title: "Story Details Saved",
-      description: "Your story details have been saved.",
-    })
-  }
+      title: 'Story Details Saved',
+      description: 'Your story details have been saved.',
+    });
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Define Your Story</CardTitle>
-        <CardDescription>Start by defining the core theme and details of your story</CardDescription>
+        <CardDescription>
+          Start by defining the core theme and details of your story
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-2">
@@ -69,8 +84,8 @@ export default function StoryThemeTab() {
             onChange={(e) => setLocalTheme(e.target.value)}
           />
           <p className="text-sm text-muted-foreground">
-            Example: "A journey of self-discovery where the protagonist learns that true strength comes from
-            vulnerability"
+            Example: "A journey of self-discovery where the protagonist learns
+            that true strength comes from vulnerability"
           </p>
         </div>
 
@@ -132,18 +147,19 @@ export default function StoryThemeTab() {
           onClick={() => {
             if (!storyTheme) {
               toast({
-                title: "Save Story Details First",
-                description: "Please save your story details before proceeding.",
-                variant: "destructive",
-              })
-              return
+                title: 'Save Story Details First',
+                description:
+                  'Please save your story details before proceeding.',
+                variant: 'destructive',
+              });
+              return;
             }
-            document.getElementById("research-tab-trigger")?.click()
+            document.getElementById('research-tab-trigger')?.click();
           }}
         >
           Next: Research <ArrowRight className="h-4 w-4" />
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }

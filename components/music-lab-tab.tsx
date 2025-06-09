@@ -1,71 +1,84 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useToast } from "@/hooks/use-toast"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useProjectStore } from "@/lib/stores/project-store"
-import { useLoadingStore } from "@/lib/stores/loading-store"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useProjectStore } from '@/lib/stores/project-store';
+import { useLoadingStore } from '@/lib/stores/loading-store';
 
 export default function MusicLabTab() {
-  const { toast } = useToast()
-  const { generateVideoTreatment } = useProjectStore()
-  const { isLoading } = useLoadingStore()
-  const [videoTreatment, setVideoTreatment] = useState("")
+  const { toast } = useToast();
+  const { generateVideoTreatment } = useProjectStore();
+  const { isLoading } = useLoadingStore();
+  const [videoTreatment, setVideoTreatment] = useState('');
 
   const [formData, setFormData] = useState({
-    artistName: "",
-    songTitle: "",
-    genre: "",
-    lyrics: "",
-    concept: "",
-    visualDescriptors: "",
-    wardrobeCount: "1",
-    wardrobeDetails: "",
-  })
+    artistName: '',
+    songTitle: '',
+    genre: '',
+    lyrics: '',
+    concept: '',
+    visualDescriptors: '',
+    wardrobeCount: '1',
+    wardrobeDetails: '',
+  });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
-  }
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
   const handleGenerateTreatment = async () => {
     if (!formData.lyrics.trim()) {
       toast({
-        title: "Lyrics Required",
-        description: "Please enter song lyrics to generate a video treatment.",
-        variant: "destructive",
-      })
-      return
+        title: 'Lyrics Required',
+        description: 'Please enter song lyrics to generate a video treatment.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     try {
-      const treatment = await generateVideoTreatment(formData)
-      setVideoTreatment(treatment)
+      const treatment = await generateVideoTreatment(formData);
+      setVideoTreatment(treatment);
       toast({
-        title: "Treatment Generated",
-        description: "Video treatment has been successfully generated.",
-      })
+        title: 'Treatment Generated',
+        description: 'Video treatment has been successfully generated.',
+      });
     } catch (error) {
       toast({
-        title: "Generation Failed",
-        description: error instanceof Error ? error.message : "Failed to generate video treatment.",
-        variant: "destructive",
-      })
+        title: 'Generation Failed',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to generate video treatment.',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Music Lab</CardTitle>
-        <CardDescription>Generate video treatment concepts and prompts from song lyrics</CardDescription>
+        <CardDescription>
+          Generate video treatment concepts and prompts from song lyrics
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="input">
@@ -180,10 +193,14 @@ export default function MusicLabTab() {
 
                 <Button
                   onClick={handleGenerateTreatment}
-                  disabled={isLoading("generateTreatment") || !formData.lyrics.trim()}
+                  disabled={
+                    isLoading('generateTreatment') || !formData.lyrics.trim()
+                  }
                   className="w-full mt-4"
                 >
-                  {isLoading("generateTreatment") ? "Generating..." : "Generate Video Treatment"}
+                  {isLoading('generateTreatment')
+                    ? 'Generating...'
+                    : 'Generate Video Treatment'}
                 </Button>
               </div>
             </div>
@@ -191,16 +208,19 @@ export default function MusicLabTab() {
 
           <TabsContent value="treatment">
             <div className="space-y-4">
-              <div className="p-6 border rounded-md bg-muted/30 whitespace-pre-line">{videoTreatment}</div>
+              <div className="p-6 border rounded-md bg-muted/30 whitespace-pre-line">
+                {videoTreatment}
+              </div>
 
               <div className="flex justify-end">
                 <Button
                   onClick={() => {
-                    navigator.clipboard.writeText(videoTreatment)
+                    navigator.clipboard.writeText(videoTreatment);
                     toast({
-                      title: "Copied to Clipboard",
-                      description: "Video treatment has been copied to clipboard.",
-                    })
+                      title: 'Copied to Clipboard',
+                      description:
+                        'Video treatment has been copied to clipboard.',
+                    });
                   }}
                 >
                   Copy to Clipboard
@@ -211,5 +231,5 @@ export default function MusicLabTab() {
         </Tabs>
       </CardContent>
     </Card>
-  )
+  );
 }

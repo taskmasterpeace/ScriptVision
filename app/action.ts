@@ -1,12 +1,12 @@
-"use server";
+'use server';
 
-import { YoutubeTranscript } from "youtube-transcript";
+import { YoutubeTranscript } from 'youtube-transcript';
 import {
   YoutubeSearchResponse,
   YoutubeVideoStatistics,
   YoutubeSearchResult,
   YoutubeTranscriptResult,
-} from "@/lib/types/script.type";
+} from '@/lib/types/script.type';
 
 export const searchYouTubeAction = async (
   query: string,
@@ -14,17 +14,17 @@ export const searchYouTubeAction = async (
 ): Promise<YoutubeSearchResult[]> => {
   try {
     const urlParams = new URLSearchParams({
-      type: "video",
-      part: "snippet",
+      type: 'video',
+      part: 'snippet',
       q: query,
-      maxResults: "5",
+      maxResults: '5',
     }).toString();
     const response = await fetch(
       `https://youtube.googleapis.com/youtube/v3/search?${params || urlParams}&key=${process.env.YOUTUBE_API_KEY}`
     );
     const data: YoutubeSearchResponse = await response.json();
 
-    const videoIds = data.items.map((video) => video.id.videoId).join(",");
+    const videoIds = data.items.map((video) => video.id.videoId).join(',');
 
     // Fetch statistics for all videos in one API call
     const statsResponse = await fetch(
@@ -32,7 +32,9 @@ export const searchYouTubeAction = async (
     );
     const statsData: YoutubeVideoStatistics = await statsResponse.json();
 
-    const transcripts = await getYouTubeTranscript(data.items.map((video) => video.id.videoId));
+    const transcripts = await getYouTubeTranscript(
+      data.items.map((video) => video.id.videoId)
+    );
 
     const combinedData = data.items.map((video) => {
       return {
@@ -42,13 +44,16 @@ export const searchYouTubeAction = async (
         snippet: video.snippet,
         statistics: statsData.items.find((item) => item.id === video.id.videoId)
           ?.statistics,
-        transcript: transcripts.find((transcript) => transcript.videoId === video.id.videoId)?.text || "",
-        source: "youtube" as "youtube",
+        transcript:
+          transcripts.find(
+            (transcript) => transcript.videoId === video.id.videoId
+          )?.text || '',
+        source: 'youtube' as 'youtube',
       };
     });
     return combinedData;
   } catch (error) {
-    console.error("Failed to search YouTube (server action):", error);
+    console.error('Failed to search YouTube (server action):', error);
     throw error;
   }
 };
@@ -62,26 +67,26 @@ export const getYouTubeTranscript = async (
         const transcript = await YoutubeTranscript.fetchTranscript(videoId);
         return {
           videoId,
-          text: transcript.map((item) => item.text).join(" "),
+          text: transcript.map((item) => item.text).join(' '),
         };
       })
     );
 
     return videoIds.map((videoId, index) => {
       const result = results[index];
-      if (result?.status === "fulfilled" && result.value) {
+      if (result?.status === 'fulfilled' && result.value) {
         return {
           videoId,
-          text: result.value.text || "",
+          text: result.value.text || '',
         };
       }
       return {
         videoId,
-        text: "",
+        text: '',
       };
     });
   } catch (error) {
-    console.error("Error fetching transcripts:", error);
+    console.error('Error fetching transcripts:', error);
     return [];
   }
 };

@@ -1,11 +1,11 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast"
-import { useProjectStore } from "@/lib/stores/project-store"
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { useProjectStore } from '@/lib/stores/project-store';
 import {
   Dialog,
   DialogContent,
@@ -14,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { DataTable } from "@/components/ui/data-table"
-import { ProjectListColumns } from "@/lib/columns/project-list-columns"
+} from '@/components/ui/dialog';
+import { DataTable } from '@/components/ui/data-table';
+import { ProjectListColumns } from '@/lib/columns/project-list-columns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,115 +26,129 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
-import { Save, FolderOpen, Trash2 } from "lucide-react"
+} from '@/components/ui/alert-dialog';
+import { Save, FolderOpen, Trash2 } from 'lucide-react';
 
 export default function ProjectManager() {
-  const { toast } = useToast()
-  const { projectName, setProjectName, saveProject, loadProject, deleteProject, listProjects } = useProjectStore()
+  const { toast } = useToast();
+  const {
+    projectName,
+    setProjectName,
+    saveProject,
+    loadProject,
+    deleteProject,
+    listProjects,
+  } = useProjectStore();
 
-  const [projects, setProjects] = useState<any[]>([])
-  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false)
-  const [selectedProjectToLoad, setSelectedProjectToLoad] = useState<string | null>(null)
-  const [selectedProjectToDelete, setSelectedProjectToDelete] = useState<string | null>(null)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [projects, setProjects] = useState<any[]>([]);
+  const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
+  const [selectedProjectToLoad, setSelectedProjectToLoad] = useState<
+    string | null
+  >(null);
+  const [selectedProjectToDelete, setSelectedProjectToDelete] = useState<
+    string | null
+  >(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    refreshProjectList()
-  }, [])
+    refreshProjectList();
+  }, []);
 
   const refreshProjectList = async () => {
     try {
-      const projectList = await listProjects()
-      setProjects(projectList)
+      const projectList = await listProjects();
+      setProjects(projectList);
     } catch (error) {
-      console.error("Failed to list projects:", error)
+      console.error('Failed to list projects:', error);
     }
-  }
+  };
 
   const handleSaveProject = async () => {
     if (!projectName.trim()) {
       toast({
-        title: "Project Name Required",
-        description: "Please enter a project name to save.",
-        variant: "destructive",
-      })
-      return
+        title: 'Project Name Required',
+        description: 'Please enter a project name to save.',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setIsSaving(true)
+    setIsSaving(true);
     try {
-      await saveProject()
-      await refreshProjectList()
+      await saveProject();
+      await refreshProjectList();
       toast({
-        title: "Project Saved",
+        title: 'Project Saved',
         description: `Project "${projectName}" has been saved.`,
-      })
+      });
     } catch (error) {
       toast({
-        title: "Save Failed",
-        description: error instanceof Error ? error.message : "Failed to save project.",
-        variant: "destructive",
-      })
+        title: 'Save Failed',
+        description:
+          error instanceof Error ? error.message : 'Failed to save project.',
+        variant: 'destructive',
+      });
     } finally {
-      setIsSaving(false)
+      setIsSaving(false);
     }
-  }
+  };
 
   const handleLoadProject = async () => {
     if (!selectedProjectToLoad) {
       toast({
-        title: "No Project Selected",
-        description: "Please select a project to load.",
-        variant: "destructive",
-      })
-      return
+        title: 'No Project Selected',
+        description: 'Please select a project to load.',
+        variant: 'destructive',
+      });
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      await loadProject(selectedProjectToLoad)
-      setIsLoadDialogOpen(false)
+      await loadProject(selectedProjectToLoad);
+      setIsLoadDialogOpen(false);
       toast({
-        title: "Project Loaded",
+        title: 'Project Loaded',
         description: `Project "${selectedProjectToLoad}" has been loaded.`,
-      })
+      });
     } catch (error) {
       toast({
-        title: "Load Failed",
-        description: error instanceof Error ? error.message : "Failed to load project.",
-        variant: "destructive",
-      })
+        title: 'Load Failed',
+        description:
+          error instanceof Error ? error.message : 'Failed to load project.',
+        variant: 'destructive',
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleDeleteProject = async () => {
-    if (!selectedProjectToDelete) return
+    if (!selectedProjectToDelete) return;
 
     try {
-      await deleteProject(selectedProjectToDelete)
-      await refreshProjectList()
-      setIsDeleteDialogOpen(false)
+      await deleteProject(selectedProjectToDelete);
+      await refreshProjectList();
+      setIsDeleteDialogOpen(false);
       toast({
-        title: "Project Deleted",
+        title: 'Project Deleted',
         description: `Project "${selectedProjectToDelete}" has been deleted.`,
-      })
+      });
     } catch (error) {
       toast({
-        title: "Delete Failed",
-        description: error instanceof Error ? error.message : "Failed to delete project.",
-        variant: "destructive",
-      })
+        title: 'Delete Failed',
+        description:
+          error instanceof Error ? error.message : 'Failed to delete project.',
+        variant: 'destructive',
+      });
     }
-  }
+  };
 
   const handleProjectRowClick = (project: any) => {
-    setSelectedProjectToLoad(project.name)
-  }
+    setSelectedProjectToLoad(project.name);
+  };
 
   return (
     <Card>
@@ -153,7 +167,7 @@ export default function ProjectManager() {
             className="flex items-center gap-2"
           >
             <Save className="h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Project"}
+            {isSaving ? 'Saving...' : 'Save Project'}
           </Button>
 
           <Dialog open={isLoadDialogOpen} onOpenChange={setIsLoadDialogOpen}>
@@ -171,18 +185,30 @@ export default function ProjectManager() {
 
               <div className="py-4">
                 {projects.length > 0 ? (
-                  <DataTable columns={ProjectListColumns} data={projects} onRowClick={handleProjectRowClick} />
+                  <DataTable
+                    columns={ProjectListColumns}
+                    data={projects}
+                    onRowClick={handleProjectRowClick}
+                  />
                 ) : (
-                  <div className="text-center py-8 text-muted-foreground">No saved projects found.</div>
+                  <div className="text-center py-8 text-muted-foreground">
+                    No saved projects found.
+                  </div>
                 )}
               </div>
 
               <DialogFooter>
-                <Button variant="outline" onClick={() => setIsLoadDialogOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLoadDialogOpen(false)}
+                >
                   Cancel
                 </Button>
-                <Button onClick={handleLoadProject} disabled={isLoading || !selectedProjectToLoad}>
-                  {isLoading ? "Loading..." : "Load Project"}
+                <Button
+                  onClick={handleLoadProject}
+                  disabled={isLoading || !selectedProjectToLoad}
+                >
+                  {isLoading ? 'Loading...' : 'Load Project'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -193,13 +219,13 @@ export default function ProjectManager() {
             onClick={() => {
               if (projects.length === 0) {
                 toast({
-                  title: "No Projects",
-                  description: "There are no projects to delete.",
-                  variant: "destructive",
-                })
-                return
+                  title: 'No Projects',
+                  description: 'There are no projects to delete.',
+                  variant: 'destructive',
+                });
+                return;
               }
-              setIsLoadDialogOpen(true)
+              setIsLoadDialogOpen(true);
             }}
             className="flex items-center gap-2"
           >
@@ -209,21 +235,26 @@ export default function ProjectManager() {
         </div>
       </CardContent>
 
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the project "{selectedProjectToDelete}" and all
-              of its data.
+              This action cannot be undone. This will permanently delete the
+              project "{selectedProjectToDelete}" and all of its data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProject}>Delete</AlertDialogAction>
+            <AlertDialogAction onClick={handleDeleteProject}>
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </Card>
-  )
+  );
 }

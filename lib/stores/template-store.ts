@@ -1,40 +1,51 @@
-"use client"
+'use client';
 
-import { create } from "zustand"
-import { createJSONStorage, persist } from "zustand/middleware"
-import { storage } from "../db"
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { storage } from '../db';
 
 export interface TemplateVariable {
-  name: string
-  description: string
-  example: string
-  enabled: boolean // Track if the variable is enabled
+  name: string;
+  description: string;
+  example: string;
+  enabled: boolean; // Track if the variable is enabled
 }
 
 export interface PromptTemplate {
-  id: string
-  name: string
-  description: string
-  template: string
-  variables: TemplateVariable[]
-  category: "shotList" | "subjects" | "directorsNotes" | "visualPrompt" | "videoTreatment" | "shotSuggestions" | "other"
+  id: string;
+  name: string;
+  description: string;
+  template: string;
+  variables: TemplateVariable[];
+  category:
+    | 'shotList'
+    | 'subjects'
+    | 'directorsNotes'
+    | 'visualPrompt'
+    | 'videoTreatment'
+    | 'shotSuggestions'
+    | 'other';
 }
 
 interface TemplateState {
-  templates: PromptTemplate[]
-  getTemplate: (id: string) => PromptTemplate | undefined
-  updateTemplate: (id: string, template: Partial<PromptTemplate>) => void
-  updateTemplateVariable: (templateId: string, variableName: string, enabled: boolean) => void
-  resetToDefaults: () => void
+  templates: PromptTemplate[];
+  getTemplate: (id: string) => PromptTemplate | undefined;
+  updateTemplate: (id: string, template: Partial<PromptTemplate>) => void;
+  updateTemplateVariable: (
+    templateId: string,
+    variableName: string,
+    enabled: boolean
+  ) => void;
+  resetToDefaults: () => void;
 }
 
 // Default templates
 const defaultTemplates: PromptTemplate[] = [
   {
-    id: "shot-list-generation",
-    name: "Shot List Generation",
-    description: "Template used to generate a shot list from a script",
-    category: "shotList",
+    id: 'shot-list-generation',
+    name: 'Shot List Generation',
+    description: 'Template used to generate a shot list from a script',
+    category: 'shotList',
     template: `Generate a detailed shot list from the following script. Break it down into scenes and shots with the following information for each shot:
 - Scene number
 - Shot number
@@ -49,18 +60,18 @@ SCRIPT:
 {{script}}`,
     variables: [
       {
-        name: "script",
-        description: "The full script text",
-        example: "EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...",
+        name: 'script',
+        description: 'The full script text',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
       },
     ],
   },
   {
-    id: "subject-extraction",
-    name: "Subject Extraction",
-    description: "Template used to extract subjects from a script",
-    category: "subjects",
+    id: 'subject-extraction',
+    name: 'Subject Extraction',
+    description: 'Template used to extract subjects from a script',
+    category: 'subjects',
     template: `Extract all subjects from the following script. Categorize them as:
 - People (characters)
 - Places (locations)
@@ -76,18 +87,18 @@ SCRIPT:
 {{script}}`,
     variables: [
       {
-        name: "script",
-        description: "The full script text",
-        example: "EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...",
+        name: 'script',
+        description: 'The full script text',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
       },
     ],
   },
   {
-    id: "directors-notes",
+    id: 'directors-notes',
     name: "Director's Notes Generation",
     description: "Template used to generate director's notes for a shot",
-    category: "directorsNotes",
+    category: 'directorsNotes',
     template: `Generate detailed director's notes for the following shot {{directorStyle}}. Focus on visual style, camera movement, lighting, and performance direction.
 
 SHOT DETAILS:
@@ -100,60 +111,61 @@ Action: {{action}}
 Location: {{location}}`,
     variables: [
       {
-        name: "directorStyle",
-        description: "Optional director style reference",
-        example: "in the style of Christopher Nolan",
+        name: 'directorStyle',
+        description: 'Optional director style reference',
+        example: 'in the style of Christopher Nolan',
         enabled: true,
       },
       {
-        name: "scene",
-        description: "Scene number",
-        example: "1",
+        name: 'scene',
+        description: 'Scene number',
+        example: '1',
         enabled: true,
       },
       {
-        name: "shot",
-        description: "Shot number",
-        example: "3",
+        name: 'shot',
+        description: 'Shot number',
+        example: '3',
         enabled: true,
       },
       {
-        name: "description",
-        description: "Shot description",
-        example: "John enters the building",
+        name: 'description',
+        description: 'Shot description',
+        example: 'John enters the building',
         enabled: true,
       },
       {
-        name: "shotSize",
-        description: "Shot size",
-        example: "MS",
+        name: 'shotSize',
+        description: 'Shot size',
+        example: 'MS',
         enabled: true,
       },
       {
-        name: "people",
-        description: "People in the shot",
-        example: "John",
+        name: 'people',
+        description: 'People in the shot',
+        example: 'John',
         enabled: true,
       },
       {
-        name: "action",
-        description: "Action in the shot",
-        example: "John pushes through the revolving door",
+        name: 'action',
+        description: 'Action in the shot',
+        example: 'John pushes through the revolving door',
         enabled: true,
       },
       {
-        name: "location",
-        description: "Shot location",
-        example: "Office building entrance",
+        name: 'location',
+        description: 'Shot location',
+        example: 'Office building entrance',
         enabled: true,
       },
     ],
   },
   {
-    id: "visual-prompt",
-    name: "Visual Prompt Generation",
-    description: "Template used to generate visual prompts for AI image generation",
-    category: "visualPrompt",
+    id: 'visual-prompt',
+    name: 'Visual Prompt Generation',
+    description:
+      'Template used to generate visual prompts for AI image generation',
+    category: 'visualPrompt',
     template: `Generate three prompts (concise, normal, and detailed) based on the following information:
 
 Subjects: {{subject_info}}
@@ -249,114 +261,116 @@ Guidelines:
 - Add modifiers: Include adjectives and descriptive phrases to refine the image's appearance, mood, and style. Do not add style elements that is handled in the Style and Style Prefix only. The key is to provide clear, descriptive information about what you want to see in the image.`,
     variables: [
       {
-        name: "subject_info",
-        description: "Information about the subjects in the scene",
-        example: "John: Main character, mid-30s, business attire",
+        name: 'subject_info',
+        description: 'Information about the subjects in the scene',
+        example: 'John: Main character, mid-30s, business attire',
         enabled: true,
       },
       {
-        name: "shot_description",
-        description: "Description of the shot",
-        example: "John enters the office building through revolving doors",
+        name: 'shot_description',
+        description: 'Description of the shot',
+        example: 'John enters the office building through revolving doors',
         enabled: true,
       },
       {
-        name: "directors_notes",
-        description: "Notes from the director about the shot",
+        name: 'directors_notes',
+        description: 'Notes from the director about the shot',
         example: "Focus on John's determined expression as he enters",
         enabled: true,
       },
       {
-        name: "highlighted_text",
-        description: "Highlighted portion of the script",
-        example: "JOHN pushes through the revolving door with purpose",
+        name: 'highlighted_text',
+        description: 'Highlighted portion of the script',
+        example: 'JOHN pushes through the revolving door with purpose',
         enabled: true,
       },
       {
-        name: "full_script",
-        description: "The full script text",
-        example: "EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...",
+        name: 'full_script',
+        description: 'The full script text',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
       },
       {
-        name: "end_parameters",
-        description: "Additional parameters for the shot",
-        example: "Focus on the contrast between the busy street and quiet lobby",
+        name: 'end_parameters',
+        description: 'Additional parameters for the shot',
+        example:
+          'Focus on the contrast between the busy street and quiet lobby',
         enabled: true,
       },
       {
-        name: "style",
-        description: "Visual style for the image",
-        example: "Cinematic",
+        name: 'style',
+        description: 'Visual style for the image',
+        example: 'Cinematic',
         enabled: true,
       },
       {
-        name: "style_prefix",
-        description: "Prefix for the style",
-        example: "cinematic still, movie scene,",
+        name: 'style_prefix',
+        description: 'Prefix for the style',
+        example: 'cinematic still, movie scene,',
         enabled: true,
       },
       {
-        name: "director_style",
+        name: 'director_style',
         description: "Director's style reference",
-        example: "Christopher Nolan: High contrast, IMAX-scale visuals",
+        example: 'Christopher Nolan: High contrast, IMAX-scale visuals',
         enabled: true,
       },
       {
-        name: "camera_shot",
-        description: "Camera shot type",
-        example: "Static",
+        name: 'camera_shot',
+        description: 'Camera shot type',
+        example: 'Static',
         enabled: true,
       },
       {
-        name: "camera_move",
-        description: "Camera movement",
-        example: "Tracking",
+        name: 'camera_move',
+        description: 'Camera movement',
+        example: 'Tracking',
         enabled: true,
       },
       {
-        name: "camera_size",
-        description: "Camera shot size",
-        example: "Medium Shot (MS)",
+        name: 'camera_size',
+        description: 'Camera shot size',
+        example: 'Medium Shot (MS)',
         enabled: true,
       },
       {
-        name: "camera_framing",
-        description: "Camera framing",
-        example: "Rule of Thirds",
+        name: 'camera_framing',
+        description: 'Camera framing',
+        example: 'Rule of Thirds',
         enabled: true,
       },
       {
-        name: "camera_depth_of_field",
-        description: "Depth of field",
-        example: "Shallow",
+        name: 'camera_depth_of_field',
+        description: 'Depth of field',
+        example: 'Shallow',
         enabled: true,
       },
       {
-        name: "camera_type",
-        description: "Camera type",
-        example: "Digital",
+        name: 'camera_type',
+        description: 'Camera type',
+        example: 'Digital',
         enabled: true,
       },
       {
-        name: "camera_name",
-        description: "Camera name",
-        example: "ARRI Alexa",
+        name: 'camera_name',
+        description: 'Camera name',
+        example: 'ARRI Alexa',
         enabled: true,
       },
       {
-        name: "script_adherence",
-        description: "Instructions for script adherence",
-        example: "Strictly adhere to the script details",
+        name: 'script_adherence',
+        description: 'Instructions for script adherence',
+        example: 'Strictly adhere to the script details',
         enabled: true,
       },
     ],
   },
   {
-    id: "video-treatment",
-    name: "Video Treatment Generation",
-    description: "Template used to generate a video treatment for a music video",
-    category: "videoTreatment",
+    id: 'video-treatment',
+    name: 'Video Treatment Generation',
+    description:
+      'Template used to generate a video treatment for a music video',
+    category: 'videoTreatment',
     template: `Generate a detailed music video treatment for the following song:
 
 ARTIST: {{artistName}}
@@ -384,61 +398,65 @@ The treatment should include:
 - Transitions between sections`,
     variables: [
       {
-        name: "artistName",
-        description: "Artist name",
-        example: "Taylor Swift",
+        name: 'artistName',
+        description: 'Artist name',
+        example: 'Taylor Swift',
         enabled: true,
       },
       {
-        name: "songTitle",
-        description: "Song title",
-        example: "Blank Space",
+        name: 'songTitle',
+        description: 'Song title',
+        example: 'Blank Space',
         enabled: true,
       },
       {
-        name: "genre",
-        description: "Music genre",
-        example: "Pop",
+        name: 'genre',
+        description: 'Music genre',
+        example: 'Pop',
         enabled: true,
       },
       {
-        name: "lyrics",
-        description: "Song lyrics",
-        example: "Nice to meet you, where you been?\nI could show you incredible things...",
+        name: 'lyrics',
+        description: 'Song lyrics',
+        example:
+          'Nice to meet you, where you been?\nI could show you incredible things...',
         enabled: true,
       },
       {
-        name: "concept",
-        description: "Creative concept",
-        example: "A surreal journey through a mansion that represents the artist's mind",
+        name: 'concept',
+        description: 'Creative concept',
+        example:
+          "A surreal journey through a mansion that represents the artist's mind",
         enabled: true,
       },
       {
-        name: "visualDescriptors",
-        description: "Visual descriptors",
-        example: "High contrast, saturated colors, baroque styling",
+        name: 'visualDescriptors',
+        description: 'Visual descriptors',
+        example: 'High contrast, saturated colors, baroque styling',
         enabled: true,
       },
       {
-        name: "wardrobeCount",
-        description: "Number of wardrobes",
-        example: "3",
+        name: 'wardrobeCount',
+        description: 'Number of wardrobes',
+        example: '3',
         enabled: true,
       },
       {
-        name: "wardrobeDetails",
-        description: "Wardrobe details",
-        example: "1. Elegant white dress, 2. Black gothic outfit, 3. Red power suit",
+        name: 'wardrobeDetails',
+        description: 'Wardrobe details',
+        example:
+          '1. Elegant white dress, 2. Black gothic outfit, 3. Red power suit',
         enabled: true,
       },
     ],
   },
   // Add the new Shot Suggestions template
   {
-    id: "shot-suggestions",
-    name: "Shot Suggestions Analysis",
-    description: "Template used to analyze a script and shot list to suggest additional shots",
-    category: "shotSuggestions",
+    id: 'shot-suggestions',
+    name: 'Shot Suggestions Analysis',
+    description:
+      'Template used to analyze a script and shot list to suggest additional shots',
+    category: 'shotSuggestions',
     template: `Analyze this script and existing shot list. Suggest additional shots that might be missing or would enhance the visual storytelling.
 
 SCRIPT:
@@ -471,25 +489,26 @@ Reason: [explanation]
 Aim to suggest 3-7 additional shots that would significantly improve the visual storytelling.`,
     variables: [
       {
-        name: "script",
-        description: "The full script text",
-        example: "EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...",
+        name: 'script',
+        description: 'The full script text',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
       },
       {
-        name: "existingShots",
-        description: "The existing shot list",
-        example: "Scene 1, Shot 1: Establishing shot of city street\nScene 1, Shot 2: John walking down the street",
+        name: 'existingShots',
+        description: 'The existing shot list',
+        example:
+          'Scene 1, Shot 1: Establishing shot of city street\nScene 1, Shot 2: John walking down the street',
         enabled: true,
       },
     ],
   },
   // Story Theme Template
   {
-    id: "story-theme-generation",
-    name: "Story Theme Generation",
-    description: "Template used to generate story themes and concepts",
-    category: "videoTreatment",
+    id: 'story-theme-generation',
+    name: 'Story Theme Generation',
+    description: 'Template used to generate story themes and concepts',
+    category: 'videoTreatment',
     template: `Generate compelling story themes and concepts based on the following inputs:
 
 WORKING TITLE: {{workingTitle}}
@@ -515,45 +534,45 @@ Ensure the themes are:
 - Conducive to character growth and transformation`,
     variables: [
       {
-        name: "workingTitle",
-        description: "Working title of the story",
-        example: "The Last Light",
+        name: 'workingTitle',
+        description: 'Working title of the story',
+        example: 'The Last Light',
         enabled: true,
       },
       {
-        name: "genre",
-        description: "Genre of the story",
-        example: "Science Fiction",
+        name: 'genre',
+        description: 'Genre of the story',
+        example: 'Science Fiction',
         enabled: true,
       },
       {
-        name: "targetAudience",
-        description: "Target audience",
-        example: "Young Adults (18-25)",
+        name: 'targetAudience',
+        description: 'Target audience',
+        example: 'Young Adults (18-25)',
         enabled: true,
       },
       {
-        name: "coreConcept",
-        description: "Core concept of the story",
-        example: "A world where memories can be transferred between people",
+        name: 'coreConcept',
+        description: 'Core concept of the story',
+        example: 'A world where memories can be transferred between people',
         enabled: true,
       },
       {
-        name: "tone",
-        description: "Tone of the story",
-        example: "Contemplative with moments of tension",
+        name: 'tone',
+        description: 'Tone of the story',
+        example: 'Contemplative with moments of tension',
         enabled: true,
       },
       {
-        name: "setting",
-        description: "Setting of the story",
-        example: "Near-future urban metropolis",
+        name: 'setting',
+        description: 'Setting of the story',
+        example: 'Near-future urban metropolis',
         enabled: true,
       },
       {
-        name: "timeframe",
-        description: "Timeframe of the story",
-        example: "Over the course of one week",
+        name: 'timeframe',
+        description: 'Timeframe of the story',
+        example: 'Over the course of one week',
         enabled: true,
       },
     ],
@@ -561,10 +580,10 @@ Ensure the themes are:
 
   // Outline Generation Template
   {
-    id: "outline-generation",
-    name: "Story Outline Generation",
-    description: "Template used to generate a structured story outline",
-    category: "videoTreatment",
+    id: 'outline-generation',
+    name: 'Story Outline Generation',
+    description: 'Template used to generate a structured story outline',
+    category: 'videoTreatment',
     template: `Create a detailed story outline based on the following information:
 
 TITLE: {{title}}
@@ -597,57 +616,57 @@ For each section, provide:
 Ensure the outline follows the {{structureType}} structure while maintaining narrative coherence and emotional resonance.`,
     variables: [
       {
-        name: "title",
-        description: "Title of the story",
-        example: "The Memory Merchant",
+        name: 'title',
+        description: 'Title of the story',
+        example: 'The Memory Merchant',
         enabled: true,
       },
       {
-        name: "genre",
-        description: "Genre of the story",
-        example: "Science Fiction Thriller",
+        name: 'genre',
+        description: 'Genre of the story',
+        example: 'Science Fiction Thriller',
         enabled: true,
       },
       {
-        name: "theme",
-        description: "Main theme of the story",
-        example: "The commodification of human experience",
+        name: 'theme',
+        description: 'Main theme of the story',
+        example: 'The commodification of human experience',
         enabled: true,
       },
       {
-        name: "protagonist",
-        description: "Main character description",
-        example: "Maya Chen, 32, memory technician with a troubled past",
+        name: 'protagonist',
+        description: 'Main character description',
+        example: 'Maya Chen, 32, memory technician with a troubled past',
         enabled: true,
       },
       {
-        name: "antagonist",
-        description: "Main opposing force",
-        example: "Elias Vorn, CEO of MemoryCorp with hidden agenda",
+        name: 'antagonist',
+        description: 'Main opposing force',
+        example: 'Elias Vorn, CEO of MemoryCorp with hidden agenda',
         enabled: true,
       },
       {
-        name: "setting",
-        description: "Setting of the story",
-        example: "Neo-Tokyo, 2087, a city divided by technology access",
+        name: 'setting',
+        description: 'Setting of the story',
+        example: 'Neo-Tokyo, 2087, a city divided by technology access',
         enabled: true,
       },
       {
-        name: "timeframe",
-        description: "Timeframe of the story",
-        example: "Three intense days",
+        name: 'timeframe',
+        description: 'Timeframe of the story',
+        example: 'Three intense days',
         enabled: true,
       },
       {
-        name: "desiredLength",
-        description: "Desired length of the final story",
-        example: "Feature film (90-120 minutes)",
+        name: 'desiredLength',
+        description: 'Desired length of the final story',
+        example: 'Feature film (90-120 minutes)',
         enabled: true,
       },
       {
-        name: "structureType",
-        description: "Narrative structure to follow",
-        example: "Three-act structure",
+        name: 'structureType',
+        description: 'Narrative structure to follow',
+        example: 'Three-act structure',
         enabled: true,
       },
     ],
@@ -655,10 +674,10 @@ Ensure the outline follows the {{structureType}} structure while maintaining nar
 
   // Chapter Generation Template
   {
-    id: "chapter-generation",
-    name: "Chapter Generation",
-    description: "Template used to generate individual chapters or scenes",
-    category: "videoTreatment",
+    id: 'chapter-generation',
+    name: 'Chapter Generation',
+    description: 'Template used to generate individual chapters or scenes',
+    category: 'videoTreatment',
     template: `Generate a detailed chapter/scene based on the following parameters:
 
 TITLE: {{title}}
@@ -692,87 +711,88 @@ Writing style guidelines:
 Ensure the chapter advances the overall narrative while standing as a compelling scene in its own right.`,
     variables: [
       {
-        name: "title",
-        description: "Title of the chapter/scene",
-        example: "The Forgotten Memory",
+        name: 'title',
+        description: 'Title of the chapter/scene',
+        example: 'The Forgotten Memory',
         enabled: true,
       },
       {
-        name: "chapterPosition",
-        description: "Position in the overall story",
-        example: "Opening chapter",
+        name: 'chapterPosition',
+        description: 'Position in the overall story',
+        example: 'Opening chapter',
         enabled: true,
       },
       {
-        name: "previousChapterSummary",
-        description: "Summary of previous events",
+        name: 'previousChapterSummary',
+        description: 'Summary of previous events',
         example: "Maya discovered a corrupted memory file that shouldn't exist",
         enabled: true,
       },
       {
-        name: "charactersPresent",
-        description: "Characters in the scene",
-        example: "Maya Chen, Dr. Elias Vorn, Security Guard #1",
+        name: 'charactersPresent',
+        description: 'Characters in the scene',
+        example: 'Maya Chen, Dr. Elias Vorn, Security Guard #1',
         enabled: true,
       },
       {
-        name: "location",
-        description: "Location of the scene",
+        name: 'location',
+        description: 'Location of the scene',
         example: "MemoryCorp's underground lab, Level 3",
         enabled: true,
       },
       {
-        name: "timeOfDay",
-        description: "Time of day",
-        example: "Late night, around 2 AM",
+        name: 'timeOfDay',
+        description: 'Time of day',
+        example: 'Late night, around 2 AM',
         enabled: true,
       },
       {
-        name: "atmosphere",
-        description: "Weather and atmosphere",
-        example: "Sterile, cold, with humming machinery and flickering lights",
+        name: 'atmosphere',
+        description: 'Weather and atmosphere',
+        example: 'Sterile, cold, with humming machinery and flickering lights',
         enabled: true,
       },
       {
-        name: "plotPoints",
-        description: "Key plot points to cover",
-        example: "Maya confronts Elias, discovers the truth about the memory files, narrowly escapes security",
+        name: 'plotPoints',
+        description: 'Key plot points to cover',
+        example:
+          'Maya confronts Elias, discovers the truth about the memory files, narrowly escapes security',
         enabled: true,
       },
       {
-        name: "emotionalTone",
-        description: "Emotional tone of the scene",
-        example: "Tense, paranoid, with underlying dread",
+        name: 'emotionalTone',
+        description: 'Emotional tone of the scene',
+        example: 'Tense, paranoid, with underlying dread',
         enabled: true,
       },
       {
-        name: "desiredLength",
-        description: "Desired length",
-        example: "1500-2000 words",
+        name: 'desiredLength',
+        description: 'Desired length',
+        example: '1500-2000 words',
         enabled: true,
       },
       {
-        name: "pointOfView",
-        description: "Point of view",
+        name: 'pointOfView',
+        description: 'Point of view',
         example: "Third person limited (Maya's perspective)",
         enabled: true,
       },
       {
-        name: "tense",
-        description: "Tense",
-        example: "Present tense",
+        name: 'tense',
+        description: 'Tense',
+        example: 'Present tense',
         enabled: true,
       },
       {
-        name: "writingStyle",
-        description: "Writing style",
-        example: "Terse, noir-inspired prose with technical jargon",
+        name: 'writingStyle',
+        description: 'Writing style',
+        example: 'Terse, noir-inspired prose with technical jargon',
         enabled: true,
       },
       {
-        name: "pacing",
-        description: "Pacing",
-        example: "Quick, urgent pacing with short paragraphs",
+        name: 'pacing',
+        description: 'Pacing',
+        example: 'Quick, urgent pacing with short paragraphs',
         enabled: true,
       },
     ],
@@ -780,10 +800,10 @@ Ensure the chapter advances the overall narrative while standing as a compelling
 
   // Chapter Enhancement Template
   {
-    id: "chapter-enhancement",
-    name: "Chapter Enhancement",
-    description: "Template used to enhance and refine existing chapters",
-    category: "videoTreatment",
+    id: 'chapter-enhancement',
+    name: 'Chapter Enhancement',
+    description: 'Template used to enhance and refine existing chapters',
+    category: 'videoTreatment',
     template: `Enhance and refine the following chapter/scene based on these parameters:
 
 ORIGINAL CONTENT:
@@ -815,87 +835,91 @@ Please enhance the provided content while maintaining its core narrative and cha
 For each enhancement area marked "Yes," provide significant improvements. For those marked "No" or left blank, maintain the original approach.`,
     variables: [
       {
-        name: "originalContent",
-        description: "The original chapter/scene content",
-        example: "[Paste the original chapter text here]",
+        name: 'originalContent',
+        description: 'The original chapter/scene content',
+        example: '[Paste the original chapter text here]',
         enabled: true,
       },
       {
-        name: "enhancementFocus",
-        description: "Primary focus of enhancement",
-        example: "Deepen emotional resonance and character development",
+        name: 'enhancementFocus',
+        description: 'Primary focus of enhancement',
+        example: 'Deepen emotional resonance and character development',
         enabled: true,
       },
       {
-        name: "improveDialogue",
-        description: "Dialogue improvement needs",
-        example: "Yes - Make dialogue more distinct between characters and reveal more subtext",
+        name: 'improveDialogue',
+        description: 'Dialogue improvement needs',
+        example:
+          'Yes - Make dialogue more distinct between characters and reveal more subtext',
         enabled: true,
       },
       {
-        name: "improveDescription",
-        description: "Description improvement needs",
-        example: "Yes - Add more vivid environmental details that reflect the mood",
+        name: 'improveDescription',
+        description: 'Description improvement needs',
+        example:
+          'Yes - Add more vivid environmental details that reflect the mood',
         enabled: true,
       },
       {
-        name: "improveCharacterDevelopment",
-        description: "Character development improvement needs",
+        name: 'improveCharacterDevelopment',
+        description: 'Character development improvement needs',
         example: "Yes - Show more of Maya's internal conflict about her past",
         enabled: true,
       },
       {
-        name: "improvePacing",
-        description: "Pacing improvement needs",
-        example: "Yes - Slow down the middle section to build more tension",
+        name: 'improvePacing',
+        description: 'Pacing improvement needs',
+        example: 'Yes - Slow down the middle section to build more tension',
         enabled: true,
       },
       {
-        name: "improveEmotionalImpact",
-        description: "Emotional impact improvement needs",
-        example: "Yes - Make the revelation scene more powerful",
+        name: 'improveEmotionalImpact',
+        description: 'Emotional impact improvement needs',
+        example: 'Yes - Make the revelation scene more powerful',
         enabled: true,
       },
       {
-        name: "improveSensoryDetails",
-        description: "Sensory details improvement needs",
-        example: "Yes - Add more tactile and auditory elements",
+        name: 'improveSensoryDetails',
+        description: 'Sensory details improvement needs',
+        example: 'Yes - Add more tactile and auditory elements',
         enabled: true,
       },
       {
-        name: "improveThematicElements",
-        description: "Thematic elements improvement needs",
-        example: "Yes - Strengthen the theme of memory as identity",
+        name: 'improveThematicElements',
+        description: 'Thematic elements improvement needs',
+        example: 'Yes - Strengthen the theme of memory as identity',
         enabled: true,
       },
       {
-        name: "toneAdjustment",
-        description: "Tone adjustment needs",
-        example: "Slightly darker with moments of unexpected beauty",
+        name: 'toneAdjustment',
+        description: 'Tone adjustment needs',
+        example: 'Slightly darker with moments of unexpected beauty',
         enabled: true,
       },
       {
-        name: "voiceConsistency",
-        description: "Voice consistency needs",
-        example: "Maintain the technical, precise narration established earlier",
+        name: 'voiceConsistency',
+        description: 'Voice consistency needs',
+        example:
+          'Maintain the technical, precise narration established earlier',
         enabled: true,
       },
       {
-        name: "genreConventions",
-        description: "Genre conventions to emphasize",
-        example: "Lean more into noir elements while maintaining sci-fi foundation",
+        name: 'genreConventions',
+        description: 'Genre conventions to emphasize',
+        example:
+          'Lean more into noir elements while maintaining sci-fi foundation',
         enabled: true,
       },
       {
-        name: "wordCountTarget",
-        description: "Target word count",
-        example: "Expand to approximately 2500 words",
+        name: 'wordCountTarget',
+        description: 'Target word count',
+        example: 'Expand to approximately 2500 words',
         enabled: true,
       },
       {
-        name: "readingLevel",
-        description: "Target reading level",
-        example: "Adult - college level vocabulary acceptable",
+        name: 'readingLevel',
+        description: 'Target reading level',
+        example: 'Adult - college level vocabulary acceptable',
         enabled: true,
       },
     ],
@@ -903,10 +927,10 @@ For each enhancement area marked "Yes," provide significant improvements. For th
 
   // Character Development Template
   {
-    id: "character-development",
-    name: "Character Development",
-    description: "Template used to develop detailed character profiles",
-    category: "videoTreatment",
+    id: 'character-development',
+    name: 'Character Development',
+    description: 'Template used to develop detailed character profiles',
+    category: 'videoTreatment',
     template: `Create a comprehensive character profile based on the following parameters:
 
 CHARACTER NAME: {{characterName}}
@@ -963,45 +987,45 @@ Ensure the character is:
 - Distinctive and memorable`,
     variables: [
       {
-        name: "characterName",
+        name: 'characterName',
         description: "Character's full name",
-        example: "Maya Chen",
+        example: 'Maya Chen',
         enabled: true,
       },
       {
-        name: "characterRole",
+        name: 'characterRole',
         description: "Character's role in the story",
-        example: "Protagonist",
+        example: 'Protagonist',
         enabled: true,
       },
       {
-        name: "characterAge",
+        name: 'characterAge',
         description: "Character's age",
-        example: "32",
+        example: '32',
         enabled: true,
       },
       {
-        name: "characterGender",
+        name: 'characterGender',
         description: "Character's gender",
-        example: "Female",
+        example: 'Female',
         enabled: true,
       },
       {
-        name: "characterOccupation",
+        name: 'characterOccupation',
         description: "Character's occupation",
-        example: "Memory technician at MemoryCorp",
+        example: 'Memory technician at MemoryCorp',
         enabled: true,
       },
       {
-        name: "physicalDescription",
-        description: "Physical description",
+        name: 'physicalDescription',
+        description: 'Physical description',
         example:
-          "5'7\", athletic build, short black hair with blue highlights, distinctive neural implant scar behind right ear",
+          '5\'7", athletic build, short black hair with blue highlights, distinctive neural implant scar behind right ear',
         enabled: true,
       },
       {
-        name: "storyWorldContext",
-        description: "Context within the story world",
+        name: 'storyWorldContext',
+        description: 'Context within the story world',
         example:
           "In 2087 Neo-Tokyo, memory technicians are elite specialists who can extract, modify, and implant memories. They're bound by strict ethical codes and government regulations.",
         enabled: true,
@@ -1011,10 +1035,10 @@ Ensure the character is:
 
   // Setting Development Template
   {
-    id: "setting-development",
-    name: "Setting Development",
-    description: "Template used to develop detailed story settings",
-    category: "videoTreatment",
+    id: 'setting-development',
+    name: 'Setting Development',
+    description: 'Template used to develop detailed story settings',
+    category: 'videoTreatment',
     template: `Create a comprehensive setting profile based on the following parameters:
 
 SETTING NAME: {{settingName}}
@@ -1077,40 +1101,40 @@ Ensure the setting is:
 - Appropriate for the genre and narrative needs`,
     variables: [
       {
-        name: "settingName",
-        description: "Name of the setting",
-        example: "Neo-Tokyo",
+        name: 'settingName',
+        description: 'Name of the setting',
+        example: 'Neo-Tokyo',
         enabled: true,
       },
       {
-        name: "settingType",
-        description: "Type of setting",
-        example: "Futuristic metropolis",
+        name: 'settingType',
+        description: 'Type of setting',
+        example: 'Futuristic metropolis',
         enabled: true,
       },
       {
-        name: "timePeriod",
-        description: "Time period",
-        example: "2087, sixty years after the Great Data Collapse",
+        name: 'timePeriod',
+        description: 'Time period',
+        example: '2087, sixty years after the Great Data Collapse',
         enabled: true,
       },
       {
-        name: "genre",
-        description: "Genre of the story",
-        example: "Science fiction with noir elements",
+        name: 'genre',
+        description: 'Genre of the story',
+        example: 'Science fiction with noir elements',
         enabled: true,
       },
       {
-        name: "scale",
-        description: "Scale of the setting",
-        example: "Massive urban sprawl with 40 million inhabitants",
+        name: 'scale',
+        description: 'Scale of the setting',
+        example: 'Massive urban sprawl with 40 million inhabitants',
         enabled: true,
       },
       {
-        name: "storyRelevance",
-        description: "Relevance to the story",
+        name: 'storyRelevance',
+        description: 'Relevance to the story',
         example:
-          "Primary setting where memory technology was pioneered and is now central to the economy and social structure",
+          'Primary setting where memory technology was pioneered and is now central to the economy and social structure',
         enabled: true,
       },
     ],
@@ -1118,10 +1142,10 @@ Ensure the setting is:
 
   // Dialogue Enhancement Template
   {
-    id: "dialogue-enhancement",
-    name: "Dialogue Enhancement",
-    description: "Template used to enhance and refine dialogue",
-    category: "videoTreatment",
+    id: 'dialogue-enhancement',
+    name: 'Dialogue Enhancement',
+    description: 'Template used to enhance and refine dialogue',
+    category: 'videoTreatment',
     template: `Enhance and refine the following dialogue based on these parameters:
 
 ORIGINAL DIALOGUE:
@@ -1155,89 +1179,100 @@ Please enhance the provided dialogue while maintaining its core purpose and char
 For each enhancement area marked "Yes," provide significant improvements. For those marked "No" or left blank, maintain the original approach.`,
     variables: [
       {
-        name: "originalDialogue",
-        description: "The original dialogue content",
-        example: "[Paste the original dialogue here]",
+        name: 'originalDialogue',
+        description: 'The original dialogue content',
+        example: '[Paste the original dialogue here]',
         enabled: true,
       },
       {
-        name: "charactersInvolved",
-        description: "Characters participating in the dialogue",
-        example: "Maya Chen (protagonist, memory technician), Dr. Elias Vorn (antagonist, CEO)",
-        enabled: true,
-      },
-      {
-        name: "sceneContext",
-        description: "Context of the scene",
+        name: 'charactersInvolved',
+        description: 'Characters participating in the dialogue',
         example:
-          "Maya has discovered corrupted memory files and is confronting Elias in his office, suspecting him of illegal memory manipulation",
+          'Maya Chen (protagonist, memory technician), Dr. Elias Vorn (antagonist, CEO)',
         enabled: true,
       },
       {
-        name: "dialogueGoals",
-        description: "Goals of this dialogue exchange",
+        name: 'sceneContext',
+        description: 'Context of the scene',
+        example:
+          'Maya has discovered corrupted memory files and is confronting Elias in his office, suspecting him of illegal memory manipulation',
+        enabled: true,
+      },
+      {
+        name: 'dialogueGoals',
+        description: 'Goals of this dialogue exchange',
         example:
           "Reveal Elias's true motives while maintaining tension; Maya needs information without revealing how much she already knows",
         enabled: true,
       },
       {
-        name: "enhanceCharacterVoices",
-        description: "Character voice distinction needs",
-        example: "Yes - Make Elias sound more educated and calculating, Maya more direct and technical",
+        name: 'enhanceCharacterVoices',
+        description: 'Character voice distinction needs',
+        example:
+          'Yes - Make Elias sound more educated and calculating, Maya more direct and technical',
         enabled: true,
       },
       {
-        name: "enhanceSubtext",
-        description: "Subtext enhancement needs",
-        example: "Yes - Add layers of meaning where characters say one thing but mean another",
+        name: 'enhanceSubtext',
+        description: 'Subtext enhancement needs',
+        example:
+          'Yes - Add layers of meaning where characters say one thing but mean another',
         enabled: true,
       },
       {
-        name: "enhanceConflict",
-        description: "Conflict enhancement needs",
-        example: "Yes - Increase the underlying tension while keeping the conversation outwardly professional",
+        name: 'enhanceConflict',
+        description: 'Conflict enhancement needs',
+        example:
+          'Yes - Increase the underlying tension while keeping the conversation outwardly professional',
         enabled: true,
       },
       {
-        name: "improveExposition",
-        description: "Exposition improvement needs",
-        example: "Yes - Make the technical explanations more natural and less obvious",
+        name: 'improveExposition',
+        description: 'Exposition improvement needs',
+        example:
+          'Yes - Make the technical explanations more natural and less obvious',
         enabled: true,
       },
       {
-        name: "improvePacing",
-        description: "Pacing improvement needs",
-        example: "Yes - Vary the rhythm with some quick exchanges and some longer statements",
+        name: 'improvePacing',
+        description: 'Pacing improvement needs',
+        example:
+          'Yes - Vary the rhythm with some quick exchanges and some longer statements',
         enabled: true,
       },
       {
-        name: "improveAuthenticity",
-        description: "Authenticity improvement needs",
-        example: "Yes - Make the dialogue sound more like natural speech with interruptions and imperfections",
+        name: 'improveAuthenticity',
+        description: 'Authenticity improvement needs',
+        example:
+          'Yes - Make the dialogue sound more like natural speech with interruptions and imperfections',
         enabled: true,
       },
       {
-        name: "enhanceEmotionalImpact",
-        description: "Emotional impact enhancement needs",
-        example: "Yes - Make the moment when Maya realizes Elias is lying more powerful",
+        name: 'enhanceEmotionalImpact',
+        description: 'Emotional impact enhancement needs',
+        example:
+          'Yes - Make the moment when Maya realizes Elias is lying more powerful',
         enabled: true,
       },
       {
-        name: "dialogueStyle",
-        description: "Dialogue style guidance",
-        example: "Noir-influenced, terse, with technical jargon appropriate to memory science",
+        name: 'dialogueStyle',
+        description: 'Dialogue style guidance',
+        example:
+          'Noir-influenced, terse, with technical jargon appropriate to memory science',
         enabled: true,
       },
       {
-        name: "culturalAccuracy",
-        description: "Cultural/period accuracy needs",
-        example: "Include references to 2087 Neo-Tokyo culture and corporate language",
+        name: 'culturalAccuracy',
+        description: 'Cultural/period accuracy needs',
+        example:
+          'Include references to 2087 Neo-Tokyo culture and corporate language',
         enabled: true,
       },
       {
-        name: "jargonLevel",
-        description: "Technical jargon level",
-        example: "Moderate - use memory technology terms but ensure they're understandable in context",
+        name: 'jargonLevel',
+        description: 'Technical jargon level',
+        example:
+          "Moderate - use memory technology terms but ensure they're understandable in context",
         enabled: true,
       },
     ],
@@ -1245,10 +1280,11 @@ For each enhancement area marked "Yes," provide significant improvements. For th
 
   // Script Formatting Template
   {
-    id: "script-formatting",
-    name: "Script Formatting",
-    description: "Template used to format content into proper screenplay format",
-    category: "videoTreatment",
+    id: 'script-formatting',
+    name: 'Script Formatting',
+    description:
+      'Template used to format content into proper screenplay format',
+    category: 'videoTreatment',
     template: `Convert the following content into proper screenplay format:
 
 ORIGINAL CONTENT:
@@ -1269,102 +1305,104 @@ Please convert the provided content into professional screenplay format followin
 The formatted script should be ready for production use, with proper spacing, capitalization, and layout according to the specified format type.`,
     variables: [
       {
-        name: "originalContent",
-        description: "The original content to format",
-        example: "[Paste the original content here]",
+        name: 'originalContent',
+        description: 'The original content to format',
+        example: '[Paste the original content here]',
         enabled: true,
       },
       {
-        name: "formatType",
-        description: "Type of script format",
-        example: "Feature Film Screenplay (US Standard)",
+        name: 'formatType',
+        description: 'Type of script format',
+        example: 'Feature Film Screenplay (US Standard)',
         enabled: true,
       },
       {
-        name: "sceneHeadingStyle",
-        description: "Scene heading style",
-        example: "Standard INT./EXT. LOCATION - TIME format, all caps",
+        name: 'sceneHeadingStyle',
+        description: 'Scene heading style',
+        example: 'Standard INT./EXT. LOCATION - TIME format, all caps',
         enabled: true,
       },
       {
-        name: "characterNameStyle",
-        description: "Character name style",
-        example: "ALL CAPS, centered above dialogue",
+        name: 'characterNameStyle',
+        description: 'Character name style',
+        example: 'ALL CAPS, centered above dialogue',
         enabled: true,
       },
       {
-        name: "dialogueFormatStyle",
-        description: "Dialogue format style",
-        example: "Standard width (33 spaces), centered under character name",
+        name: 'dialogueFormatStyle',
+        description: 'Dialogue format style',
+        example: 'Standard width (33 spaces), centered under character name',
         enabled: true,
       },
       {
-        name: "actionDescriptionStyle",
-        description: "Action description style",
-        example: "Full width, single-spaced, present tense",
+        name: 'actionDescriptionStyle',
+        description: 'Action description style',
+        example: 'Full width, single-spaced, present tense',
         enabled: true,
       },
       {
-        name: "transitionStyle",
-        description: "Transition style",
-        example: "Standard transitions (CUT TO:, DISSOLVE TO:) right-aligned, all caps",
+        name: 'transitionStyle',
+        description: 'Transition style',
+        example:
+          'Standard transitions (CUT TO:, DISSOLVE TO:) right-aligned, all caps',
         enabled: true,
       },
       {
-        name: "specialInstructions",
-        description: "Special formatting instructions",
-        example: "Include camera directions only when absolutely necessary for story comprehension",
+        name: 'specialInstructions',
+        description: 'Special formatting instructions',
+        example:
+          'Include camera directions only when absolutely necessary for story comprehension',
         enabled: true,
       },
     ],
   },
-]
+];
 
 // Update the getCategoryName function to ensure all categories are properly labeled
 
 const getCategoryName = (category: string) => {
   switch (category) {
-    case "shotList":
-      return "Shot List"
-    case "subjects":
-      return "Subjects"
-    case "directorsNotes":
-      return "Director's Notes"
-    case "visualPrompt":
-      return "Visual Prompt"
-    case "videoTreatment":
-      return "Video Treatment"
-    case "shotSuggestions":
-      return "Shot Suggestions"
-    case "other":
-      return "Other"
+    case 'shotList':
+      return 'Shot List';
+    case 'subjects':
+      return 'Subjects';
+    case 'directorsNotes':
+      return "Director's Notes";
+    case 'visualPrompt':
+      return 'Visual Prompt';
+    case 'videoTreatment':
+      return 'Video Treatment';
+    case 'shotSuggestions':
+      return 'Shot Suggestions';
+    case 'other':
+      return 'Other';
     default:
-      return category
+      return category;
   }
-}
+};
 
 // Update the getCategoryColor function to ensure all categories have appropriate colors
 
 const getCategoryColor = (category: string) => {
   switch (category) {
-    case "shotList":
-      return "bg-blue-500"
-    case "subjects":
-      return "bg-green-500"
-    case "directorsNotes":
-      return "bg-purple-500"
-    case "visualPrompt":
-      return "bg-amber-500"
-    case "videoTreatment":
-      return "bg-pink-500"
-    case "shotSuggestions":
-      return "bg-cyan-500"
-    case "other":
-      return "bg-slate-500"
+    case 'shotList':
+      return 'bg-blue-500';
+    case 'subjects':
+      return 'bg-green-500';
+    case 'directorsNotes':
+      return 'bg-purple-500';
+    case 'visualPrompt':
+      return 'bg-amber-500';
+    case 'videoTreatment':
+      return 'bg-pink-500';
+    case 'shotSuggestions':
+      return 'bg-cyan-500';
+    case 'other':
+      return 'bg-slate-500';
     default:
-      return "bg-gray-500"
+      return 'bg-gray-500';
   }
-}
+};
 
 export const useTemplateStore = create<TemplateState>()(
   persist(
@@ -1372,43 +1410,55 @@ export const useTemplateStore = create<TemplateState>()(
       templates: [...defaultTemplates],
 
       getTemplate: (id: string) => {
-        return get().templates.find((template) => template.id === id)
+        return get().templates.find((template) => template.id === id);
       },
 
-      updateTemplate: (id: string, updatedTemplate: Partial<PromptTemplate>) => {
-        const templates = get().templates
-        const index = templates.findIndex((template) => template.id === id)
+      updateTemplate: (
+        id: string,
+        updatedTemplate: Partial<PromptTemplate>
+      ) => {
+        const templates = get().templates;
+        const index = templates.findIndex((template) => template.id === id);
 
         if (index !== -1) {
-          const newTemplates = [...templates]
-          newTemplates[index] = { ...newTemplates[index], ...updatedTemplate }
-          set({ templates: newTemplates })
+          const newTemplates = [...templates];
+          newTemplates[index] = { ...newTemplates[index], ...updatedTemplate };
+          set({ templates: newTemplates });
         }
       },
 
-      updateTemplateVariable: (templateId: string, variableName: string, enabled: boolean) => {
-        const templates = get().templates
-        const templateIndex = templates.findIndex((template) => template.id === templateId)
+      updateTemplateVariable: (
+        templateId: string,
+        variableName: string,
+        enabled: boolean
+      ) => {
+        const templates = get().templates;
+        const templateIndex = templates.findIndex(
+          (template) => template.id === templateId
+        );
 
         if (templateIndex !== -1) {
-          const template = templates[templateIndex]
-          const variableIndex = template.variables.findIndex((v) => v.name === variableName)
+          const template = templates[templateIndex];
+          const variableIndex = template.variables.findIndex(
+            (v) => v.name === variableName
+          );
 
           if (variableIndex !== -1) {
-            const newTemplates = [...templates]
-            newTemplates[templateIndex].variables[variableIndex].enabled = enabled
-            set({ templates: newTemplates })
+            const newTemplates = [...templates];
+            newTemplates[templateIndex].variables[variableIndex].enabled =
+              enabled;
+            set({ templates: newTemplates });
           }
         }
       },
 
       resetToDefaults: () => {
-        set({ templates: [...defaultTemplates] })
+        set({ templates: [...defaultTemplates] });
       },
     }),
     {
-      name: "scriptvision-templates",
+      name: 'scriptvision-templates',
       storage: createJSONStorage(() => storage),
-    },
-  ),
-)
+    }
+  )
+);

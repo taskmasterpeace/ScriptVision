@@ -1,9 +1,9 @@
-"use client"
+'use client';
 
-import type React from "react"
+import type React from 'react';
 
-import { useEffect } from "react"
-import { cn } from "@/lib/utils"
+import { useEffect } from 'react';
+import { cn } from '@/lib/utils';
 import {
   CheckCircle2,
   Circle,
@@ -18,157 +18,165 @@ import {
   Palette,
   Wand2,
   ImageIcon,
-} from "lucide-react"
-import { useProjectStore } from "@/lib/stores/project-store"
-import { useScriptCreationStore } from "@/lib/stores/script-creation-store"
-import { useImageGenerationStore } from "@/lib/stores/image-generation-store"
-import { Badge } from "@/components/ui/badge"
+} from 'lucide-react';
+import { useProjectStore } from '@/lib/stores/project-store';
+import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
+import { useImageGenerationStore } from '@/lib/stores/image-generation-store';
+import { Badge } from '@/components/ui/badge';
 
 interface WorkflowStep {
-  id: string
-  label: string
-  description: string
-  tabValue: string
-  isCompleted: (state: any) => boolean
-  icon?: React.ReactNode
-  phase: "creation" | "production" | "generation"
+  id: string;
+  label: string;
+  description: string;
+  tabValue: string;
+  isCompleted: (state: any) => boolean;
+  icon?: React.ReactNode;
+  phase: 'creation' | 'production' | 'generation';
 }
 
 export function EnhancedWorkflowNavigation({
   activeTab,
   onTabChange,
 }: {
-  activeTab: string
-  onTabChange: (tab: string) => void
+  activeTab: string;
+  onTabChange: (tab: string) => void;
 }) {
-  const projectState = useProjectStore()
-  const scriptCreationState = useScriptCreationStore()
-  const imageGenerationState = useImageGenerationStore()
+  const projectState = useProjectStore();
+  const scriptCreationState = useScriptCreationStore();
+  const imageGenerationState = useImageGenerationStore();
 
   // Define the workflow steps including the new script creation steps
   const workflowSteps: WorkflowStep[] = [
     {
-      id: "story-theme",
-      label: "1. Story Theme",
-      description: "Define your story concept",
-      tabValue: "story-theme",
-      isCompleted: (state) => Boolean(scriptCreationState.storyTheme && scriptCreationState.storyTheme.length > 0),
+      id: 'story-theme',
+      label: '1. Story Theme',
+      description: 'Define your story concept',
+      tabValue: 'story-theme',
+      isCompleted: (state) =>
+        Boolean(
+          scriptCreationState.storyTheme &&
+            scriptCreationState.storyTheme.length > 0
+        ),
       icon: <BookOpen className="h-4 w-4" />,
-      phase: "creation",
+      phase: 'creation',
     },
     {
-      id: "research",
-      label: "2. Research",
-      description: "Find inspiration from YouTube",
-      tabValue: "research",
-      isCompleted: (state) => scriptCreationState.selectedTranscripts.length > 0,
+      id: 'research',
+      label: '2. Research',
+      description: 'Find inspiration from YouTube',
+      tabValue: 'research',
+      isCompleted: (state) =>
+        scriptCreationState.selectedTranscripts.length > 0,
       icon: <Youtube className="h-4 w-4" />,
-      phase: "creation",
+      phase: 'creation',
     },
     {
-      id: "outline",
-      label: "3. Outline",
-      description: "Create your story structure",
-      tabValue: "outline",
+      id: 'outline',
+      label: '3. Outline',
+      description: 'Create your story structure',
+      tabValue: 'outline',
       isCompleted: (state) => scriptCreationState.chapters.length > 0,
       icon: <List className="h-4 w-4" />,
-      phase: "creation",
+      phase: 'creation',
     },
     {
-      id: "write",
-      label: "4. Write",
-      description: "Develop your story chapters",
-      tabValue: "write",
+      id: 'write',
+      label: '4. Write',
+      description: 'Develop your story chapters',
+      tabValue: 'write',
       isCompleted: (state) => scriptCreationState.generatedChapters.length > 0,
       icon: <FileText className="h-4 w-4" />,
-      phase: "creation",
+      phase: 'creation',
     },
     {
-      id: "enhance",
-      label: "5. Enhance",
-      description: "Optimize emotional impact",
-      tabValue: "enhance",
+      id: 'enhance',
+      label: '5. Enhance',
+      description: 'Optimize emotional impact',
+      tabValue: 'enhance',
       isCompleted: (state) => scriptCreationState.enhancedChapters.length > 0,
       icon: <Sparkles className="h-4 w-4" />,
-      phase: "creation",
+      phase: 'creation',
     },
     {
-      id: "script",
-      label: "6. Script",
-      description: "Review final script",
-      tabValue: "script",
-      isCompleted: (state) => Boolean(projectState.script && projectState.script.length > 0),
+      id: 'script',
+      label: '6. Script',
+      description: 'Review final script',
+      tabValue: 'script',
+      isCompleted: (state) =>
+        Boolean(projectState.script && projectState.script.length > 0),
       icon: <FileText className="h-4 w-4" />,
-      phase: "production",
+      phase: 'production',
     },
     {
-      id: "shotlist",
-      label: "7. Shot List",
-      description: "Generate and refine shot list",
-      tabValue: "shotlist",
+      id: 'shotlist',
+      label: '7. Shot List',
+      description: 'Generate and refine shot list',
+      tabValue: 'shotlist',
       isCompleted: (state) => projectState.shotList.length > 0,
       icon: <Camera className="h-4 w-4" />,
-      phase: "production",
+      phase: 'production',
     },
     {
-      id: "subjects",
-      label: "8. Subjects",
-      description: "Manage characters, locations, props",
-      tabValue: "subjects",
+      id: 'subjects',
+      label: '8. Subjects',
+      description: 'Manage characters, locations, props',
+      tabValue: 'subjects',
       isCompleted: (state) => projectState.subjects.length > 0,
       icon: <Users className="h-4 w-4" />,
-      phase: "production",
+      phase: 'production',
     },
     {
-      id: "styles",
-      label: "9. Styles",
-      description: "Select visual and director styles",
-      tabValue: "styles",
+      id: 'styles',
+      label: '9. Styles',
+      description: 'Select visual and director styles',
+      tabValue: 'styles',
       isCompleted: (state) => Boolean(projectState.selectedStyle),
       icon: <Palette className="h-4 w-4" />,
-      phase: "production",
+      phase: 'production',
     },
     {
-      id: "prompts",
-      label: "10. Prompts",
-      description: "Generate visual prompts",
-      tabValue: "prompts",
+      id: 'prompts',
+      label: '10. Prompts',
+      description: 'Generate visual prompts',
+      tabValue: 'prompts',
       isCompleted: (state) => projectState.generatedPrompts.length > 0,
       icon: <Wand2 className="h-4 w-4" />,
-      phase: "production",
+      phase: 'production',
     },
     {
-      id: "images",
-      label: "11. Images",
-      description: "Generate images from prompts",
-      tabValue: "images",
+      id: 'images',
+      label: '11. Images',
+      description: 'Generate images from prompts',
+      tabValue: 'images',
       isCompleted: (state) => imageGenerationState.generatedImages.length > 0,
       icon: <ImageIcon className="h-4 w-4" />,
-      phase: "generation",
+      phase: 'generation',
     },
     {
-      id: "developer",
-      label: "Developer",
-      description: "Advanced template editing",
-      tabValue: "developer",
+      id: 'developer',
+      label: 'Developer',
+      description: 'Advanced template editing',
+      tabValue: 'developer',
       isCompleted: () => true,
       icon: <Settings className="h-4 w-4" />,
-      phase: "production",
+      phase: 'production',
     },
-  ]
+  ];
 
   // Auto-suggest next step if current step is completed
   useEffect(() => {
-    const currentStepIndex = workflowSteps.findIndex((step) => step.tabValue === activeTab)
+    const currentStepIndex = workflowSteps.findIndex(
+      (step) => step.tabValue === activeTab
+    );
     if (currentStepIndex >= 0) {
-      const currentStep = workflowSteps[currentStepIndex]
+      const currentStep = workflowSteps[currentStepIndex];
       if (
         currentStep.isCompleted(
-          currentStep.phase === "creation"
+          currentStep.phase === 'creation'
             ? scriptCreationState
-            : currentStep.phase === "generation"
+            : currentStep.phase === 'generation'
               ? imageGenerationState
-              : projectState,
+              : projectState
         ) &&
         currentStepIndex < workflowSteps.length - 1
       ) {
@@ -176,18 +184,25 @@ export function EnhancedWorkflowNavigation({
         // This is just visual - we don't automatically change tabs
       }
     }
-  }, [activeTab, projectState, scriptCreationState, imageGenerationState])
+  }, [activeTab, projectState, scriptCreationState, imageGenerationState]);
 
   // Group steps into categories for better UI organization
-  const scriptCreationSteps = workflowSteps.filter((step) => step.phase === "creation")
-  const productionSteps = workflowSteps.filter((step) => step.phase === "production" && step.id !== "developer")
-  const generationSteps = workflowSteps.filter((step) => step.phase === "generation")
-  const utilitySteps = workflowSteps.filter((step) => step.id === "developer")
+  const scriptCreationSteps = workflowSteps.filter(
+    (step) => step.phase === 'creation'
+  );
+  const productionSteps = workflowSteps.filter(
+    (step) => step.phase === 'production' && step.id !== 'developer'
+  );
+  const generationSteps = workflowSteps.filter(
+    (step) => step.phase === 'generation'
+  );
+  const utilitySteps = workflowSteps.filter((step) => step.id === 'developer');
 
   return (
     <div className="mb-6 bg-card border rounded-lg p-4 shadow-md">
       <div className="text-sm text-muted-foreground mb-4">
-        Follow these steps to create your script, visual prompts, and generate images:
+        Follow these steps to create your script, visual prompts, and generate
+        images:
       </div>
 
       <div className="space-y-6">
@@ -201,7 +216,9 @@ export function EnhancedWorkflowNavigation({
               >
                 Phase 1
               </Badge>
-              <h3 className="text-base font-semibold text-purple-800 dark:text-purple-300">Script Creation</h3>
+              <h3 className="text-base font-semibold text-purple-800 dark:text-purple-300">
+                Script Creation
+              </h3>
             </div>
             <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
               {scriptCreationSteps.map((step) => renderWorkflowStep(step))}
@@ -219,7 +236,9 @@ export function EnhancedWorkflowNavigation({
               >
                 Phase 2
               </Badge>
-              <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300">Production</h3>
+              <h3 className="text-base font-semibold text-amber-800 dark:text-amber-300">
+                Production
+              </h3>
             </div>
             <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
               {productionSteps.map((step) => renderWorkflowStep(step))}
@@ -237,7 +256,9 @@ export function EnhancedWorkflowNavigation({
               >
                 Phase 3
               </Badge>
-              <h3 className="text-base font-semibold text-emerald-800 dark:text-emerald-300">Image Generation</h3>
+              <h3 className="text-base font-semibold text-emerald-800 dark:text-emerald-300">
+                Image Generation
+              </h3>
             </div>
             <div className="flex flex-nowrap overflow-x-auto pb-2 gap-2">
               {generationSteps.map((step) => renderWorkflowStep(step))}
@@ -252,69 +273,77 @@ export function EnhancedWorkflowNavigation({
         </div>
       </div>
     </div>
-  )
+  );
 
   function renderWorkflowStep(step: WorkflowStep) {
     const state =
-      step.phase === "creation"
+      step.phase === 'creation'
         ? scriptCreationState
-        : step.phase === "generation"
+        : step.phase === 'generation'
           ? imageGenerationState
-          : projectState
-    const isActive = activeTab === step.tabValue
-    const isCompleted = step.isCompleted(state)
+          : projectState;
+    const isActive = activeTab === step.tabValue;
+    const isCompleted = step.isCompleted(state);
 
     // Different styling based on the phase
     const phaseColors = {
       creation: {
-        active: "bg-purple-600 text-white hover:bg-purple-700",
+        active: 'bg-purple-600 text-white hover:bg-purple-700',
         completed:
-          "text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900/30 dark:hover:bg-purple-800/40",
-        default: "text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20",
+          'text-purple-700 bg-purple-100 hover:bg-purple-200 dark:text-purple-300 dark:bg-purple-900/30 dark:hover:bg-purple-800/40',
+        default:
+          'text-purple-600 hover:bg-purple-100 dark:text-purple-400 dark:hover:bg-purple-900/20',
       },
       production: {
-        active: "bg-amber-600 text-white hover:bg-amber-700",
+        active: 'bg-amber-600 text-white hover:bg-amber-700',
         completed:
-          "text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-800/40",
-        default: "text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/20",
+          'text-amber-700 bg-amber-100 hover:bg-amber-200 dark:text-amber-300 dark:bg-amber-900/30 dark:hover:bg-amber-800/40',
+        default:
+          'text-amber-600 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/20',
       },
       generation: {
-        active: "bg-emerald-600 text-white hover:bg-emerald-700",
+        active: 'bg-emerald-600 text-white hover:bg-emerald-700',
         completed:
-          "text-emerald-700 bg-emerald-100 hover:bg-emerald-200 dark:text-emerald-300 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/40",
-        default: "text-emerald-600 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-900/20",
+          'text-emerald-700 bg-emerald-100 hover:bg-emerald-200 dark:text-emerald-300 dark:bg-emerald-900/30 dark:hover:bg-emerald-800/40',
+        default:
+          'text-emerald-600 hover:bg-emerald-100 dark:text-emerald-400 dark:hover:bg-emerald-900/20',
       },
-    }
+    };
 
     const colorClass = isActive
       ? phaseColors[step.phase].active
       : isCompleted
         ? phaseColors[step.phase].completed
-        : phaseColors[step.phase].default
+        : phaseColors[step.phase].default;
 
     const ringColor =
-      step.phase === "creation"
-        ? "ring-purple-400"
-        : step.phase === "production"
-          ? "ring-amber-400"
-          : "ring-emerald-400"
+      step.phase === 'creation'
+        ? 'ring-purple-400'
+        : step.phase === 'production'
+          ? 'ring-amber-400'
+          : 'ring-emerald-400';
 
     return (
       <button
         key={step.id}
         onClick={() => onTabChange(step.tabValue)}
         className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative shadow-sm",
+          'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative shadow-sm',
           colorClass,
-          isActive && "ring-2 ring-offset-1",
-          ringColor,
+          isActive && 'ring-2 ring-offset-1',
+          ringColor
         )}
       >
         <span className="flex-shrink-0">
-          {step.icon || (isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Circle className="h-5 w-5" />)}
+          {step.icon ||
+            (isCompleted ? (
+              <CheckCircle2 className="h-5 w-5" />
+            ) : (
+              <Circle className="h-5 w-5" />
+            ))}
         </span>
         <span className="whitespace-nowrap">{step.label}</span>
       </button>
-    )
+    );
   }
 }
