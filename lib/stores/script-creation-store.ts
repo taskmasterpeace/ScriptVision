@@ -1,76 +1,42 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
 import { v4 as uuidv4 } from "uuid"
 import { useLoadingStore } from "@/lib/stores/loading-store"
 import { useAILogsStore } from "@/lib/stores/ai-logs-store"
 import { useProjectStore } from "@/lib/stores/project-store"
 import { generateAIResponse } from "@/lib/ai-service"
+import { storage } from "../db"
+import { YouTubeTranscript, Chapter, BulletPoint, GeneratedChapter, EmotionalEnhancement, ChapterSuggestion, EmotionalSuggestion, YoutubeSearchResult } from "@/lib/types/script.type"
+import { searchYouTubeAction } from "@/app/action"
 
-// Add to the YouTubeTranscript interface to support custom transcripts
-export interface YouTubeTranscript {
-  id: string
-  videoId: string | null // Can be null for custom transcripts
-  title: string
-  channelTitle: string | null // Can be null for custom transcripts
-  transcript: string
-  thumbnailUrl: string | null // Can be null for custom transcripts
-  selected: boolean
-  source: "youtube" | "custom" // Add source field to distinguish between YouTube and custom transcripts
+interface State {
+  projectId: string
+  storyTheme?: string
+  storyTitle?: string
+  storyGenre?: string
+  targetAudience?: string
+  searchQuery?: string
+  searchResults?: YoutubeSearchResult[]
+  selectedTranscripts?: YoutubeSearchResult[]
+  chapters?: Chapter[]
+  chapterSuggestions?: ChapterSuggestion[]
+  outlineDirections?: {
+    storyStructure: "three-act" | "hero-journey" | "five-act"
+    perspective: "first-person" | "third-person" | "multiple-pov"
+    tone: "light" | "dark" | "neutral"
+    additionalNotes: string
+    customPrompt: string // Add this new field
+  }
+  generatedChapters?: GeneratedChapter[]
+  enhancedChapters?: EmotionalEnhancement[]
+  emotionalSuggestions?: EmotionalSuggestion[]
 }
 
-export interface Chapter {
-  id: string
-  title: string
-  bulletPoints: BulletPoint[]
-  expanded: boolean
-}
-
-export interface BulletPoint {
-  id: string
-  text: string
-  selected: boolean
-}
-
-export interface GeneratedChapter {
-  id: string
-  chapterId: string
-  title: string
-  content: string
-  timestamp: string
-}
-
-export interface EmotionalEnhancement {
-  id: string
-  chapterId: string
-  originalContent: string
-  enhancedContent: string
-  emotionalImpact: string
-  changes: string[]
-  timestamp: string
-}
-
-export interface ChapterSuggestion {
-  id: string
-  chapterId: string | null // null for new chapter suggestions
-  title: string
-  reason: string
-  bulletPoints: string[]
-  selected: boolean
-}
-
-export interface EmotionalSuggestion {
-  id: string
-  chapterId: string
-  type: "dialog" | "scene" | "character" | "pacing"
-  suggestion: string
-  emotionalImpact: string
-  selected: boolean
-}
-
-// Add to the ScriptCreationState interface
 interface ScriptCreationState {
+  // Store all projects details in state and current project detail in their individual state
+  state: State[]
   // Story Theme
   storyTheme: string
   storyTitle: string
@@ -79,8 +45,8 @@ interface ScriptCreationState {
 
   // Research
   searchQuery: string
-  searchResults: YouTubeTranscript[]
-  selectedTranscripts: YouTubeTranscript[]
+  searchResults: YoutubeSearchResult[]
+  selectedTranscripts: YoutubeSearchResult[]
 
   // Outline
   chapters: Chapter[]
@@ -101,6 +67,26 @@ interface ScriptCreationState {
   // Enhance
   enhancedChapters: EmotionalEnhancement[]
   emotionalSuggestions: EmotionalSuggestion[]
+
+  // searchParams
+  searchParams: {
+    publishedAfter: string,
+    publishedBefore: string,
+    relevanceLanguage: string,
+    regionCode: string,
+    order: string,
+    videoDuration: string,
+    maxResults: string,
+  }
+  setSearchParams: (params: {
+    publishedAfter: string,
+    publishedBefore: string,
+    relevanceLanguage: string,
+    regionCode: string,
+    order: string,
+    videoDuration: string,
+    maxResults: string,
+  }) => void
 
   // Actions
   setStoryTheme: (theme: string) => void
@@ -142,12 +128,15 @@ interface ScriptCreationState {
 
   // Add this new action
   setOutlineDirections: (directions: Partial<ScriptCreationState["outlineDirections"]>) => void
+
+  setKeytoState: (key: keyof State, value: State[keyof State]) => void
 }
 
 // Add the implementation in the store
 export const useScriptCreationStore = create<ScriptCreationState>()(
   persist(
     (set, get) => ({
+      state: [],
       // Initial state
       storyTheme: "",
       storyTitle: "",
@@ -157,6 +146,15 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       searchQuery: "",
       searchResults: [],
       selectedTranscripts: [],
+      searchParams: {
+        publishedAfter: "",
+        publishedBefore: "",
+        relevanceLanguage: "",
+        regionCode: "",
+        order: "",
+        videoDuration: "",
+        maxResults: "",
+      },
 
       chapters: [],
       chapterSuggestions: [],
@@ -174,21 +172,84 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
       enhancedChapters: [],
       emotionalSuggestions: [],
+      setKeytoState: (key: keyof State, value: State[keyof State]) => {
+        const currentProject = useProjectStore.getState().projects.find((project) => project.name === useProjectStore.getState().projectName)
+        if (currentProject) {
+          const currentState = get().state;
+          // check if project exists on state
+          if (currentState.find((state) => state.projectId === currentProject.id)) {            
+            set({
+              state: get().state.map((state) => {
+                if (state.projectId === currentProject.id) {
+                  return {
+                    ...state,
+                    [key]: value,
+                  }
+                }
+                return state
+              }),
+            })
+          } else {
+            set({
+              state: [...get().state, {
+                projectId: currentProject.id,
+                [key]: value,
+              }],
+            })
+          }
+        }
+      },
 
       // Actions
-      setStoryTheme: (theme) => set({ storyTheme: theme }),
-      setStoryTitle: (title) => set({ storyTitle: title }),
-      setStoryGenre: (genre) => set({ storyGenre: genre }),
-      setTargetAudience: (audience) => set({ targetAudience: audience }),
+      setStoryTheme: (theme) => {
+        set({ storyTheme: theme })
+        get().setKeytoState("storyTheme", theme)
+      },
+      setStoryTitle: (title) => {
+        set({ storyTitle: title })
+        get().setKeytoState("storyTitle", title)
+      },
+      setStoryGenre: (genre) => {
+        set({ storyGenre: genre })
+        get().setKeytoState("storyGenre", genre)
+      },
+      setTargetAudience: (audience) => {
+        set({ targetAudience: audience })
+        get().setKeytoState("targetAudience", audience)
+      },
 
       // Update the searchYouTube function to include the source field
       searchYouTube: async (query) => {
         useLoadingStore.getState().setLoading("youtubeSearch", true)
-
+        // TODO: abstract params creation and formate date functions
+        const formatDate = (dateString: string) => {
+          if (!dateString) return "";
+          const date = new Date(dateString);
+          return date?.toISOString();
+        };
         try {
-          // In a real implementation, this would call the YouTube API
-          // For now, we'll simulate the API call with mock data
-          await new Promise((resolve) => setTimeout(resolve, 1500))
+          const searchParams = get().searchParams
+          const params = new URLSearchParams({
+            part: "snippet",
+            type: "video",
+            q: query || "",
+            ...(searchParams.maxResults && { maxResults: searchParams.maxResults }),
+            ...(searchParams.publishedAfter && {
+              publishedAfter: formatDate(searchParams.publishedAfter),
+            }),
+            ...(searchParams.publishedBefore && {
+              publishedBefore: formatDate(searchParams.publishedBefore),
+            }),
+            ...(searchParams.relevanceLanguage && {
+              relevanceLanguage: searchParams.relevanceLanguage,
+            }),
+            ...(searchParams.regionCode && { regionCode: searchParams.regionCode }),
+            ...(searchParams.order && { order: searchParams.order }),
+            ...(searchParams.videoDuration && {
+              videoDuration: searchParams.videoDuration,
+            }),
+          });
+          const result = await searchYouTubeAction(query, params.toString())
 
           // Mock search results
           const mockResults: YouTubeTranscript[] = [
@@ -227,7 +288,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
           set({
             searchQuery: query,
-            searchResults: mockResults,
+            searchResults: result,
           })
         } catch (error) {
           console.error("Failed to search YouTube:", error)
@@ -235,6 +296,10 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
         } finally {
           useLoadingStore.getState().setLoading("youtubeSearch", false)
         }
+      },
+
+      setSearchParams(params) {
+        set({ searchParams: params })
       },
 
       // Update the toggleTranscriptSelection function to include the source field
@@ -246,13 +311,12 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
           const updatedSelected = updatedResults
             .filter((result) => result.selected)
-            .map(({ id, videoId, title, channelTitle, transcript, thumbnailUrl, source }) => ({
+            .map(({ id, videoId, snippet, statistics, source, transcript }) => ({
               id,
               videoId,
-              title,
-              channelTitle,
+              snippet,
+              statistics,
               transcript,
-              thumbnailUrl,
               selected: true,
               source,
             }))
@@ -291,7 +355,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
         try {
           // Prepare the context for the AI
           const transcriptsText = selectedTranscripts
-            .map((t) => `SOURCE: ${t.title}\nCONTENT: ${t.transcript}`)
+            .map((t) => `SOURCE: ${t.snippet.title}\nCONTENT: ${t.transcript}`)
             .join("\n\n")
 
           const promptContext = {
@@ -436,9 +500,9 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           chapters: state.chapters.map((chapter) =>
             chapter.id === chapterId
               ? {
-                  ...chapter,
-                  bulletPoints: [...chapter.bulletPoints, { id: uuidv4(), text, selected: true }],
-                }
+                ...chapter,
+                bulletPoints: [...chapter.bulletPoints, { id: uuidv4(), text, selected: true }],
+              }
               : chapter,
           ),
         }))
@@ -449,9 +513,9 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           chapters: state.chapters.map((chapter) =>
             chapter.id === chapterId
               ? {
-                  ...chapter,
-                  bulletPoints: chapter.bulletPoints.map((point) => (point.id === id ? { ...point, text } : point)),
-                }
+                ...chapter,
+                bulletPoints: chapter.bulletPoints.map((point) => (point.id === id ? { ...point, text } : point)),
+              }
               : chapter,
           ),
         }))
@@ -462,9 +526,9 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           chapters: state.chapters.map((chapter) =>
             chapter.id === chapterId
               ? {
-                  ...chapter,
-                  bulletPoints: chapter.bulletPoints.filter((point) => point.id !== id),
-                }
+                ...chapter,
+                bulletPoints: chapter.bulletPoints.filter((point) => point.id !== id),
+              }
               : chapter,
           ),
         }))
@@ -475,11 +539,11 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           chapters: state.chapters.map((chapter) =>
             chapter.id === chapterId
               ? {
-                  ...chapter,
-                  bulletPoints: chapter.bulletPoints.map((point) =>
-                    point.id === id ? { ...point, selected: !point.selected } : point,
-                  ),
-                }
+                ...chapter,
+                bulletPoints: chapter.bulletPoints.map((point) =>
+                  point.id === id ? { ...point, selected: !point.selected } : point,
+                ),
+              }
               : chapter,
           ),
         }))
@@ -979,13 +1043,42 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
       // Add these new implementations
       addCustomTranscript: (title, transcript) => {
-        const newTranscript: YouTubeTranscript = {
+        const newTranscript: YoutubeSearchResult = {
           id: uuidv4(),
-          videoId: null,
-          title,
-          channelTitle: null,
+          videoId: "",
           transcript,
-          thumbnailUrl: null,
+          snippet: {
+            publishedAt: "",
+            channelId: "",
+            title,
+            description: "",
+            thumbnails: {
+              default: {
+                url: "",
+                width: 0,
+                height: 0,
+              },
+              medium: {
+                url: "",
+                width: 0,
+                height: 0,
+              },
+              high: {
+                url: "",
+                width: 0,
+                height: 0,
+              },
+            },
+            channelTitle: "",
+            liveBroadcastContent: "",
+            publishTime: "",
+          },
+          statistics: {
+            viewCount: "",
+            favoriteCount: "",
+            commentCount: "",
+            likeCount: "",
+          },
           selected: true,
           source: "custom",
         }
@@ -1022,6 +1115,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
     }),
     {
       name: "scriptvision-script-creation",
+      storage: createJSONStorage(() => storage),
     },
   ),
 )

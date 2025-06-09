@@ -1,7 +1,8 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
+import { storage } from "../db"
 
 export type ImageGenerationSettings = {
   aspectRatio: string
@@ -128,6 +129,7 @@ export const useImageGenerationStore = create<ImageGenerationState>()(
     }),
     {
       name: "scriptvision-image-generation",
+      storage: createJSONStorage(() => storage)
     },
   ),
 )

@@ -59,6 +59,7 @@ export interface GeneratedPrompt {
 }
 
 export interface Project {
+  id: string
   name: string
   lastModified: string
   script: string

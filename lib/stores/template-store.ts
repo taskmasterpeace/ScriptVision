@@ -1,7 +1,8 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
+import { storage } from "../db"
 
 export interface TemplateVariable {
   name: string
@@ -1407,6 +1408,7 @@ export const useTemplateStore = create<TemplateState>()(
     }),
     {
       name: "scriptvision-templates",
+      storage: createJSONStorage(() => storage),
     },
   ),
 )

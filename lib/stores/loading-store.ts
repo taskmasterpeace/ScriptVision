@@ -9,6 +9,7 @@ export type LoadingKey =
   | "generatePrompt"
   | "generateTreatment"
   | "suggestShots"
+  | string
 
 interface LoadingState {
   loadingStates: Record<LoadingKey, boolean>

@@ -1,8 +1,9 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
 import { v4 as uuidv4 } from "uuid"
+import { storage } from "../db"
 
 export interface AILogEntry {
   id: string
@@ -43,6 +44,7 @@ export const useAILogsStore = create<AILogsState>()(
     }),
     {
       name: "page2prompt-ai-logs",
+      storage: createJSONStorage(() => storage)
     },
   ),
 )

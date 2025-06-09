@@ -1,7 +1,8 @@
 "use client"
 
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { createJSONStorage, persist } from "zustand/middleware"
+import { storage } from "../db"
 
 export type AIModel = {
   id: string
@@ -127,6 +128,7 @@ export const useModelStore = create<ModelState>()(
     }),
     {
       name: "scriptvision-models",
+      storage: createJSONStorage(() => storage)
     },
   ),
 )

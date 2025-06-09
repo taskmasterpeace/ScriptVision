@@ -34,6 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Separator } from "@/components/ui/separator"
+import YoutubeFilterBar from "./Research/filter-bar"
 
 export default function ResearchTab() {
   const { toast } = useToast()
@@ -203,6 +204,7 @@ export default function ResearchTab() {
                 )}
               </Button>
             </div>
+            <YoutubeFilterBar />
 
             {searchResults.filter((r) => r.source === "youtube").length === 0 ? (
               <div className="text-center py-12 border rounded-md">
@@ -220,8 +222,8 @@ export default function ResearchTab() {
                     <Card key={result.id} className={`overflow-hidden ${result.selected ? "border-primary" : ""}`}>
                       <div className="relative">
                         <img
-                          src={result.thumbnailUrl || "/placeholder.svg"}
-                          alt={result.title}
+                          src={result.snippet.thumbnails.high.url || "/placeholder.svg"}
+                          alt={result.snippet.title}
                           className="w-full h-32 object-cover"
                         />
                         {result.selected && (
@@ -231,8 +233,8 @@ export default function ResearchTab() {
                         )}
                       </div>
                       <CardContent className="p-4">
-                        <h3 className="font-medium line-clamp-2 mb-1">{result.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-3">{result.channelTitle}</p>
+                        <h3 className="font-medium line-clamp-2 mb-1">{result.snippet.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-3">{result.snippet.channelTitle}</p>
                         <div className="flex justify-between items-center">
                           <Button
                             variant={result.selected ? "default" : "outline"}
@@ -331,7 +333,7 @@ export default function ResearchTab() {
                       <CardContent className="p-4">
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-medium">{result.title}</h3>
+                            <h3 className="font-medium">{result.snippet.title}</h3>
                             {result.selected && (
                               <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
                                 Selected
@@ -353,7 +355,7 @@ export default function ResearchTab() {
                                   onClick={() =>
                                     setEditingTranscript({
                                       id: result.id,
-                                      title: result.title,
+                                      title: result.snippet.title,
                                       content: result.transcript,
                                     })
                                   }
@@ -410,7 +412,7 @@ export default function ResearchTab() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleDeleteTranscript(result.id, result.title)}
+                              onClick={() => handleDeleteTranscript(result.id, result.snippet.title)}
                             >
                               <Trash className="h-4 w-4 text-red-500" />
                             </Button>
@@ -458,7 +460,7 @@ export default function ResearchTab() {
                   ) : (
                     <FileText className="h-4 w-4 text-muted-foreground" />
                   )}
-                  <span className="text-sm font-medium flex-1">{transcript.title}</span>
+                  <span className="text-sm font-medium flex-1">{transcript.snippet.title}</span>
                   <Button
                     variant="ghost"
                     size="sm"
