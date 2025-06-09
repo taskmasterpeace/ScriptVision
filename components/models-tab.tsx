@@ -129,6 +129,8 @@ export default function ModelsTab() {
         return "Video Treatment";
       case "shotSuggestions":
         return "Shot Suggestions";
+      case "outlineGeneration":
+        return "Outline Generation";
       default:
         return phase;
     }
@@ -215,35 +217,35 @@ export default function ModelsTab() {
                   ) : (
                     getFilteredModels(phase)
                       .map((model) => (
-                        <div
-                          key={`${model.provider}-${model.model}`}
+                      <div
+                        key={`${model.provider}-${model.model}`}
                           className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/50 ${config.model === model.model ? "bg-muted" : ""
-                            }`}
-                          onClick={() =>
-                            handleSetModelForPhase(
-                              phase as ApplicationPhase,
-                              model.model
-                            )
-                          }
-                        >
-                          <div className="flex-1">
-                            <div className="flex items-center">
-                              <span className="font-medium">{model.model}</span>
-                              {/* {model.recommended && (
+                        }`}
+                        onClick={() =>
+                          handleSetModelForPhase(
+                            phase as ApplicationPhase,
+                            model.model
+                          )
+                        }
+                      >
+                        <div className="flex-1">
+                          <div className="flex items-center">
+                            <span className="font-medium">{model.model}</span>
+                            {/* {model.recommended && (
                               <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                                 Recommended
                               </span>
                             )} */}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {model.description || "No description available"}
-                            </p>
                           </div>
-                          {config.model === model.model && (
-                            <Check className="h-4 w-4 text-primary" />
-                          )}
+                          <p className="text-xs text-muted-foreground">
+                              {model.description || "No description available"}
+                          </p>
                         </div>
-                      ))
+                        {config.model === model.model && (
+                          <Check className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
+                    ))
                   )}
                 </div>
               </CardContent>

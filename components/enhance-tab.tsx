@@ -34,8 +34,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
+import { useTabsStore } from '@/lib/stores/tabs-store';
 
 export default function EnhanceTab() {
+  const { setActiveTab: setActiveTabStore } = useTabsStore();
   const { toast } = useToast();
   const { isLoading } = useLoadingStore();
   const {
@@ -158,7 +160,7 @@ export default function EnhanceTab() {
     });
 
     // Navigate to the script tab
-    document.getElementById('script-tab-trigger')?.click();
+    setActiveTabStore('script')
   };
 
   return (
@@ -193,9 +195,7 @@ export default function EnhanceTab() {
             </p>
             <Button
               variant="outline"
-              onClick={() =>
-                document.getElementById('write-tab-trigger')?.click()
-              }
+              onClick={() => setActiveTabStore('write')}
             >
               Go to Write
             </Button>
@@ -537,7 +537,7 @@ export default function EnhanceTab() {
         <Button
           variant="outline"
           className="gap-2"
-          onClick={() => document.getElementById('write-tab-trigger')?.click()}
+          onClick={() => setActiveTabStore('write')}
         >
           <ArrowLeft className="h-4 w-4" /> Back: Write
         </Button>

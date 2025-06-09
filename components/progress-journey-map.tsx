@@ -21,6 +21,7 @@ import {
   ImageIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTabsStore } from "@/lib/stores/tabs-store";
 
 interface JourneyStep {
   id: string;
@@ -31,13 +32,8 @@ interface JourneyStep {
   tabValue: string;
 }
 
-export function ProgressJourneyMap({
-  activeTab,
-  onTabChange,
-}: {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}) {
+export function ProgressJourneyMap() {
+  const { activeTab, setActiveTab } = useTabsStore();
   const projectState = useProjectStore();
   const scriptCreationState = useScriptCreationStore();
   const imageGenerationState = useImageGenerationStore();
@@ -272,7 +268,7 @@ export function ProgressJourneyMap({
                   return (
                     <button
                       key={step.id}
-                      onClick={() => onTabChange(step.tabValue)}
+                      onClick={() => setActiveTab(step.tabValue)}
                       className="relative flex flex-col items-center"
                     >
                       <div
@@ -338,7 +334,7 @@ export function ProgressJourneyMap({
                   return (
                     <button
                       key={step.id}
-                      onClick={() => onTabChange(step.tabValue)}
+                      onClick={() => setActiveTab(step.tabValue)}
                       className="relative flex flex-col items-center"
                     >
                       <div
@@ -404,7 +400,7 @@ export function ProgressJourneyMap({
                   return (
                     <button
                       key={step.id}
-                      onClick={() => onTabChange(step.tabValue)}
+                      onClick={() => setActiveTab(step.tabValue)}
                       className="relative flex flex-col items-center"
                     >
                       <div

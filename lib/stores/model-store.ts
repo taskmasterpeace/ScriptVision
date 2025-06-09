@@ -16,7 +16,8 @@ export type ApplicationPhase =
   | 'directorsNotes'
   | 'visualPrompt'
   | 'videoTreatment'
-  | 'shotSuggestions';
+  | 'shotSuggestions'
+  | 'outlineGeneration';
 
 interface ModelState {
   apiKey: string
@@ -79,8 +80,14 @@ const defaultPhaseModelMapping: PhaseModelMapping = {
     provider: "openai",
     model: "gpt-4o-mini",
     lastUpdated: new Date().toISOString()
+  },
+  outlineGeneration: {
+    id: "outlineGeneration",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
   }
-};
+}
 
 export const useModelStore = create<ModelState>()(
   persist(
@@ -155,7 +162,7 @@ export const useModelStore = create<ModelState>()(
           // Clear all existing model data from IndexedDB
           const allKeys = await keys();
           await Promise.all(allKeys.map(key => del(key)));
-          
+
           // Create a new state with default values
           const defaultState = {
             phaseModelMapping: { ...defaultPhaseModelMapping },
@@ -164,7 +171,7 @@ export const useModelStore = create<ModelState>()(
               return acc;
             }, {})
           };
-          
+
           // Update the state
           set({
             ...defaultState,
@@ -174,7 +181,7 @@ export const useModelStore = create<ModelState>()(
             availableModels: [...get().availableModels],
             isLoading: false
           });
-          
+
           // Save the default configuration to IndexedDB
           await get().saveModel();
         } catch (error) {
@@ -188,13 +195,13 @@ export const useModelStore = create<ModelState>()(
         try {
           const { phaseModelMapping } = get()
           // We just need to ensure the state is updated
-          
+
           set({ phaseModelMapping: phaseModelMapping })
         } catch (error) {
           console.error('Error saving model configuration:', error)
         }
       },
-      
+
       // Load the model configuration from IndexedDB
       loadModel: async () => {
         try {
@@ -208,7 +215,7 @@ export const useModelStore = create<ModelState>()(
               acc[phase] = 'openai';
               return acc;
             }, {})
-            
+
             // Update selectedProviders based on loaded phaseModelMapping
             const loadedSelectedProviders = Object.entries(savedState || {}).reduce<Record<string, string>>(
               (acc, [phase, config]) => {
@@ -221,7 +228,7 @@ export const useModelStore = create<ModelState>()(
               },
               { ...defaultSelectedProviders }
             );
-            
+
             // Update the state with loaded values
             set({
               ...get(), // Keep existing state
@@ -261,4 +268,4 @@ export const useModelStore = create<ModelState>()(
       storage: createJSONStorage(() => storage),
     },
   ),
-)
+  )

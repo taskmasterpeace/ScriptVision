@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -23,8 +23,10 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
 import { ArrowRight } from 'lucide-react';
+import { useTabsStore } from '@/lib/stores/tabs-store';
 
 export default function StoryThemeTab() {
+  const { setActiveTab } = useTabsStore();
   const { toast } = useToast();
   const {
     storyTheme,
@@ -37,10 +39,10 @@ export default function StoryThemeTab() {
     setTargetAudience,
   } = useScriptCreationStore();
 
-  const [localTheme, setLocalTheme] = useState(storyTheme);
-  const [localTitle, setLocalTitle] = useState(storyTitle);
-  const [localGenre, setLocalGenre] = useState(storyGenre);
-  const [localAudience, setLocalAudience] = useState(targetAudience);
+  const [localTheme, setLocalTheme] = useState('');
+  const [localTitle, setLocalTitle] = useState('');
+  const [localGenre, setLocalGenre] = useState('');
+  const [localAudience, setLocalAudience] = useState('');
 
   const handleSave = () => {
     if (!localTheme.trim()) {
@@ -62,6 +64,13 @@ export default function StoryThemeTab() {
       description: 'Your story details have been saved.',
     });
   };
+
+  useEffect(() => {
+    setLocalTheme(storyTheme);
+    setLocalTitle(storyTitle);
+    setLocalGenre(storyGenre);
+    setLocalAudience(targetAudience);
+  }, [storyTheme, storyTitle, storyGenre, targetAudience]);
 
   return (
     <Card>
@@ -154,7 +163,7 @@ export default function StoryThemeTab() {
               });
               return;
             }
-            document.getElementById('research-tab-trigger')?.click();
+            setActiveTab('research');
           }}
         >
           Next: Research <ArrowRight className="h-4 w-4" />

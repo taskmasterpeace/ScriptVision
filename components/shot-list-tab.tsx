@@ -17,8 +17,10 @@ import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import ShotSuggestions from '@/components/shot-suggestions';
+import { useTabsStore } from "@/lib/stores/tabs-store";
 
 export default function ShotListTab() {
+  const { setActiveTab } = useTabsStore();
   const { toast } = useToast();
   const { shotList, script, generateShotList } = useProjectStore();
   const { isLoading } = useLoadingStore();
@@ -133,9 +135,7 @@ export default function ShotListTab() {
             ) : (
               <Button
                 variant="outline"
-                onClick={() =>
-                  window.document.getElementById('script-tab-trigger')?.click()
-                }
+                onClick={() => setActiveTab('script')}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Go to Script Tab

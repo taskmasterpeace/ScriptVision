@@ -1318,4 +1318,223 @@ The formatted script should be ready for production use, with proper spacing, ca
       },
     ],
   },
+
+  // Chronological Journey Outline Template
+  {
+    id: 'chronological-journey-outline',
+    name: 'Chronological Journey Outline',
+    description:
+      'Linear Framework - Simple Complexity',
+    category: 'outlineGeneration',
+    template: `Create a chronological journey outline from the following content: {STORY_OR_TRANSCRIPT}
+
+Organize the narrative into 4 time-based phases following this exact structure:
+
+**I. Origins & Foundation (Early Period)**
+- Background, formative experiences, and initial influences
+- Key people, places, and events that shaped the foundation
+- Early challenges, discoveries, or pivotal moments
+
+**II. Entry & Evolution (Development Period)**  
+- First major steps into their field/journey
+- Learning experiences, relationships, and skill building
+- Initial successes, failures, and adaptations
+
+**III. Breaking Barriers (Achievement Period)**
+- Major breakthroughs, innovations, or milestone moments
+- Recognition, expansion, and establishing reputation
+- Overcoming significant obstacles or limitations
+
+**IV. Elevation & Impact (Current/Legacy Period)**
+- Current status, major accomplishments, and influence
+- Ongoing projects, future vision, and lasting contributions
+- Legacy building and continued evolution
+
+Focus on clear temporal progression. Each section should build naturally from the previous one, showing growth and development over time. Include specific dates, ages, or time markers when available.`,
+    variables: [
+      {
+        name: 'STORY_OR_TRANSCRIPT',
+        description: 'The story or transcript to generate an outline for',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      },
+    ]
+  },
+
+  // Challenge Response Outline Template
+  {
+    id: 'challenge-response-outline',
+    name: 'Challenge Response Outline',
+    description:
+      'Dynamic Framework - Moderate Complexity',
+    category: 'outlineGeneration',
+    template: `Create a challenge and response outline from the following content: {STORY_OR_TRANSCRIPT}
+
+Organize the narrative into 4 problem-solution cycles following this exact structure:
+
+**I. [Primary Challenge Title]**
+- *Problem:* Core obstacle, barrier, or systemic issue faced
+- *Response:* Specific actions, strategies, or approaches taken
+- *Impact:* Results achieved and lessons learned
+
+**II. [Secondary Challenge Title]**
+- *Problem:* Next major difficulty or resistance encountered  
+- *Response:* Adaptive solutions and tactical decisions made
+- *Impact:* Outcomes and ripple effects on broader situation
+
+**III. [Tertiary Challenge Title]**
+- *Problem:* Complex or multi-faceted challenge requiring innovation
+- *Response:* Creative or bold approaches to address the issue
+- *Impact:* Transformation achieved and new standards set
+
+**IV. [Ongoing Challenge Title]**
+- *Problem:* Current or persistent challenge requiring sustained effort
+- *Response:* Long-term strategies and continued commitment
+- *Impact:* Ongoing influence and future implications
+
+Each challenge should represent a distinct type of obstacle (personal, professional, systemic, etc.). Show clear cause-and-effect relationships between problems and solutions. Focus on decision-making processes and adaptive strategies.`,
+    variables: [
+      {
+        name: 'STORY_OR_TRANSCRIPT',
+        description: 'The story or transcript to generate an outline for',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      }
+    ]
+  },
+
+  // Character Arc Transformation Framework Template
+  {
+    id: 'character-arc-transformation-framework',
+    name: 'Character Arc Transformation Framework',
+    description:
+      'Developmental Framework - Moderate Complexity',
+    category: 'outlineGeneration',
+    template: `Create a character transformation outline from the following content: {STORY_OR_TRANSCRIPT}
+
+  Organize the narrative into 4 developmental stages following this exact structure:
+
+  **I. The [Starting Identity] (Initial State)**
+  - Core personality traits, beliefs, and limitations
+  - Initial motivations, fears, and worldview
+  - Early behaviors and relationship patterns
+
+  **II. The [Learning Phase Identity] (Growth State)**
+  - New experiences that challenged initial assumptions
+  - Mentors, influences, and learning opportunities
+  - First attempts at change and skill development
+
+  **III. The [Breakthrough Identity] (Transformation State)**
+  - Key moments of insight, courage, or breakthrough
+  - Major shifts in capability, confidence, or perspective
+  - Innovation, leadership, or creative contributions
+
+  **IV. The [Current Identity] (Evolved State)**
+  - Present-day character traits and capabilities
+  - Leadership style, influence, and impact on others
+  - Vision for continued growth and future development
+
+  Focus on internal growth and psychological development. Show how external events shaped internal change. Highlight pivotal moments where the person's fundamental approach or identity shifted. Each stage should demonstrate clear character evolution.`,
+    variables: [
+      {
+        name: 'STORY_OR_TRANSCRIPT',
+        description: 'The story or transcript to generate an outline for',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      }
+    ]
+  },
+
+  // Thematic Pillars Outline Template
+  {
+    id: 'thematic-pillars-outline',
+    name: 'Thematic Pillars Outline',
+    description:
+      'Thematic Framework - Complex Complexity',
+    category: 'outlineGeneration',
+    template: `Create a thematic pillars outline from the following content: {STORY_OR_TRANSCRIPT}
+
+Organize the narrative around 4 core values/principles following this exact structure:
+
+**I. [Core Value #1]: "[Value Statement]"**
+- How this principle manifests in their work/life
+- Specific examples and consistent behaviors
+- Challenges faced in upholding this value
+- Impact on their success and relationships
+
+**II. [Core Value #2]: "[Value Statement]"**
+- Evidence of this principle across different contexts
+- Decisions made based on this value
+- Conflicts or trade-offs involving this principle
+- How it differentiates them from others
+
+**III. [Core Value #3]: "[Value Statement]"**
+- Ways this value drives their innovations or approaches
+- Sacrifices made or risks taken for this principle
+- How they inspire others through this value
+- Long-term commitment and consistency
+
+**IV. [Core Value #4]: "[Value Statement]"**
+- Integration of this value with their broader mission
+- Evolution of how they express this principle
+- Future vision based on this value
+- Legacy they want to build around this principle
+
+Focus on the underlying values that drive all decisions and actions. Show how these principles create consistency across different situations. Each pillar should be a fundamental belief that explains their choices and behaviors.`,
+    variables: [
+      {
+        name: 'STORY_OR_TRANSCRIPT',
+        description: 'The story or transcript to generate an outline for',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      }
+    ]
+  },
+
+  // Conflict Resolution Framework Template
+  {
+    id: 'conflict-resolution-framework',
+    name: 'Conflict Resolution Framework',
+    description:
+      'Dynamic Framework - Complex Complexity',
+    category: 'outlineGeneration',
+    template: `Create a conflict and resolution outline from the following content: {STORY_OR_TRANSCRIPT}
+
+Organize the narrative into 4 tension-resolution cycles following this exact structure:
+
+**I. Internal Conflicts**
+- Self-doubt, identity struggles, or personal limitations
+- Values conflicts and difficult choices
+- Fear, ambition, or perfectionism tensions
+- Personal growth resolutions and breakthroughs
+
+**II. External Conflicts**
+- Industry resistance, gatekeepers, or systemic barriers
+- Competition, criticism, or professional challenges
+- Resource limitations or opportunity constraints
+- Strategic victories and relationship building
+
+**III. Pivotal Moments**
+- Crisis points requiring major decisions
+- Make-or-break situations and their outcomes
+- Unexpected opportunities or setbacks
+- Transformation achieved through adversity
+
+**IV. Resolution & Ongoing Impact**
+- Current status and conflicts resolved
+- Ongoing tensions and how they're managed
+- Influence on industry or community standards
+- Future challenges and preparedness strategies
+
+Focus on dramatic tension and high-stakes moments. Show how conflicts create pressure that leads to growth or change. Each section should build dramatic intensity. Highlight moments where the stakes were highest and how those conflicts were ultimately resolved or transformed.`,
+    variables: [
+      {
+        name: 'STORY_OR_TRANSCRIPT',
+        description: 'The story or transcript to generate an outline for',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      }
+    ]
+  },
 ];
+

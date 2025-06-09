@@ -151,3 +151,10 @@ export interface YoutubeTranscriptResult {
   videoId: string;
   text: string;
 }
+
+export type StoryOutlineType =
+  | 'linear-framework-simple-complexity'
+  | 'dynamic-framework-moderate-complexity'
+  | 'developmental-framework-moderate-complexity'
+  | 'thematic-framework-complex-complexity'
+  | 'dynamic-framework-complex-complexity';

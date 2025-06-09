@@ -49,8 +49,10 @@ import {
 import { Separator } from '@/components/ui/separator';
 import YoutubeFilterBar from './Research/filter-bar';
 import ReactPlayer from 'react-player';
+import { useTabsStore } from '@/lib/stores/tabs-store';
 
 export default function ResearchTab() {
+  const { setActiveTab } = useTabsStore();
   const { toast } = useToast();
   const { isLoading } = useLoadingStore();
   const {
@@ -631,9 +633,7 @@ export default function ResearchTab() {
         <Button
           variant="outline"
           className="gap-2"
-          onClick={() =>
-            document.getElementById('story-theme-tab-trigger')?.click()
-          }
+          onClick={() => setActiveTab('story-theme')}
         >
           <ArrowLeft className="h-4 w-4" /> Back: Story Theme
         </Button>
@@ -650,7 +650,7 @@ export default function ResearchTab() {
               });
               return;
             }
-            document.getElementById('outline-tab-trigger')?.click();
+            setActiveTab('outline')
           }}
         >
           Next: Outline <ArrowRight className="h-4 w-4" />

@@ -45,8 +45,10 @@ import {
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import type { Subject } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useTabsStore } from "@/lib/stores/tabs-store";
 
 export default function SubjectsTab() {
+  const { setActiveTab } = useTabsStore();
   const { toast } = useToast();
   const {
     script,
@@ -255,11 +257,7 @@ export default function SubjectsTab() {
                   ) : (
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        window.document
-                          .getElementById('script-tab-trigger')
-                          ?.click()
-                      }
+                      onClick={() => setActiveTab('script')}
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Go to Script Tab
@@ -361,11 +359,7 @@ export default function SubjectsTab() {
                   ) : (
                     <Button
                       variant="outline"
-                      onClick={() =>
-                        window.document
-                          .getElementById('script-tab-trigger')
-                          ?.click()
-                      }
+                      onClick={() => setActiveTab('script')}
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />
                       Go to Script Tab

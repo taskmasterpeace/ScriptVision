@@ -31,8 +31,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTabsStore } from '@/lib/stores/tabs-store';
 
 export default function WriteTab() {
+  const { setActiveTab } = useTabsStore();
   const { toast } = useToast();
   const { isLoading } = useLoadingStore();
   const {
@@ -179,9 +181,7 @@ export default function WriteTab() {
             </p>
             <Button
               variant="outline"
-              onClick={() =>
-                document.getElementById('outline-tab-trigger')?.click()
-              }
+              onClick={() => setActiveTab('outline')}
             >
               Go to Outline
             </Button>
@@ -382,9 +382,7 @@ export default function WriteTab() {
         <Button
           variant="outline"
           className="gap-2"
-          onClick={() =>
-            document.getElementById('outline-tab-trigger')?.click()
-          }
+          onClick={() => setActiveTab('outline')}
         >
           <ArrowLeft className="h-4 w-4" /> Back: Outline
         </Button>
@@ -401,7 +399,7 @@ export default function WriteTab() {
               });
               return;
             }
-            document.getElementById('enhance-tab-trigger')?.click();
+            setActiveTab('enhance')
           }}
         >
           Next: Enhance <ArrowRight className="h-4 w-4" />

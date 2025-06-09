@@ -68,7 +68,6 @@ export interface Project {
   generatedPrompts: GeneratedPrompt[];
 }
 
-
 // Model type for phase-model mapping
 export type Model = {
   id: string;

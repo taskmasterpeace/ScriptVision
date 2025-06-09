@@ -25,6 +25,7 @@ export interface PromptTemplate {
     | 'visualPrompt'
     | 'videoTreatment'
     | 'shotSuggestions'
+    | 'outlineGeneration'
     | 'other';
 }
 

@@ -23,6 +23,7 @@ import { useProjectStore } from '@/lib/stores/project-store';
 import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
 import { useImageGenerationStore } from '@/lib/stores/image-generation-store';
 import { Badge } from '@/components/ui/badge';
+import { useTabsStore } from "@/lib/stores/tabs-store";
 
 interface WorkflowStep {
   id: string;
@@ -34,13 +35,8 @@ interface WorkflowStep {
   phase: 'creation' | 'production' | 'generation';
 }
 
-export function EnhancedWorkflowNavigation({
-  activeTab,
-  onTabChange,
-}: {
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-}) {
+export function EnhancedWorkflowNavigation() {
+  const { activeTab, setActiveTab } = useTabsStore();
   const projectState = useProjectStore();
   const scriptCreationState = useScriptCreationStore();
   const imageGenerationState = useImageGenerationStore();
@@ -326,7 +322,7 @@ export function EnhancedWorkflowNavigation({
     return (
       <button
         key={step.id}
-        onClick={() => onTabChange(step.tabValue)}
+        onClick={() => setActiveTab(step.tabValue)}
         className={cn(
           'flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors relative shadow-sm',
           colorClass,

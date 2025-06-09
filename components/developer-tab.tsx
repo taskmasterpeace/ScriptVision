@@ -181,6 +181,8 @@ export default function DeveloperTab() {
         return 'Other';
       case 'shotSuggestions':
         return 'Shot Suggestions';
+      case 'outlineGeneration':
+        return 'Outline Generation';
       default:
         return category;
     }
@@ -202,6 +204,8 @@ export default function DeveloperTab() {
         return 'bg-slate-500';
       case 'shotSuggestions':
         return 'bg-orange-500';
+      case 'outlineGeneration':
+        return 'bg-indigo-500';
       default:
         return 'bg-gray-500';
     }
@@ -426,6 +430,15 @@ export default function DeveloperTab() {
                   >
                     Shot Suggestions
                   </Button>
+                  <Button
+                    variant={
+                      activeCategory === 'outlineGeneration' ? 'default' : 'outline'
+                    }
+                    onClick={() => setActiveCategory('outlineGeneration')}
+                    size="sm"
+                  >
+                    Outline Generation
+                  </Button>
                 </div>
 
                 <div className="border rounded-md overflow-hidden">
@@ -548,6 +561,7 @@ export default function DeveloperTab() {
                                 | 'visualPrompt'
                                 | 'videoTreatment'
                                 | 'shotSuggestions'
+                                | 'outlineGeneration'
                                 | 'other',
                             })
                           }
@@ -572,6 +586,9 @@ export default function DeveloperTab() {
                             </SelectItem>
                             <SelectItem value="shotSuggestions">
                               Shot Suggestions
+                            </SelectItem>
+                            <SelectItem value="outlineGeneration">
+                              Outline Generation
                             </SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>

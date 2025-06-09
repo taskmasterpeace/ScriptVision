@@ -22,9 +22,10 @@ import ResearchTab from '@/components/research-tab';
 import OutlineTab from '@/components/outline-tab';
 import WriteTab from '@/components/write-tab';
 import EnhanceTab from '@/components/enhance-tab';
+import { useTabsStore } from "@/lib/stores/tabs-store";
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState('story-theme');
+  const { activeTab, setActiveTab } = useTabsStore();
   const [showWorkflowNav, setShowWorkflowNav] = useState(true);
 
   const handleTabChange = (value: string) => {
@@ -53,15 +54,9 @@ export default function Page() {
       </div>
 
       {showWorkflowNav ? (
-        <EnhancedWorkflowNavigation
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
+        <EnhancedWorkflowNavigation />
       ) : (
-        <ProgressJourneyMap
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
+        <ProgressJourneyMap />
       )}
 
       <Tabs
