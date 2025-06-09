@@ -68,6 +68,21 @@ export interface Project {
   generatedPrompts: GeneratedPrompt[];
 }
 
+
+// Model type for phase-model mapping
+export type Model = {
+  id: string;
+  model: string;
+  provider: string;
+  description?: string | null;
+  lastUpdated?: string;
+  context_window?: number;
+  input_tokens_price_per_million?: string;
+  output_tokens_price_per_million?: string;
+  supports_vision?: boolean;
+  supports_computer_use?: boolean;
+};
+
 export interface CameraSettings {
   shot: string;
   move: string;

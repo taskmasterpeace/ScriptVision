@@ -1,19 +1,14 @@
 'use client';
 
-import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
-import { storage } from '../db';
+import { create } from "zustand"
+import { createJSONStorage, persist } from "zustand/middleware"
+import { del, keys } from "idb-keyval"
+import { Model } from "../types"
+import { storage } from "../db"
 
-export type AIModel = {
-  id: string;
-  name: string;
-  provider: string;
-  description: string;
-  capabilities: string[];
-  contextWindow: number;
-  costPer1KTokens: number;
-  recommended: boolean;
-};
+export type PhaseModelMapping = {
+  [key in ApplicationPhase]: Model
+}
 
 export type ApplicationPhase =
   | 'shotListGeneration'
@@ -24,68 +19,67 @@ export type ApplicationPhase =
   | 'shotSuggestions';
 
 interface ModelState {
-  apiKey: string;
-  replicateApiToken: string;
-  useMockData: boolean;
-  availableModels: AIModel[];
-  phaseModelMapping: Record<ApplicationPhase, string>;
-  setApiKey: (key: string) => void;
-  setReplicateApiToken: (token: string) => void;
-  setUseMockData: (useMock: boolean) => void;
-  setModelForPhase: (phase: ApplicationPhase, modelId: string) => void;
-  getModelForPhase: (phase: ApplicationPhase) => string;
-  resetToDefaults: () => void;
+  apiKey: string
+  replicateApiToken: string
+  useMockData: boolean
+  availableModels: Model[]
+  isLoading: boolean
+  selectedProviders: Record<string, string>
+  phaseModelMapping: PhaseModelMapping
+  setApiKey: (key: string) => void
+  setReplicateApiToken: (token: string) => void
+  setUseMockData: (useMock: boolean) => void
+  setModelForPhase: (phase: ApplicationPhase, modelId: string, provider: string) => void
+  getModelForPhase: (phase: ApplicationPhase) => string
+  setSelectedProvider: (phase: string, provider: string) => void
+  fetchApiModels: () => Promise<void>
+
+  // Model actions
+  resetModelsDB: () => void
+  loadModel: () => Promise<void>
+  saveModel: () => Promise<void>
+
+  resetToDefaults: () => void
 }
 
-// Default models
-const defaultModels: AIModel[] = [
-  {
-    id: 'gpt-4o',
-    name: 'GPT-4o',
-    provider: 'OpenAI',
-    description:
-      "OpenAI's most advanced model, optimized for both vision and language tasks.",
-    capabilities: [
-      'Text generation',
-      'Creative writing',
-      'Complex reasoning',
-      'Detailed analysis',
-    ],
-    contextWindow: 128000,
-    costPer1KTokens: 0.01,
-    recommended: true,
-  },
-  {
-    id: 'gpt-4-turbo',
-    name: 'GPT-4 Turbo',
-    provider: 'OpenAI',
-    description:
-      'A powerful model with a good balance of capabilities and cost.',
-    capabilities: ['Text generation', 'Creative writing', 'Complex reasoning'],
-    contextWindow: 128000,
-    costPer1KTokens: 0.01,
-    recommended: false,
-  },
-  {
-    id: 'gpt-3.5-turbo',
-    name: 'GPT-3.5 Turbo',
-    provider: 'OpenAI',
-    description: 'A fast and cost-effective model for simpler tasks.',
-    capabilities: ['Text generation', 'Basic reasoning', 'Fast responses'],
-    contextWindow: 16000,
-    costPer1KTokens: 0.0015,
-    recommended: false,
-  },
-];
-
 // Default phase-model mapping
-const defaultPhaseModelMapping: Record<ApplicationPhase, string> = {
-  shotListGeneration: 'gpt-4o',
-  subjectExtraction: 'gpt-4o',
-  directorsNotes: 'gpt-4o',
-  visualPrompt: 'gpt-4o',
-  videoTreatment: 'gpt-4o',
-  shotSuggestions: 'gpt-4o',
+const defaultPhaseModelMapping: PhaseModelMapping = {
+  shotListGeneration: {
+    id: "shotListGeneration",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
+  },
+  subjectExtraction: {
+    id: "subjectExtraction",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
+  },
+  directorsNotes: {
+    id: "directorsNotes",
+    provider: "openai",
+    model: "gpt-4o-mini",  
+    lastUpdated: new Date().toISOString()
+  },
+  visualPrompt: {
+    id: "visualPrompt",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
+  },
+  videoTreatment: {
+    id: "videoTreatment",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
+  },
+  shotSuggestions: {
+    id: "shotSuggestions",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
+  }
 };
 
 export const useModelStore = create<ModelState>()(
@@ -94,7 +88,9 @@ export const useModelStore = create<ModelState>()(
       apiKey: '',
       replicateApiToken: '',
       useMockData: true, // Default to using mock data
-      availableModels: [...defaultModels],
+      availableModels: [],
+      selectedProviders: {},
+      isLoading: false,
       phaseModelMapping: { ...defaultPhaseModelMapping },
 
       setApiKey: (key: string) => {
@@ -113,31 +109,156 @@ export const useModelStore = create<ModelState>()(
         set({ useMockData: useMock });
       },
 
-      setModelForPhase: (phase: ApplicationPhase, modelId: string) => {
+      setModelForPhase: (phase: ApplicationPhase, modelId: string, provider: string) => {
         set((state) => ({
           phaseModelMapping: {
             ...state.phaseModelMapping,
-            [phase]: modelId,
-          },
+            [phase]: {
+              provider,
+              model: modelId,
+              lastUpdated: new Date().toISOString()
+            }
+          }
         }));
       },
 
       getModelForPhase: (phase: ApplicationPhase) => {
-        return (
-          get().phaseModelMapping[phase] || defaultPhaseModelMapping[phase]
-        );
+        return get().phaseModelMapping[phase]?.model || '';
+      },
+
+      fetchApiModels: async () => {
+        set({ isLoading: true });
+        try {
+          const response = await fetch("https://api.requesty.ai/router/models");
+          if (!response.ok) throw new Error("Failed to fetch models");
+          const data = await response.json();
+          set({ availableModels: data });
+        } catch (error) {
+          console.error("Error fetching models:", error);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
+      setSelectedProvider: (phase: string, provider: string) => {
+        set((state) => ({
+          selectedProviders: {
+            ...state.selectedProviders,
+            [phase]: provider,
+          },
+        }));
+      },
+
+      // Reset models to default values
+      resetModelsDB: async () => {
+        try {
+          // Clear all existing model data from IndexedDB
+          const allKeys = await keys();
+          await Promise.all(allKeys.map(key => del(key)));
+          
+          // Create a new state with default values
+          const defaultState = {
+            phaseModelMapping: { ...defaultPhaseModelMapping },
+            selectedProviders: Object.entries(defaultPhaseModelMapping).reduce<Record<string, string>>((acc, [phase, config]) => {
+              acc[phase] = config.provider;
+              return acc;
+            }, {})
+          };
+          
+          // Update the state
+          set({
+            ...defaultState,
+            apiKey: get().apiKey,
+            replicateApiToken: get().replicateApiToken,
+            useMockData: get().useMockData,
+            availableModels: [...get().availableModels],
+            isLoading: false
+          });
+          
+          // Save the default configuration to IndexedDB
+          await get().saveModel();
+        } catch (error) {
+          console.error('Error resetting models to defaults:', error)
+          throw error
+        }
+      },
+
+      // Save the current model configuration to IndexedDB
+      saveModel: async () => {
+        try {
+          const { phaseModelMapping } = get()
+          // We just need to ensure the state is updated
+          
+          set({ phaseModelMapping: phaseModelMapping })
+        } catch (error) {
+          console.error('Error saving model configuration:', error)
+        }
+      },
+      
+      // Load the model configuration from IndexedDB
+      loadModel: async () => {
+        try {
+          // The persist middleware automatically loads the state from IndexedDB
+          // This method is kept for backward compatibility
+          const savedState = get().phaseModelMapping
+          if (savedState) {
+            
+            // Create default selected providers
+            const defaultSelectedProviders = Object.keys(defaultPhaseModelMapping).reduce<Record<string, string>>((acc, phase) => {
+              acc[phase] = 'openai';
+              return acc;
+            }, {})
+            
+            // Update selectedProviders based on loaded phaseModelMapping
+            const loadedSelectedProviders = Object.entries(savedState || {}).reduce<Record<string, string>>(
+              (acc, [phase, config]) => {
+                if (config && typeof config === 'object' && 'provider' in config) {
+                  acc[phase] = config.provider as string;
+                } else {
+                  acc[phase] = 'openai';
+                }
+                return acc;
+              },
+              { ...defaultSelectedProviders }
+            );
+            
+            // Update the state with loaded values
+            set({
+              ...get(), // Keep existing state
+              phaseModelMapping: {
+                ...defaultPhaseModelMapping,
+                ...(savedState || {})
+              },
+              selectedProviders: loadedSelectedProviders
+            });
+          }
+        } catch (error) {
+          console.error('Error loading model configuration:', error);
+        }
       },
 
       resetToDefaults: () => {
         set({
-          availableModels: [...defaultModels],
           phaseModelMapping: { ...defaultPhaseModelMapping },
-        });
+        })
+        set((state) => ({
+          selectedProviders: {
+            ...state.selectedProviders,
+            shotListGeneration: "openai",
+            subjectExtraction: "openai",
+            directorsNotes: "openai",
+            visualPrompt: "openai",
+            videoTreatment: "openai",
+            shotSuggestions: "openai",
+          }
+        }))
+        // Reset the database to default models db
+        get().resetModelsDB()
       },
     }),
     {
-      name: 'scriptvision-models',
+      name: "scriptvision-models",
       storage: createJSONStorage(() => storage),
-    }
-  )
-);
+    },
+  ),
+)

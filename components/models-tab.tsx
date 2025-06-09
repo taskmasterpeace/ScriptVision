@@ -1,15 +1,22 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useToast } from '@/hooks/use-toast';
-import { useModelStore, type ApplicationPhase } from '@/lib/stores/model-store';
-import { AlertTriangle, Check, RefreshCw, Save } from 'lucide-react';
+import { useState, useEffect, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { useModelStore, type ApplicationPhase } from "@/lib/stores/model-store";
+import { AlertTriangle, Check, RefreshCw, Save } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ModelsTab() {
   const { toast } = useToast();
@@ -17,32 +24,65 @@ export default function ModelsTab() {
     apiKey,
     replicateApiToken,
     useMockData,
-    availableModels,
     phaseModelMapping,
     setApiKey,
     setReplicateApiToken,
     setUseMockData,
     setModelForPhase,
     resetToDefaults,
+    isLoading,
+    availableModels,
+    fetchApiModels,
+    selectedProviders,
+    saveModel,
+    loadModel,
+    setSelectedProvider,
   } = useModelStore();
   const [apiKeyInput, setApiKeyInput] = useState(apiKey);
   const [replicateApiTokenInput, setReplicateApiTokenInput] =
     useState(replicateApiToken);
-  const [activeTab, setActiveTab] = useState<string>('models');
+  const [activeTab, setActiveTab] = useState<string>("models");
+
+  // Fetch models from API
+  useEffect(() => {
+    fetchApiModels();
+    loadModel();
+  }, []);
+
+  // Get unique providers from available models (case-insensitive)
+  const availableProviders = useMemo(() => {
+    const providers = Array.from(
+      new Set(availableModels.map((m) => m.provider))
+    ).sort((a, b) => a.localeCompare(b));
+    return providers;
+  }, [availableModels]);
+
+  // Get filtered models for a specific phase
+  const getFilteredModels = (phase: string) => {
+    const selectedProvider = selectedProviders[phase] || "openai";
+
+    if (selectedProvider === "openai") {
+      return availableModels?.filter((model) => model.provider.toLowerCase() === "openai");
+    }
+
+    return availableModels.filter(
+      (model) => model.provider.toLowerCase() === selectedProvider.toLowerCase()
+    );
+  };
 
   const handleSaveApiKey = () => {
     setApiKey(apiKeyInput);
     toast({
-      title: 'API Key Saved',
-      description: 'Your OpenAI API key has been saved.',
+      title: "API Key Saved",
+      description: "Your OpenAI API key has been saved.",
     });
   };
 
   const handleSaveReplicateApiToken = () => {
     setReplicateApiToken(replicateApiTokenInput);
     toast({
-      title: 'Replicate API Token Saved',
-      description: 'Your Replicate API token has been saved.',
+      title: "Replicate API Token Saved",
+      description: "Your Replicate API token has been saved.",
     });
   };
 
@@ -51,13 +91,15 @@ export default function ModelsTab() {
     toast({
       title: checked ? 'Using Mock Data' : 'Using Live API',
       description: checked
-        ? 'The application will use mock data instead of making API calls.'
-        : 'The application will make real API calls to OpenAI.',
+        ? "The application will use mock data instead of making API calls."
+        : "The application will make real API calls to OpenAI.",
     });
   };
 
   const handleSetModelForPhase = (phase: ApplicationPhase, modelId: string) => {
-    setModelForPhase(phase, modelId);
+    const provider = selectedProviders[phase];
+    setModelForPhase(phase, modelId, provider);
+    saveModel();
     toast({
       title: 'Model Updated',
       description: `Model for ${getPhaseDisplayName(phase)} has been updated.`,
@@ -67,26 +109,26 @@ export default function ModelsTab() {
   const handleResetToDefaults = () => {
     resetToDefaults();
     toast({
-      title: 'Models Reset',
+      title: "Models Reset",
       description:
-        'All model settings have been reset to their default values.',
+        "All model settings have been reset to their default values.",
     });
   };
 
   const getPhaseDisplayName = (phase: ApplicationPhase): string => {
     switch (phase) {
-      case 'shotListGeneration':
-        return 'Shot List Generation';
-      case 'subjectExtraction':
-        return 'Subject Extraction';
-      case 'directorsNotes':
+      case "shotListGeneration":
+        return "Shot List Generation";
+      case "subjectExtraction":
+        return "Subject Extraction";
+      case "directorsNotes":
         return "Director's Notes";
-      case 'visualPrompt':
-        return 'Visual Prompt';
-      case 'videoTreatment':
-        return 'Video Treatment';
-      case 'shotSuggestions':
-        return 'Shot Suggestions';
+      case "visualPrompt":
+        return "Visual Prompt";
+      case "videoTreatment":
+        return "Video Treatment";
+      case "shotSuggestions":
+        return "Shot Suggestions";
       default:
         return phase;
     }
@@ -120,49 +162,89 @@ export default function ModelsTab() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.entries(phaseModelMapping).map(([phase, modelId]) => (
-            <Card key={phase} className="overflow-hidden">
+          {Object.entries(phaseModelMapping).map(([phase, config]) => (
+            <Card key={`${phase}-${config.model}`} className="overflow-hidden">
               <CardContent className="p-0">
-                <div className="p-4 bg-muted/50">
-                  <h3 className="font-medium">
-                    {getPhaseDisplayName(phase as ApplicationPhase)}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Select the model to use for this phase
-                  </p>
-                </div>
-                <div className="p-4 space-y-2">
-                  {availableModels.map((model) => (
-                    <div
-                      key={model.id}
-                      className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/50 ${
-                        modelId === model.id ? 'bg-muted' : ''
-                      }`}
-                      onClick={() =>
-                        handleSetModelForPhase(
-                          phase as ApplicationPhase,
-                          model.id
-                        )
-                      }
+                <div className="flex justify-between gap-2 items-center p-4 bg-muted/50">
+                  <div>
+                    <h3 className="font-medium">
+                      {getPhaseDisplayName(phase as ApplicationPhase)}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      Select the model to use for this phase
+                    </p>
+                  </div>
+                  <div>
+                    <Select
+                      key={`${phase}-${selectedProviders[phase]}`}
+                      value={selectedProviders[phase] || "openai"}
+                      onValueChange={(value) => {
+                        setSelectedProvider(phase, value);
+                      }}
                     >
-                      <div className="flex-1">
-                        <div className="flex items-center">
-                          <span className="font-medium">{model.name}</span>
-                          {model.recommended && (
-                            <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                              Recommended
-                            </span>
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select Provider" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableProviders.map((provider) => (
+                          <SelectItem
+                            key={provider}
+                            value={provider.toLowerCase()}
+                            className="cursor-pointer"
+                          >
+                            {provider}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div
+                  key={`${phase}-${selectedProviders[phase]}`}
+                  className="p-4 space-y-2 h-52 overflow-y-auto"
+                  style={{ scrollbarWidth: "thin" }}
+                >
+                  {isLoading ? (
+                    <div className="flex justify-center p-4">
+                      <RefreshCw className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : getFilteredModels(phase).length === 0 ? (
+                    <div className="text-center p-4 text-muted-foreground">
+                      No models found for the selected provider
+                    </div>
+                  ) : (
+                    getFilteredModels(phase)
+                      .map((model) => (
+                        <div
+                          key={`${model.provider}-${model.model}`}
+                          className={`flex items-center justify-between p-2 rounded-md cursor-pointer hover:bg-muted/50 ${config.model === model.model ? "bg-muted" : ""
+                            }`}
+                          onClick={() =>
+                            handleSetModelForPhase(
+                              phase as ApplicationPhase,
+                              model.model
+                            )
+                          }
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center">
+                              <span className="font-medium">{model.model}</span>
+                              {/* {model.recommended && (
+                              <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                                Recommended
+                              </span>
+                            )} */}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {model.description || "No description available"}
+                            </p>
+                          </div>
+                          {config.model === model.model && (
+                            <Check className="h-4 w-4 text-primary" />
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                          {model.description}
-                        </p>
-                      </div>
-                      {modelId === model.id && (
-                        <Check className="h-4 w-4 text-primary" />
-                      )}
-                    </div>
-                  ))}
+                      ))
+                  )}
                 </div>
               </CardContent>
             </Card>
