@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import { useAILogsStore } from '@/lib/stores/ai-logs-store';
 import { useProjectStore } from '@/lib/stores/project-store';
-import { generateAIResponse } from '@/lib/ai-service';
+import { generateAIResponse, generateResponse } from '@/lib/ai-service';
 import { storage } from '../db';
 import {
   YouTubeTranscript,
@@ -17,10 +17,12 @@ import {
   ChapterSuggestion,
   EmotionalSuggestion,
   YoutubeSearchResult,
+  StoryOutlineType,
 } from '@/lib/types/script.type';
 import { searchYouTubeAction } from '@/app/action';
 
 interface State {
+  outline?: string; // Store outline per project
   projectId: string;
   storyTheme?: string;
   storyTitle?: string;
@@ -32,6 +34,7 @@ interface State {
   chapters?: Chapter[];
   chapterSuggestions?: ChapterSuggestion[];
   outlineDirections?: {
+    outlineType: StoryOutlineType;
     storyStructure: 'three-act' | 'hero-journey' | 'five-act';
     perspective: 'first-person' | 'third-person' | 'multiple-pov';
     tone: 'light' | 'dark' | 'neutral';
@@ -44,6 +47,7 @@ interface State {
 }
 
 interface ScriptCreationState {
+  outline: string;
   // Store all projects details in state and current project detail in their individual state
   state: State[];
   // Story Theme
@@ -63,6 +67,7 @@ interface ScriptCreationState {
 
   // Add these new properties
   outlineDirections: {
+    outlineType: StoryOutlineType;
     storyStructure: 'three-act' | 'hero-journey' | 'five-act';
     perspective: 'first-person' | 'third-person' | 'multiple-pov';
     tone: 'light' | 'dark' | 'neutral';
@@ -138,6 +143,7 @@ interface ScriptCreationState {
     transcript: string
   ) => void;
   deleteTranscript: (id: string) => void;
+  setOutline: (outline: string) => void;
 
   // Add this new action
   setOutlineDirections: (
@@ -173,9 +179,11 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
       chapters: [],
       chapterSuggestions: [],
+      outline: '',
 
       // Add the new property
       outlineDirections: {
+        outlineType: 'linear-framework-simple-complexity',
         storyStructure: 'three-act',
         perspective: 'third-person',
         tone: 'neutral',
@@ -240,6 +248,11 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       setTargetAudience: (audience) => {
         set({ targetAudience: audience });
         get().setKeytoState('targetAudience', audience);
+      },
+
+      setOutline: (outline) => {
+        set({ outline });
+        get().setKeytoState('outline', outline);
       },
 
       // Update the searchYouTube function to include the source field
@@ -403,26 +416,33 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             title: storyTitle || 'Untitled',
             genre: storyGenre || 'Not specified',
             transcripts: transcriptsText,
-            structure: outlineDirections.storyStructure,
-            perspective: outlineDirections.perspective,
-            tone: outlineDirections.tone,
-            additionalNotes: outlineDirections.additionalNotes,
-            customPrompt: outlineDirections.customPrompt, // Add this line
+            outlineType: outlineDirections?.outlineType,
+            structure: outlineDirections?.storyStructure,
+            perspective: outlineDirections?.perspective,
+            tone: outlineDirections?.tone,
+            additionalNotes: outlineDirections?.additionalNotes,
+            customPrompt: outlineDirections?.customPrompt, // Add this line
           };
 
-          // Call the AI service
-          const outlineResponse = await generateAIResponse(
-            'Generate a story outline with chapters and bullet points',
-            JSON.stringify(promptContext)
+          const outlineResponse = await generateResponse(
+            'outlineGeneration',
+            outlineDirections?.outlineType,
+            { STORY_OR_TRANSCRIPT: JSON.stringify(promptContext) }
           );
+
+          const outlineResponseString =
+            typeof outlineResponse.content === 'string'
+              ? outlineResponse.content
+              : outlineResponse.content.map((part: any) => part.text).join('');
 
           // Log the AI response
           useAILogsStore.getState().addLog({
             type: 'response',
             template: 'story-outline',
-            content: outlineResponse,
+            content: outlineResponseString,
           });
 
+          get().setOutline(outlineResponseString);
           // Parse the AI response into structured data
           // In a real implementation, we would parse the AI's JSON response
           // For now, we'll create mock chapters

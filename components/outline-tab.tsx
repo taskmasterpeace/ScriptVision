@@ -11,7 +11,6 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -26,6 +25,30 @@ import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
 import { Loader2, FileText, List, CheckCircle2 } from 'lucide-react';
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { StoryOutlineType } from '@/lib/types/script.type';
+
+const outlineTypeOptions = [
+  {
+    value: 'linear-framework-simple-complexity',
+    label: 'Linear Framework - Simple Complexity',
+  },
+  {
+    value: 'dynamic-framework-moderate-complexity',
+    label: 'Dynamic Framework - Moderate Complexity',
+  },
+  {
+    value: 'developmental-framework-moderate-complexity',
+    label: 'Developmental Framework - Moderate Complexity',
+  },
+  {
+    value: 'thematic-framework-complex-complexity',
+    label: 'Thematic Framework - Complex Complexity',
+  },
+  {
+    value: 'dynamic-framework-complex-complexity',
+    label: 'Dynamic Framework - Complex Complexity',
+  },
+];
 
 export default function OutlineTab() {
   const { toast } = useToast();
@@ -35,12 +58,12 @@ export default function OutlineTab() {
     generateOutline,
     outlineDirections,
     setOutlineDirections: updateOutlineDirections,
-    selectedTranscripts,
   } = useScriptCreationStore();
   const { isLoading } = useLoadingStore();
   const [localOutline, setLocalOutline] = useState(outline);
   const [outlineDirectionsLocal, setOutlineDirectionsLocal] =
     useState(outlineDirections);
+
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Update local outline when the store changes
@@ -76,14 +99,18 @@ export default function OutlineTab() {
   const handleGenerateOutline = async () => {
     try {
       // Save the outline directions first
-      updateOutlineDirections(outlineDirectionsLocal);
+      updateOutlineDirections({
+        outlineType: outlineDirectionsLocal.outlineType as StoryOutlineType,
+      });
 
       await generateOutline();
+
       toast({
         title: 'Outline Generated',
         description: 'Your outline has been generated successfully.',
       });
       setShowSuccess(true);
+
       // Hide the success message after 5 seconds
       setTimeout(() => {
         setShowSuccess(false);
@@ -157,175 +184,28 @@ export default function OutlineTab() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="title">Story Title</Label>
-                <Input
-                  id="title"
-                  value={outlineDirectionsLocal.title}
-                  onChange={(e) =>
-                    setOutlineDirectionsLocal({
-                      ...outlineDirectionsLocal,
-                      title: e.target.value,
-                    })
-                  }
-                  placeholder="Enter a title for your story"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="genre">Genre</Label>
+                <Label htmlFor="outlineType">Outline Type</Label>
                 <Select
-                  value={outlineDirectionsLocal.genre}
+                  value={outlineDirectionsLocal.outlineType}
                   onValueChange={(value) =>
                     setOutlineDirectionsLocal({
                       ...outlineDirectionsLocal,
-                      genre: value,
+                      outlineType: value as StoryOutlineType,
                     })
                   }
                 >
-                  <SelectTrigger id="genre">
-                    <SelectValue placeholder="Select a genre" />
+                  <SelectTrigger id="outlineType">
+                    <SelectValue placeholder="Select Outline Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="action">Action</SelectItem>
-                    <SelectItem value="adventure">Adventure</SelectItem>
-                    <SelectItem value="comedy">Comedy</SelectItem>
-                    <SelectItem value="drama">Drama</SelectItem>
-                    <SelectItem value="fantasy">Fantasy</SelectItem>
-                    <SelectItem value="horror">Horror</SelectItem>
-                    <SelectItem value="mystery">Mystery</SelectItem>
-                    <SelectItem value="romance">Romance</SelectItem>
-                    <SelectItem value="sci-fi">Science Fiction</SelectItem>
-                    <SelectItem value="thriller">Thriller</SelectItem>
+                    {outlineTypeOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="theme">Main Theme</Label>
-                <Input
-                  id="theme"
-                  value={outlineDirectionsLocal.theme}
-                  onChange={(e) =>
-                    setOutlineDirectionsLocal({
-                      ...outlineDirectionsLocal,
-                      theme: e.target.value,
-                    })
-                  }
-                  placeholder="e.g., Redemption, Coming of age, etc."
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="structure">Story Structure</Label>
-                <Select
-                  value={outlineDirectionsLocal.structure}
-                  onValueChange={(value) =>
-                    setOutlineDirectionsLocal({
-                      ...outlineDirectionsLocal,
-                      structure: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="structure">
-                    <SelectValue placeholder="Select a structure" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="three-act">
-                      Three-Act Structure
-                    </SelectItem>
-                    <SelectItem value="hero-journey">Hero's Journey</SelectItem>
-                    <SelectItem value="save-the-cat">Save the Cat</SelectItem>
-                    <SelectItem value="seven-point">
-                      Seven-Point Structure
-                    </SelectItem>
-                    <SelectItem value="non-linear">Non-Linear</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="perspective">Narrative Perspective</Label>
-                <Select
-                  value={outlineDirectionsLocal.perspective}
-                  onValueChange={(value) =>
-                    setOutlineDirectionsLocal({
-                      ...outlineDirectionsLocal,
-                      perspective: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="perspective">
-                    <SelectValue placeholder="Select a perspective" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="first-person">First Person</SelectItem>
-                    <SelectItem value="second-person">Second Person</SelectItem>
-                    <SelectItem value="third-person">Third Person</SelectItem>
-                    <SelectItem value="multiple-pov">Multiple POV</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tone">Tone</Label>
-                <Select
-                  value={outlineDirectionsLocal.tone}
-                  onValueChange={(value) =>
-                    setOutlineDirectionsLocal({
-                      ...outlineDirectionsLocal,
-                      tone: value,
-                    })
-                  }
-                >
-                  <SelectTrigger id="tone">
-                    <SelectValue placeholder="Select a tone" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="humorous">Humorous</SelectItem>
-                    <SelectItem value="inspirational">Inspirational</SelectItem>
-                    <SelectItem value="melancholic">Melancholic</SelectItem>
-                    <SelectItem value="neutral">Neutral</SelectItem>
-                    <SelectItem value="optimistic">Optimistic</SelectItem>
-                    <SelectItem value="pessimistic">Pessimistic</SelectItem>
-                    <SelectItem value="satirical">Satirical</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="customPrompt">Custom Prompt (Optional)</Label>
-              <Textarea
-                id="customPrompt"
-                value={outlineDirectionsLocal.customPrompt}
-                onChange={(e) =>
-                  setOutlineDirectionsLocal({
-                    ...outlineDirectionsLocal,
-                    customPrompt: e.target.value,
-                  })
-                }
-                placeholder="Add any specific instructions or ideas for your outline"
-                className="min-h-[100px]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="additionalNotes">
-                Additional Notes (Optional)
-              </Label>
-              <Textarea
-                id="additionalNotes"
-                value={outlineDirectionsLocal.additionalNotes}
-                onChange={(e) =>
-                  setOutlineDirectionsLocal({
-                    ...outlineDirectionsLocal,
-                    additionalNotes: e.target.value,
-                  })
-                }
-                placeholder="Add any additional notes or context"
-                className="min-h-[100px]"
-              />
             </div>
 
             {showSuccess && outline && outline.trim() !== '' && (

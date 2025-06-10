@@ -1,9 +1,12 @@
+import { ChatOpenAI } from '@langchain/openai';
 // AI service implementation using OpenAI API
 import { useTemplateStore } from '@/lib/stores/template-store';
 import { useAILogsStore } from '@/lib/stores/ai-logs-store';
 import { useModelStore, type ApplicationPhase } from '@/lib/stores/model-store';
 import type { Shot } from '@/lib/types';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { v4 as uuidv4 } from 'uuid';
+import { parseAIShotList } from './utils/project';
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -12,6 +15,47 @@ const isPreviewEnvironment = () => {
     (process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview' ||
       process.env.NODE_ENV === 'development')
   );
+};
+
+export const generateResponse = async (
+  phase: ApplicationPhase,
+  templateId: string,
+  context: Record<string, string>
+) => {
+  try {
+    const model = useModelStore.getState().getModelForPhase(phase);
+    const provider = useModelStore.getState().selectedProviders[phase];
+    const template = useTemplateStore.getState().getTemplate(templateId);
+
+    const API_KEY = useModelStore.getState().apiKey;
+
+    const systemTemplate =
+      'You are a helpful assistant specialized in visual prompts and film production.';
+
+    const promptTemplate = ChatPromptTemplate.fromMessages([
+      ['system', systemTemplate],
+      ['user', template?.template || ''],
+    ]);
+
+    const promptValue = await promptTemplate.invoke(context);
+
+    const openai = new ChatOpenAI({
+      apiKey: API_KEY,
+      model: `${provider}/${model}`,
+      configuration: {
+        baseURL: 'https://router.requesty.ai/v1',
+      },
+      temperature: 0.7,
+      maxTokens: 2000,
+    });
+
+    const response = await openai.invoke(promptValue);
+
+    return response;
+  } catch (error) {
+    console.error('Error generating response:', error);
+    throw error;
+  }
 };
 
 export async function generateAIResponse(
@@ -165,6 +209,7 @@ export async function generateAIResponse(
         variables.theme = contextObj.theme || '';
         variables.storyStructure = contextObj.structure || 'three-act';
         variables.perspective = contextObj.perspective || 'third-person';
+
         variables.tone = contextObj.tone || 'neutral';
         variables.customPrompt = contextObj.customPrompt || '';
         variables.additionalNotes = contextObj.additionalNotes || '';
@@ -187,7 +232,7 @@ export async function generateAIResponse(
     metadata: {
       originalPrompt: prompt,
       context: context,
-      model: selectedModel ? selectedModel.name : 'Default',
+      model: selectedModel ? selectedModel.model : 'Default',
       modelId: selectedModelId || 'default',
       usedMockData: modelStore.useMockData || isPreviewEnvironment(),
     },
@@ -195,7 +240,7 @@ export async function generateAIResponse(
 
   // Debug logging
   console.log(
-    `Using model: ${selectedModel ? selectedModel.name : 'Default'} (${selectedModelId || 'default'})`
+    `Using model: ${selectedModel ? selectedModel.model : 'Default'} (${selectedModelId || 'default'})`
   );
   console.log(
     `Using mock data: ${modelStore.useMockData || isPreviewEnvironment()}`
@@ -314,7 +359,7 @@ export async function generateAIResponse(
         template: templateId,
         content: aiResponse,
         metadata: {
-          model: selectedModel ? selectedModel.name : modelId,
+          model: selectedModel ? selectedModel.model : modelId,
           modelId: selectedModelId || modelId,
           usedMockData: false,
           usage: data.usage || null,
@@ -330,7 +375,7 @@ export async function generateAIResponse(
         template: templateId,
         content: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         metadata: {
-          model: selectedModel ? selectedModel.name : 'Error',
+          model: selectedModel ? selectedModel.model : 'Error',
           modelId: selectedModelId || 'error',
           usedMockData: false,
           error: true,
@@ -374,7 +419,7 @@ export async function generateAIResponse(
     template: templateId,
     content: response,
     metadata: {
-      model: selectedModel ? selectedModel.name : 'Mock',
+      model: selectedModel ? selectedModel.model : 'Mock',
       modelId: selectedModelId || 'mock',
       usedMockData: true,
     },
@@ -809,7 +854,6 @@ export async function generateStructuredShotList(
 
       // Fall back to the regex parser as a last resort
       console.log('Falling back to regex parser for shot list');
-      const { parseAIShotList } = await import('@/lib/stores/project-store');
       const shots = parseAIShotList(aiResponse);
 
       // If the regex parser also fails, try a simpler approach

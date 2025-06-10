@@ -1,5 +1,4 @@
-import { PromptTemplate } from "@/lib/stores/template-store";
-
+import { PromptTemplate } from '@/lib/stores/template-store';
 
 // Default templates
 export const defaultTemplates: PromptTemplate[] = [
@@ -1319,12 +1318,11 @@ The formatted script should be ready for production use, with proper spacing, ca
     ],
   },
 
-  // Chronological Journey Outline Template
+  // Linear Framework - Simple Complexity
   {
-    id: 'chronological-journey-outline',
-    name: 'Chronological Journey Outline',
-    description:
-      'Linear Framework - Simple Complexity',
+    id: 'linear-framework-simple-complexity',
+    name: 'Linear Framework - Simple Complexity',
+    description: 'Linear Framework - Simple Complexity',
     category: 'outlineGeneration',
     template: `Create a chronological journey outline from the following content: {STORY_OR_TRANSCRIPT}
 
@@ -1358,15 +1356,14 @@ Focus on clear temporal progression. Each section should build naturally from th
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
       },
-    ]
+    ],
   },
 
-  // Challenge Response Outline Template
+  // Dynamic Framework - Moderate Complexity
   {
-    id: 'challenge-response-outline',
-    name: 'Challenge Response Outline',
-    description:
-      'Dynamic Framework - Moderate Complexity',
+    id: 'dynamic-framework-moderate-complexity',
+    name: 'Dynamic Framework - Moderate Complexity',
+    description: 'Dynamic Framework - Moderate Complexity',
     category: 'outlineGeneration',
     template: `Create a challenge and response outline from the following content: {STORY_OR_TRANSCRIPT}
 
@@ -1399,16 +1396,15 @@ Each challenge should represent a distinct type of obstacle (personal, professio
         description: 'The story or transcript to generate an outline for',
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
-      }
-    ]
+      },
+    ],
   },
 
-  // Character Arc Transformation Framework Template
+  // Developmental Framework - Moderate Complexity
   {
-    id: 'character-arc-transformation-framework',
-    name: 'Character Arc Transformation Framework',
-    description:
-      'Developmental Framework - Moderate Complexity',
+    id: 'developmental-framework-moderate-complexity',
+    name: 'Developmental Framework - Moderate Complexity',
+    description: 'Developmental Framework - Moderate Complexity',
     category: 'outlineGeneration',
     template: `Create a character transformation outline from the following content: {STORY_OR_TRANSCRIPT}
 
@@ -1441,16 +1437,15 @@ Each challenge should represent a distinct type of obstacle (personal, professio
         description: 'The story or transcript to generate an outline for',
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
-      }
-    ]
+      },
+    ],
   },
 
-  // Thematic Pillars Outline Template
+  // Thematic Framework - Complex Complexity
   {
-    id: 'thematic-pillars-outline',
-    name: 'Thematic Pillars Outline',
-    description:
-      'Thematic Framework - Complex Complexity',
+    id: 'thematic-framework-complex-complexity',
+    name: 'Thematic Framework - Complex Complexity',
+    description: 'Thematic Framework - Complex Complexity',
     category: 'outlineGeneration',
     template: `Create a thematic pillars outline from the following content: {STORY_OR_TRANSCRIPT}
 
@@ -1487,16 +1482,15 @@ Focus on the underlying values that drive all decisions and actions. Show how th
         description: 'The story or transcript to generate an outline for',
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
-      }
-    ]
+      },
+    ],
   },
 
-  // Conflict Resolution Framework Template
+  // Dynamic Framework - Complex Complexity
   {
-    id: 'conflict-resolution-framework',
-    name: 'Conflict Resolution Framework',
-    description:
-      'Dynamic Framework - Complex Complexity',
+    id: 'dynamic-framework-complex-complexity',
+    name: 'Dynamic Framework - Complex Complexity',
+    description: 'Dynamic Framework - Complex Complexity',
     category: 'outlineGeneration',
     template: `Create a conflict and resolution outline from the following content: {STORY_OR_TRANSCRIPT}
 
@@ -1533,8 +1527,7 @@ Focus on dramatic tension and high-stakes moments. Show how conflicts create pre
         description: 'The story or transcript to generate an outline for',
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
-      }
-    ]
+      },
+    ],
   },
 ];
-
