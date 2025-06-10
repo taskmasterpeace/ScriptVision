@@ -7,6 +7,7 @@ import type { Shot } from '@/lib/types';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { parseAIShotList } from './utils/project';
+import { schema } from './utils/schema';
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -28,7 +29,7 @@ export const generateResponse = async (
     const template = useTemplateStore.getState().getTemplate(templateId);
 
     const API_KEY = useModelStore.getState().apiKey;
-
+    
     const systemTemplate =
       'You are a helpful assistant specialized in visual prompts and film production.';
 
@@ -54,6 +55,46 @@ export const generateResponse = async (
     return response;
   } catch (error) {
     console.error('Error generating response:', error);
+    throw error;
+  }
+};
+
+export const generateJSONResponse = async (
+  phase: ApplicationPhase,
+  templateId: string,
+  context: Record<string, string>
+) => {
+  try {
+    const model = useModelStore.getState().getModelForPhase(phase);
+    const provider = useModelStore.getState().selectedProviders[phase];
+    const template = useTemplateStore.getState().getTemplate(templateId);
+    const API_KEY = useModelStore.getState().apiKey;
+
+    const systemTemplate =
+      'You are a helpful assistant specialized in visual prompts and film production.';
+    const promptTemplate = ChatPromptTemplate.fromMessages([
+      ['system', systemTemplate],
+      ['user', template?.template || ''],
+    ]);
+
+    const promptValue = await promptTemplate.invoke(context);
+
+    const openai = new ChatOpenAI({
+      apiKey: API_KEY,
+      model: `${provider}/${model}`,
+      configuration: {
+        baseURL: 'https://router.requesty.ai/v1',
+      },
+      temperature: 0.7,
+      maxTokens: 2000,
+    });
+
+    const structuredOutput = openai.withStructuredOutput(schema);
+
+    const response = await structuredOutput.invoke(promptValue);
+    return response;
+  } catch (error) {
+    console.error('Error generating JSON response:', error);
     throw error;
   }
 };

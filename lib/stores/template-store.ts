@@ -26,6 +26,7 @@ export interface PromptTemplate {
     | 'videoTreatment'
     | 'shotSuggestions'
     | 'outlineGeneration'
+    | 'storyGeneration'
     | 'other';
 }
 
@@ -34,7 +35,7 @@ interface TemplateState {
   getTemplate: (id: string) => PromptTemplate | undefined
   selectedTemplate: PromptTemplate | null
   setSelectedTemplate: (template: PromptTemplate | null) => void
-  
+
   updateTemplate: (id: string, updatedTemplate: Partial<PromptTemplate>) => void
   updateTemplateVariable: (templateId: string, variableName: string, enabled: boolean) => void
   // DB actions
@@ -68,19 +69,19 @@ export const useTemplateStore = create<TemplateState>()(
         if (index !== -1) {
           const newTemplates = [...templates]
           const existingTemplate = newTemplates[index]
-          
+
           // Preserve variables that might not be in the update
           const variables = updatedTemplate.variables !== undefined 
-            ? updatedTemplate.variables 
+              ? updatedTemplate.variables
             : existingTemplate.variables
-            
-          const updated = { 
-            ...existingTemplate, 
+
+          const updated = {
+            ...existingTemplate,
             ...updatedTemplate,
             variables
           }
           newTemplates[index] = updated
-          
+
           // Update selected template if it's the one being modified
           const currentSelected = get().selectedTemplate
           if (currentSelected && currentSelected.id === id) {
@@ -141,13 +142,13 @@ export const useTemplateStore = create<TemplateState>()(
         try {
           // First load any saved templates
           await get().loadTemplate()
-          
+
           // Then ensure we have the latest defaults
           const templates = get().templates
           const hasUpdates = defaultTemplates.some(defaultTemplate => {
             return !templates.some(t => t.id === defaultTemplate.id)
           })
-          
+
           if (hasUpdates) {
             // If there are new default templates, merge them in
             const mergedTemplates = defaultTemplates.map(defaultTemplate => {
@@ -172,4 +173,4 @@ export const useTemplateStore = create<TemplateState>()(
       storage: createJSONStorage(() => storage),
     },
   ),
-)
+  )

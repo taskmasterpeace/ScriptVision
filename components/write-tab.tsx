@@ -179,10 +179,7 @@ export default function WriteTab() {
               Please go back to the Outline tab and create your story structure
               first.
             </p>
-            <Button
-              variant="outline"
-              onClick={() => setActiveTab('outline')}
-            >
+            <Button variant="outline" onClick={() => setActiveTab('outline')}>
               Go to Outline
             </Button>
           </div>
@@ -399,7 +396,7 @@ export default function WriteTab() {
               });
               return;
             }
-            setActiveTab('enhance')
+            setActiveTab('enhance');
           }}
         >
           Next: Enhance <ArrowRight className="h-4 w-4" />

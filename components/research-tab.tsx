@@ -62,9 +62,11 @@ export default function ResearchTab() {
     selectedTranscripts,
     searchYouTube,
     toggleTranscriptSelection,
+    removeSelectedTranscript,
     addCustomTranscript,
     updateCustomTranscript,
     deleteTranscript,
+    skipOutlineGeneration,
   } = useScriptCreationStore();
 
   const [localSearchQuery, setLocalSearchQuery] = useState(
@@ -77,6 +79,12 @@ export default function ResearchTab() {
     content: '',
   });
   const [editingTranscript, setEditingTranscript] = useState<{
+    id: string;
+    title: string;
+    content: string;
+  } | null>(null);
+
+  const [viewingTranscript, setViewingTranscript] = useState<{
     id: string;
     title: string;
     content: string;
@@ -190,6 +198,24 @@ export default function ResearchTab() {
     if (number < 1000) return Number(number).toString();
     return numeral(number).format('0.0a');
   }
+
+  const handleSkipOutline = async () => {
+    try {
+      await skipOutlineGeneration();
+      if (selectedTranscripts.length === 0) {
+        toast({
+          title: 'No Transcripts Selected',
+          description:
+            'Please select at least one transcript before proceeding.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setActiveTab('write');
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   return (
     <Card>
@@ -615,21 +641,57 @@ export default function ResearchTab() {
                   <span className="text-sm font-medium flex-1">
                     {transcript.snippet.title}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-red-500 hover:text-red-700 hover:bg-red-100"
-                    onClick={() => toggleTranscriptSelection(transcript.id)}
-                  >
-                    Remove
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-purple-500 hover:text-purple-700 hover:bg-purple-100"
+                      onClick={() => setViewingTranscript({
+                        id: transcript.id,
+                        title: transcript.snippet.title,
+                        content: transcript.transcript 
+                      })}
+                    >
+                      View Transcript
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-red-500 hover:text-red-700 hover:bg-red-100"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSelectedTranscript(transcript.id);
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between">
+
+      {/* Transcript Viewer Modal */}
+      <Dialog open={!!viewingTranscript} onOpenChange={(open) => !open && setViewingTranscript(null)}>
+        <DialogContent className="max-w-3xl max-h-[500px] flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{viewingTranscript?.title}</DialogTitle>
+            <DialogDescription>
+              Transcript Content
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="flex-1 p-4 bg-muted/30 rounded-md text-sm overflow-y-auto">
+            <pre className="whitespace-pre-wrap font-sans text-sm">
+              {viewingTranscript?.content ? viewingTranscript.content : <p className="text-muted-foreground text-center">
+                No transcript content available.</p>}
+            </pre>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      <CardFooter className="flex justify-between gap-3">
         <Button
           variant="outline"
           className="gap-2"
@@ -637,24 +699,44 @@ export default function ResearchTab() {
         >
           <ArrowLeft className="h-4 w-4" /> Back: Story Theme
         </Button>
-        <Button
-          variant="outline"
-          className="gap-2"
-          onClick={() => {
-            if (selectedTranscripts.length === 0) {
-              toast({
-                title: 'No Transcripts Selected',
-                description:
-                  'Please select at least one transcript before proceeding.',
-                variant: 'destructive',
-              });
-              return;
-            }
-            setActiveTab('outline')
-          }}
-        >
-          Next: Outline <ArrowRight className="h-4 w-4" />
-        </Button>
+        <div className="flex gap-3 items-center">
+          <Button
+            variant="outline"
+            className="gap-2"
+            disabled={isLoading('storyGeneration')}
+            onClick={handleSkipOutline}
+          >
+            {isLoading('storyGeneration') ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Skip : Outline...
+              </>
+            ) : (
+              <>
+                Skip : Outline
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </>
+            )}
+          </Button>
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={() => {
+              if (selectedTranscripts.length === 0) {
+                toast({
+                  title: 'No Transcripts Selected',
+                  description:
+                    'Please select at least one transcript before proceeding.',
+                  variant: 'destructive',
+                });
+                return;
+              }
+              setActiveTab('outline');
+            }}
+          >
+            Next: Outline <ArrowRight className="h-4 w-4" />
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );

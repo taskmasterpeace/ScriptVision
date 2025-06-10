@@ -1,12 +1,17 @@
 'use server';
 
 import { YoutubeTranscript } from 'youtube-transcript';
+import { Supadata } from '@supadata/js';
 import {
   YoutubeSearchResponse,
   YoutubeVideoStatistics,
   YoutubeSearchResult,
   YoutubeTranscriptResult,
 } from '@/lib/types/script.type';
+
+const supadata = new Supadata({
+  apiKey: process.env.SUPADATA_API_KEY!,
+});
 
 export const searchYouTubeAction = async (
   query: string,
@@ -57,36 +62,53 @@ export const searchYouTubeAction = async (
     throw error;
   }
 };
-
 export const getYouTubeTranscript = async (
   videoIds: string[]
 ): Promise<YoutubeTranscriptResult[]> => {
-  try {
-    const results = await Promise.allSettled(
-      videoIds.map(async (videoId) => {
-        const transcript = await YoutubeTranscript.fetchTranscript(videoId);
-        return {
-          videoId,
-          text: transcript.map((item) => item.text).join(' '),
-        };
-      })
-    );
+  const results: YoutubeTranscriptResult[] = [];
 
-    return videoIds.map((videoId, index) => {
-      const result = results[index];
-      if (result?.status === 'fulfilled' && result.value) {
-        return {
-          videoId,
-          text: result.value.text || '',
-        };
+  for (const videoId of videoIds) {
+    let transcriptText = '';
+
+    try {
+      // Primary attempt: YoutubeTranscript package
+      const transcript = await YoutubeTranscript.fetchTranscript(videoId);
+
+      // Check if transcript has meaningful text
+      transcriptText = transcript.map((item) => item.text).join(' ').trim();
+
+      if (!transcriptText) {
+        throw new Error('Transcript is empty');
       }
-      return {
+      results.push({ videoId, text: transcriptText });
+      continue; // Success — skip fallback
+    } catch (err) {
+      console.warn(`Primary fetch failed or empty for videoId: ${videoId}, trying Supadata`, err);
+    }
+
+// Fallback: Supadata
+    try {
+      const transcriptSupadata = await supadata.youtube.transcript({
+        videoId,
+        text: true,
+      });
+
+      if (typeof transcriptSupadata.content === 'string') {
+        transcriptText = transcriptSupadata.content;
+      } else if (Array.isArray(transcriptSupadata.content)) {
+        transcriptText = transcriptSupadata.content.map((item) => item.text).join(' ');
+      }
+      results.push({
+        videoId,
+        text: transcriptText.trim(),
+      });
+    } catch (supadataErr) {
+      console.error(`Supadata fetch failed for videoId: ${videoId}`, supadataErr);
+      results.push({
         videoId,
         text: '',
-      };
     });
-  } catch (error) {
-    console.error('Error fetching transcripts:', error);
-    return [];
+   }
   }
+  return results;
 };

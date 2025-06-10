@@ -6,7 +6,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import { useAILogsStore } from '@/lib/stores/ai-logs-store';
 import { useProjectStore } from '@/lib/stores/project-store';
-import { generateAIResponse, generateResponse } from '@/lib/ai-service';
+import {
+  generateAIResponse,
+  generateJSONResponse,
+  generateResponse,
+} from '@/lib/ai-service';
 import { storage } from '../db';
 import {
   YouTubeTranscript,
@@ -107,9 +111,10 @@ interface ScriptCreationState {
   setStoryTitle: (title: string) => void;
   setStoryGenre: (genre: string) => void;
   setTargetAudience: (audience: string) => void;
-
+  skipOutlineGeneration: () => Promise<void>;
   searchYouTube: (query: string) => Promise<void>;
   toggleTranscriptSelection: (id: string) => void;
+  removeSelectedTranscript: (id: string) => void;
   generateOutline: (outlineTypeOverride?: string) => Promise<void>;
   addChapter: (title: string) => void;
   updateChapter: (id: string, title: string) => void;
@@ -289,46 +294,20 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               videoDuration: searchParams.videoDuration,
             }),
           });
-          const result = await searchYouTubeAction(query, params.toString());
+          const result: YoutubeSearchResult[] = await searchYouTubeAction(query, params.toString());
 
-          // Mock search results
-          const mockResults: YouTubeTranscript[] = [
-            {
-              id: uuidv4(),
-              videoId: 'abc123',
-              title: 'How to Write a Compelling Story',
-              channelTitle: 'StoryTelling Mastery',
-              transcript:
-                "Today we're going to talk about storytelling. The key elements of a good story include character, plot, setting, and theme...",
-              thumbnailUrl: '/open-book-glow.png',
-              selected: false,
-              source: 'youtube',
-            },
-            {
-              id: uuidv4(),
-              videoId: 'def456',
-              title: `Understanding ${query} - A Deep Dive`,
-              channelTitle: 'Expert Analysis',
-              transcript: `In this video, we'll explore ${query} in detail. We'll cover the history, the key concepts, and why it matters in today's world...`,
-              thumbnailUrl: '/data-analysis-dashboard.png',
-              selected: false,
-              source: 'youtube',
-            },
-            {
-              id: uuidv4(),
-              videoId: 'ghi789',
-              title: `The Ultimate Guide to ${query}`,
-              channelTitle: 'MasterClass Online',
-              transcript: `Welcome to our comprehensive guide on ${query}. In this video, we'll break down everything you need to know to become an expert...`,
-              thumbnailUrl: '/colorful-guide-arrows.png',
-              selected: false,
-              source: 'youtube',
-            },
-          ];
+          // Get IDs of currently selected transcripts
+          const selectedIds = get().selectedTranscripts.map(t => t.id);
+
+          // Update search results while preserving selection state
+          const updatedSearchResults = result.map(item => ({
+            ...item,
+            selected: selectedIds.includes(item.id),
+          }));
 
           set({
             searchQuery: query,
-            searchResults: result,
+            searchResults: updatedSearchResults,
           });
         } catch (error) {
           console.error('Failed to search YouTube:', error);
@@ -351,19 +330,53 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               : result
           );
 
-          const updatedSelected = updatedResults
-            .filter((result) => result.selected)
-            .map(
-              ({ id, videoId, snippet, statistics, source, transcript }) => ({
-                id,
-                videoId,
-                snippet,
-                statistics,
-                transcript,
-                selected: true,
-                source,
-              })
-            );
+          // Get the item being toggled
+          const toggledItem = updatedResults.find(result => result.id === id);
+
+          // Start with existing selected transcripts
+          let updatedSelected = [...state.selectedTranscripts];
+
+          if (toggledItem) {
+            if (toggledItem.selected) {
+              // Add to selected if not already there
+              if (!updatedSelected.some(item => item.id === id)) {
+                const { id, videoId, snippet, statistics, source, transcript } = toggledItem;
+                updatedSelected.push({
+                  id,
+                  videoId,
+                  snippet,
+                  statistics,
+                  transcript,
+                  selected: true,
+                  source,
+                });
+              }
+            } else {
+              // Remove from selected if exists
+              updatedSelected = updatedSelected.filter(item => item.id !== id);
+            }
+          }
+
+
+          return {
+            searchResults: updatedResults,
+            selectedTranscripts: updatedSelected,
+          };
+        });
+      },
+
+      // Remove a transcript from the selected list
+      removeSelectedTranscript: (id: string) => {
+        set((state) => {
+          // Update search results to unselect if exists
+          const updatedResults = state.searchResults.map((result) =>
+            result.id === id ? { ...result, selected: false } : result
+          );
+
+          // Remove from selected transcripts
+          const updatedSelected = state.selectedTranscripts.filter(
+            (item) => item.id !== id
+          );
 
           return {
             searchResults: updatedResults,
@@ -608,10 +621,93 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           console.error('Failed to generate outline:', error);
           throw error;
         } finally {
-          useLoadingStore.getState().setLoading('generateOutline', false);
+          useLoadingStore.getState().setLoading(loadingKey, false);
         }
       },
+      skipOutlineGeneration: async () => {
+        const {
+          storyTheme,
+          storyTitle,
+          storyGenre,
+          selectedTranscripts,
+          outlineDirections,
+        } = get();
 
+        if (!storyTheme) {
+          throw new Error('Please define a story theme first');
+        }
+
+        if (selectedTranscripts.length === 0) {
+          throw new Error(
+            'Please select at least one transcript for inspiration'
+          );
+        }
+
+        useLoadingStore.getState().setLoading('storyGeneration', true);
+
+        try {
+          // Prepare the context for the AI
+          const transcriptsText = selectedTranscripts
+            .map((t) => `SOURCE: ${t.snippet.title}\nCONTENT: ${t.transcript}`)
+            .join('\n\n');
+
+          const promptContext = {
+            theme: storyTheme,
+            title: storyTitle || 'Untitled',
+            genre: storyGenre || 'Not specified',
+            transcripts: transcriptsText,
+            outlineType: outlineDirections?.outlineType,
+            structure: outlineDirections?.storyStructure,
+            perspective: outlineDirections?.perspective,
+            tone: outlineDirections?.tone,
+            additionalNotes: outlineDirections?.additionalNotes,
+            customPrompt: outlineDirections?.customPrompt, // Add this line
+          };
+
+          const storyGenerationResponse = await generateJSONResponse(
+            'storyGeneration',
+            'story-generation',
+            { TRANSCRIPT_OR_DATA: JSON.stringify(promptContext) }
+          );
+
+          // Log the AI response
+          useAILogsStore.getState().addLog({
+            type: 'response',
+            template: 'story-outline',
+            content: JSON.stringify(storyGenerationResponse, null, 2),
+          });
+
+          let chapters: Chapter[] = [];
+          try {
+            const data = storyGenerationResponse; // already an object
+            console.log('data', data);
+            const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+
+            chapters =
+              (Array.isArray(parsed) ? parsed : parsed.chapters)?.map(
+                (item: any) => ({
+                  ...item,
+                  id: uuidv4(),
+                  expanded: true,
+                  bulletPoints: item?.bulletPoints.map((bp: any) => ({
+                    ...bp,
+                    id: uuidv4(),
+                    selected: true,
+                  })),
+                })
+              ) ?? [];
+          } catch (e) {
+            console.error('Failed to parse AI response as chapters:', e);
+            chapters = [];
+          }
+          set({ chapters });
+        } catch (error) {
+          console.error('Failed to generate outline:', error);
+          throw error;
+        } finally {
+          useLoadingStore.getState().setLoading('storyGeneration', false);
+        }
+      },
       addChapter: (title) => {
         set((state) => ({
           chapters: [

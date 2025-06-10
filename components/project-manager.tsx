@@ -17,16 +17,6 @@ import {
 } from '@/components/ui/dialog';
 import { DataTable } from '@/components/ui/data-table';
 import { ProjectListColumns } from '@/lib/columns/project-list-columns';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Save, FolderOpen, Trash2 } from 'lucide-react';
 
 export default function ProjectManager() {
@@ -147,7 +137,11 @@ export default function ProjectManager() {
   };
 
   const handleProjectRowClick = (project: any) => {
-    setSelectedProjectToLoad(project.name);
+    if (isLoadDialogOpen) {
+      setSelectedProjectToLoad(project.name);
+    } else if (isDeleteDialogOpen) {
+      setSelectedProjectToDelete(project.name);
+    }
   };
 
   return (
@@ -214,47 +208,69 @@ export default function ProjectManager() {
             </DialogContent>
           </Dialog>
 
-          <Button
-            variant="outline"
-            onClick={() => {
-              if (projects.length === 0) {
-                toast({
-                  title: 'No Projects',
-                  description: 'There are no projects to delete.',
-                  variant: 'destructive',
-                });
-                return;
-              }
-              setIsLoadDialogOpen(true);
-            }}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Delete Project
-          </Button>
+          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedProjectToDelete(null);
+                  setIsDeleteDialogOpen(true);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Project
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+              <DialogHeader>
+                <DialogTitle>Delete Project</DialogTitle>
+                <DialogDescription>Select a project to delete</DialogDescription>
+              </DialogHeader>
+
+              <div className="py-4">
+                {projects.length > 0 ? (
+                  <DataTable
+                    columns={ProjectListColumns}
+                    data={projects}
+                    onRowClick={handleProjectRowClick}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No projects found.
+                  </div>
+                )}
+              </div>
+
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectedProjectToDelete(null);
+                    setIsDeleteDialogOpen(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (selectedProjectToDelete) {
+                      handleDeleteProject();
+                      setIsDeleteDialogOpen(false);
+                    }
+                  }}
+                  disabled={!selectedProjectToDelete}
+                  variant="destructive"
+                >
+                  Delete Project
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardContent>
 
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the
-              project "{selectedProjectToDelete}" and all of its data.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteProject}>
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Card>
   );
 }

@@ -1738,4 +1738,152 @@ Now analyze the provided content and automatically generate the optimal outline 
       },
     ],
   },
+
+  // Outline Skip
+  {
+    id: 'story-generation',
+    name: 'Story Generation',
+    description: 'Story Generation',
+    category: 'storyGeneration',
+    template: `Story Generation Prompt
+
+You are an expert biographical storyteller who transforms raw interviews, blogs, notes and scattered information into compelling, engaging narratives that captivate readers from the first sentence to the last.
+
+## YOUR MISSION
+Transform this raw material into a **compelling, interesting, and engaging story** that reads like a professionally crafted feature article. Create a narrative that makes readers think "I can't put this down" and leaves them inspired or intrigured by the subject's journey. It must be compelling interesting and engaging.
+
+## WRITING STANDARDS
+- **Length Target:** 2,500-4,000 words (substantial, immersive read)
+- **Tone:** Cinematic and dramatic, yet authentic and grounded
+- **Style:** Blend of literary narrative with journalistic precision
+- **Engagement Level:** Every paragraph should propel the reader forward
+
+## STRUCTURAL REQUIREMENTS
+
+### Opening Hook (150-200 words)
+- Start with a vivid scene, striking detail, or provocative statement
+- Introduce the subject in an unexpected or compelling way
+- Create immediate intrigue about what makes this person remarkable
+- Avoid generic biographical openings
+
+### Story Architecture
+Choose the most compelling framework from the source material:
+- **Hero's Journey:** If transformation/overcoming odds is central
+- **David vs. Goliath:** If fighting systems/underdogs is prominent  
+- **Innovation Story:** If creating something new is the focus
+- **Redemption Arc:** If comeback/second chances drive the narrative
+- **Trailblazer Tale:** If breaking barriers/being first is key
+
+### Narrative Techniques to Deploy
+1. **Scene Setting:** Paint vivid pictures of key moments
+2. **Character Development:** Show personality through actions and dialogue
+3. **Tension Building:** Create anticipation and stakes
+4. **Conflict Emphasis:** Highlight obstacles and opposition
+5. **Emotional Resonance:** Connect struggles to universal themes
+6. **Momentum Maintenance:** Each section should end with forward pull
+
+## CONTENT EXTRACTION GUIDELINES
+
+### From Interview Transcripts, Extract:
+- **Personality Markers:** Speech patterns, humor, attitude, values
+- **Pivotal Moments:** Turning points, crises, breakthroughs
+- **Specific Details:** Names, places, dates, quotes, anecdotes
+- **Hidden Gems:** Throwaway comments that reveal character depth
+- **Conflict Points:** Tensions, opposition, difficult decisions
+- **Unique Angles:** What makes this story different/special
+
+### Transform Scattered Information Into:
+- **Coherent Timeline:** Even if non-linear presentation
+- **Character Depth:** Internal motivations and external pressures
+- **Stakes Clarity:** What was at risk and why it mattered
+- **Resolution Impact:** How outcomes changed everything
+
+## WRITING EXECUTION STANDARDS
+
+### Paragraph Crafting
+- **Opening Sentences:** Hook readers with intrigue or revelation
+- **Middle Development:** Build tension, provide context, advance plot
+- **Closing Sentences:** Create momentum toward next section
+
+### Dialogue Integration
+- Use direct quotes to reveal personality and key moments
+- Clean up transcript language while preserving authentic voice
+- Balance dialogue with narrative description
+
+### Pacing Control
+- **Fast Pacing:** Action sequences, conflict moments, breakthroughs
+- **Slow Pacing:** Character development, background, reflection
+- **Rhythm Variation:** Mix short punchy paragraphs with longer descriptive ones
+
+### Emotional Architecture
+- **Early:** Curiosity and connection
+- **Middle:** Investment and tension
+- **Climax:** High stakes and resolution
+- **End:** Satisfaction and inspiration
+
+## QUALITY MARKERS
+
+### Compelling Elements
+- Reader can visualize scenes clearly
+- Personality emerges through actions, not just description
+- Stakes feel real and significant
+- Obstacles seem genuinely challenging
+- Victories feel earned and meaningful
+
+### Interesting Factors
+- Unexpected angles or revelations
+- Unique details that surprise readers
+- Fresh perspective on familiar themes
+- Insider insights into specific worlds/industries
+- Human moments that create connection
+
+### Engaging Techniques
+- Cliffhangers between sections
+- Questions that demand answers
+- Emotional investment in outcomes
+- Relatable struggles despite unique circumstances
+- Forward momentum that prevents stopping
+
+## SECTION DEVELOPMENT TEMPLATE
+
+### Section Opening Pattern
+"[Compelling scene or revelation] + [Context that raises stakes] + [Forward momentum toward resolution/conflict]"
+
+### Section Content Structure
+1. **Hook:** Immediate engagement
+2. **Context:** Necessary background woven naturally
+3. **Development:** Character growth or plot advancement
+4. **Conflict:** Tension or obstacle introduction
+5. **Transition:** Bridge to next section with intrigue
+
+### Section Closing Pattern
+"[Resolution of immediate tension] + [New question or challenge raised] + [Hint at what's coming next without a spoiler]"
+
+## FINAL REQUIREMENTS
+
+- **Title:** Create a compelling title that captures the essence
+- **Subheadings:** Use 4-6 evocative section headers (not generic)
+- **Length:** Substantial enough for deep immersion
+- **Authenticity:** Stay true to facts while maximizing narrative impact
+- **Universality:** Connect specific journey to broader human themes
+
+## EXECUTION COMMAND
+
+Analyze the provided source material and create a compelling, interesting, and engaging story that transforms raw information into a narrative readers won't be able to put down. Focus on the most dramatic, inspiring, and unique elements while maintaining authenticity and emotional truth.
+
+The story should read like a feature article from a top-tier publication - professionally crafted, deeply engaging, and impossible to stop reading once started.
+
+
+SOURCE MATERIAL: {TRANSCRIPT_OR_DATA}
+`,
+
+    variables: [
+      {
+        name: 'TRANSCRIPT_OR_DATA',
+        description: 'The transcript or data to generate a story from',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      },
+    ],
+  },
 ];

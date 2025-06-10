@@ -66,15 +66,26 @@ import {
 } from '@/components/ui/select';
 
 export default function DeveloperTab() {
-  const { toast } = useToast()
-  const { templates, updateTemplate, updateTemplateVariable, resetToDefaults, selectedTemplate, setSelectedTemplate } = useTemplateStore()
-  const [editedTemplate, setEditedTemplate] = useState<Partial<PromptTemplate>>({})
-  const [activeCategory, setActiveCategory] = useState<string>("all")
-  const [previewInput, setPreviewInput] = useState<Record<string, string>>({})
-  const [previewOutput, setPreviewOutput] = useState<string>("")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [activeTab, setActiveTab] = useState<"templates" | "logs" | "models">("models") // Default to models tab
-  const [debugInfo, setDebugInfo] = useState<string>("")
+  const { toast } = useToast();
+  const {
+    templates,
+    updateTemplate,
+    updateTemplateVariable,
+    resetToDefaults,
+    selectedTemplate,
+    setSelectedTemplate,
+  } = useTemplateStore();
+  const [editedTemplate, setEditedTemplate] = useState<Partial<PromptTemplate>>(
+    {}
+  );
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [previewInput, setPreviewInput] = useState<Record<string, string>>({});
+  const [previewOutput, setPreviewOutput] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [activeTab, setActiveTab] = useState<'templates' | 'logs' | 'models'>(
+    'models'
+  ); // Default to models tab
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   // Debug effect to check templates loading
   useEffect(() => {
@@ -97,8 +108,8 @@ export default function DeveloperTab() {
   const handleSaveTemplate = () => {
     if (!selectedTemplate) return;
 
-    updateTemplate(selectedTemplate.id, editedTemplate)
-    setEditedTemplate({})
+    updateTemplate(selectedTemplate.id, editedTemplate);
+    setEditedTemplate({});
     toast({
       title: 'Template Updated',
       description: `Template "${selectedTemplate.name}" has been updated.`,
@@ -432,12 +443,26 @@ export default function DeveloperTab() {
                   </Button>
                   <Button
                     variant={
-                      activeCategory === 'outlineGeneration' ? 'default' : 'outline'
+                      activeCategory === 'outlineGeneration'
+                        ? 'default'
+                        : 'outline'
                     }
                     onClick={() => setActiveCategory('outlineGeneration')}
                     size="sm"
                   >
                     Outline Generation
+                  </Button>
+
+                  <Button
+                    variant={
+                      activeCategory === 'storyGeneration'
+                        ? 'default'
+                        : 'outline'
+                    }
+                    onClick={() => setActiveCategory('storyGeneration')}
+                    size="sm"
+                  >
+                    Story Generation
                   </Button>
                 </div>
 
@@ -447,10 +472,11 @@ export default function DeveloperTab() {
                       filteredTemplates.map((template) => (
                         <div
                           key={template.id}
-                          className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${selectedTemplate?.id === template.id
+                          className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors ${
+                            selectedTemplate?.id === template.id
                               ? 'bg-muted'
                               : ''
-                            }`}
+                          }`}
                           onClick={() => handleSelectTemplate(template)}
                         >
                           <div className="flex items-center justify-between">
@@ -780,27 +806,27 @@ export default function DeveloperTab() {
                                 {selectedTemplate.variables.some(
                                   (v) => !v.enabled
                                 ) && (
-                                    <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md text-amber-800 dark:text-amber-300 text-sm">
-                                      <p className="font-medium">
-                                        Disabled Variables
-                                      </p>
-                                      <p className="mt-1">
-                                        The following variables are disabled and
-                                        will be completely removed from the
-                                        prompt:
-                                        {selectedTemplate.variables
-                                          .filter((v) => !v.enabled)
-                                          .map((v) => (
-                                            <span
-                                              key={v.name}
-                                              className="inline-block mx-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900 rounded font-mono text-xs"
-                                            >
-                                              {v.name}
-                                            </span>
-                                          ))}
-                                      </p>
-                                    </div>
-                                  )}
+                                  <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md text-amber-800 dark:text-amber-300 text-sm">
+                                    <p className="font-medium">
+                                      Disabled Variables
+                                    </p>
+                                    <p className="mt-1">
+                                      The following variables are disabled and
+                                      will be completely removed from the
+                                      prompt:
+                                      {selectedTemplate.variables
+                                        .filter((v) => !v.enabled)
+                                        .map((v) => (
+                                          <span
+                                            key={v.name}
+                                            className="inline-block mx-1 px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900 rounded font-mono text-xs"
+                                          >
+                                            {v.name}
+                                          </span>
+                                        ))}
+                                    </p>
+                                  </div>
+                                )}
 
                                 <div className="flex gap-2">
                                   <Button

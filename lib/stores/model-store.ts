@@ -17,7 +17,8 @@ export type ApplicationPhase =
   | 'visualPrompt'
   | 'videoTreatment'
   | 'shotSuggestions'
-  | 'outlineGeneration';
+  | 'outlineGeneration'
+  | 'storyGeneration';
 
 interface ModelState {
   apiKey: string
@@ -83,6 +84,12 @@ const defaultPhaseModelMapping: PhaseModelMapping = {
   },
   outlineGeneration: {
     id: "outlineGeneration",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    lastUpdated: new Date().toISOString()
+  },
+  storyGeneration: {
+    id: "storyGeneration",
     provider: "openai",
     model: "gpt-4o-mini",
     lastUpdated: new Date().toISOString()
