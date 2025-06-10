@@ -1530,4 +1530,212 @@ Focus on dramatic tension and high-stakes moments. Show how conflicts create pre
       },
     ],
   },
+  // auto outline generation framework
+  {
+    id: 'auto-outline-generation',
+    name: 'Auto Outline Generation',
+    description: 'Auto Outline Generation',
+    category: 'outlineGeneration',
+    template: `You are an expert story structure analyst. Your task is to analyze the provided content, determine the optimal outline framework(s), and automatically generate the best possible outline.
+
+CONTENT TO ANALYZE: {STORY_OR_TRANSCRIPT}
+
+## ANALYSIS PHASE
+
+First, evaluate the content against these criteria:
+
+**Content Type Indicators:**
+- Biography/Life Story: Personal journey with clear timeline
+- Business/Career Focus: Professional achievements and challenges
+- Innovation/Creative: New ideas, artistic expression, or breakthrough moments
+- Advocacy/Social Impact: Fighting for causes or systemic change
+- Overcoming Adversity: Struggles, failures, and comebacks
+- Leadership/Influence: Building movements or inspiring others
+
+**Narrative Strength Indicators:**
+- Clear Timeline: Strong chronological progression
+- Value-Driven: Consistent principles guide all decisions
+- Problem-Solving: Series of challenges overcome
+- Transformation: Dramatic personal/professional evolution
+- Conflict-Heavy: High tensions, opposition, dramatic moments
+- Multi-Dimensional: Complex story requiring multiple perspectives
+
+**Audience & Purpose:**
+- Inspirational: Motivate others through example
+- Educational: Teach lessons or provide guidance
+- Entertainment: Engage with compelling narrative
+- Professional: Business/career development context
+- Academic: Analytical or research purposes
+- Marketing: Brand building or promotional content
+
+## FRAMEWORK SELECTION LOGIC
+
+Based on your analysis, automatically select from these options:
+
+### SINGLE FRAMEWORKS
+
+**1. Chronological Journey** - Use when:
+- Clear life progression with distinct phases
+- Timeline is the strongest organizing principle
+- Audience wants to understand "how they got here"
+- Simple, accessible narrative needed
+
+**2. Challenge & Response** - Use when:
+- Story centers on problem-solving
+- Multiple distinct obstacles overcome
+- Audience wants strategic insights
+- Focus on resilience and adaptation
+
+**3. Character Arc Transformation** - Use when:
+- Dramatic personal evolution is central
+- Internal growth drives external success
+- Audience interested in psychological development
+- Inspirational/motivational purpose
+
+**4. Thematic Pillars** - Use when:
+- Strong value system drives all actions
+- Consistent principles across different contexts
+- Audience wants to understand core beliefs
+- Brand building or leadership development focus
+
+**5. Conflict & Resolution** - Use when:
+- High-drama narrative with clear tensions
+- Stakes and opposition are prominent
+- Entertainment value is important
+- Audience enjoys compelling, dramatic stories
+
+### HYBRID FRAMEWORKS
+
+**6. Chronological + Challenge & Response** - Use when:
+- Strong timeline with distinct problem-solving phases
+- Each time period had signature challenges
+- Audience wants both progression and strategy insights
+
+**7. Character Arc + Thematic Pillars** - Use when:
+- Personal transformation driven by core values
+- Values evolved or deepened over time
+- Audience interested in both growth and principles
+
+**8. Conflict & Resolution + Character Arc** - Use when:
+- External conflicts drove internal transformation
+- Dramatic tension shaped personality development
+- Audience wants both drama and inspiration
+
+**9. Challenge & Response + Thematic Pillars** - Use when:
+- Problems were solved through consistent value application
+- Values were tested and proven through challenges
+- Audience wants both strategy and principle insights
+
+**10. Chronological + Thematic Pillars** - Use when:
+- Values manifested differently in each life phase
+- Timeline shows evolution of principle application
+- Audience wants both progression and core belief understanding
+
+## OUTPUT INSTRUCTIONS
+
+1. **Framework Selection** (1-2 sentences explaining your choice)
+2. **Complete Outline** using the selected framework's exact structure
+3. **Alternative Framework Note** (brief mention of second-best option)
+
+---
+
+## FRAMEWORK TEMPLATES IN MEMORY
+
+### Template 1: Chronological Journey
+**I. Origins & Foundation (Early Period)**
+**II. Entry & Evolution (Development Period)**
+**III. Breaking Barriers (Achievement Period)**
+**IV. Elevation & Impact (Current/Legacy Period)**
+
+### Template 2: Challenge & Response
+**I. [Primary Challenge Title]**
+- Problem/Response/Impact
+**II. [Secondary Challenge Title]**
+- Problem/Response/Impact
+**III. [Tertiary Challenge Title]**
+- Problem/Response/Impact
+**IV. [Ongoing Challenge Title]**
+- Problem/Response/Impact
+
+### Template 3: Character Arc Transformation
+**I. The [Starting Identity] (Initial State)**
+**II. The [Learning Phase Identity] (Growth State)**
+**III. The [Breakthrough Identity] (Transformation State)**
+**IV. The [Current Identity] (Evolved State)**
+
+### Template 4: Thematic Pillars
+**I. [Core Value #1]: "[Value Statement]"**
+**II. [Core Value #2]: "[Value Statement]"**
+**III. [Core Value #3]: "[Value Statement]"**
+**IV. [Core Value #4]: "[Value Statement]"**
+
+### Template 5: Conflict & Resolution
+**I. Internal Conflicts**
+**II. External Conflicts**
+**III. Pivotal Moments**
+**IV. Resolution & Ongoing Impact**
+
+### Template 6: Chronological + Challenge & Response
+**I. Origins & Foundation (Early Period) + Primary Challenges**
+- Time period background + Core problems/responses
+**II. Entry & Evolution (Development Period) + Learning Challenges**
+- Development phase + Skill-building obstacles/solutions
+**III. Breaking Barriers (Achievement Period) + Breakthrough Challenges**
+- Achievement phase + Major barriers overcome
+**IV. Elevation & Impact (Current/Legacy Period) + Ongoing Challenges**
+- Current status + Present problems/approaches
+
+### Template 7: Character Arc + Thematic Pillars
+**I. The [Starting Identity] - Core Value Formation**
+- Initial character + emerging principles
+**II. The [Learning Phase Identity] - Value Testing**
+- Character growth + principles under pressure
+**III. The [Breakthrough Identity] - Value Mastery**
+- Transformation + principles fully integrated
+**IV. The [Current Identity] - Value Leadership**
+- Evolved character + inspiring others through principles
+
+### Template 8: Conflict & Resolution + Character Arc
+**I. Internal Conflicts → Character Foundation**
+- Internal tensions + how they shaped initial identity
+**II. External Conflicts → Character Testing**
+- External pressures + how they forced growth
+**III. Pivotal Moments → Character Transformation**
+- Crisis points + breakthrough moments in development
+**IV. Resolution & Ongoing Impact → Character Mastery**
+- Current resolved state + influence on others' development
+
+### Template 9: Challenge & Response + Thematic Pillars
+**I. [Primary Challenge] Through [Core Value #1]**
+- Problem + value-based solution + principle demonstrated
+**II. [Secondary Challenge] Through [Core Value #2]**
+- Problem + value-based solution + principle demonstrated
+**III. [Tertiary Challenge] Through [Core Value #3]**
+- Problem + value-based solution + principle demonstrated
+**IV. [Ongoing Challenge] Through [Core Value #4]**
+- Problem + value-based solution + principle demonstrated
+
+### Template 10: Chronological + Thematic Pillars
+**I. Origins & Foundation - Core Values Emergence**
+- Early period + initial value formation
+**II. Entry & Evolution - Values in Practice**
+- Development period + principles tested in real world
+**III. Breaking Barriers - Values Under Pressure**
+- Achievement period + principles during major challenges
+**IV. Elevation & Impact - Values as Leadership**
+- Current period + principles inspiring others
+
+## EXECUTION
+
+Now analyze the provided content and automatically generate the optimal outline following the selected framework's structure. Provide No addition commentary
+`,
+    variables: [
+      {
+        name: 'STORY_OR_TRANSCRIPT',
+        description: 'The story or transcript to generate an outline for',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      },
+    ],
+  },
 ];

@@ -110,8 +110,7 @@ interface ScriptCreationState {
 
   searchYouTube: (query: string) => Promise<void>;
   toggleTranscriptSelection: (id: string) => void;
-
-  generateOutline: () => Promise<void>;
+  generateOutline: (outlineTypeOverride?: string) => Promise<void>;
   addChapter: (title: string) => void;
   updateChapter: (id: string, title: string) => void;
   deleteChapter: (id: string) => void;
@@ -384,7 +383,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       },
 
       // Update the generateOutline function to use the outline directions
-      generateOutline: async () => {
+      generateOutline: async (outlineTypeOverride?: string) => {
         const {
           storyTheme,
           storyTitle,
@@ -402,8 +401,12 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             'Please select at least one transcript for inspiration'
           );
         }
+        const loadingKey =
+          outlineTypeOverride === 'auto-outline-generation'
+            ? 'autoGenerateOutline'
+            : 'generateOutline';
 
-        useLoadingStore.getState().setLoading('generateOutline', true);
+        useLoadingStore.getState().setLoading(loadingKey, true);
 
         try {
           // Prepare the context for the AI
@@ -426,7 +429,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
           const outlineResponse = await generateResponse(
             'outlineGeneration',
-            outlineDirections?.outlineType,
+            outlineTypeOverride || outlineDirections?.outlineType,
             { STORY_OR_TRANSCRIPT: JSON.stringify(promptContext) }
           );
 

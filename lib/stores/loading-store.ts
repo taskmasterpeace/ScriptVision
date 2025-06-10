@@ -9,6 +9,8 @@ export type LoadingKey =
   | 'generatePrompt'
   | 'generateTreatment'
   | 'suggestShots'
+  | 'generateOutline'
+  | 'autoGenerateOutline'
   | string;
 
 interface LoadingState {
@@ -26,6 +28,8 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
     generatePrompt: false,
     generateTreatment: false,
     suggestShots: false,
+    generateOutline: false,
+    autoGenerateOutline: false,
   },
 
   setLoading: (key, isLoading) =>

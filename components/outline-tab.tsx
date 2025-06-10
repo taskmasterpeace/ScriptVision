@@ -63,6 +63,7 @@ export default function OutlineTab() {
   const [localOutline, setLocalOutline] = useState(outline);
   const [outlineDirectionsLocal, setOutlineDirectionsLocal] =
     useState(outlineDirections);
+  const [activeTab, setActiveTab] = useState('editor');
 
   const [showSuccess, setShowSuccess] = useState(false);
 
@@ -90,6 +91,7 @@ export default function OutlineTab() {
 
   const handleSaveOutline = () => {
     setOutline(localOutline);
+
     toast({
       title: 'Outline Saved',
       description: 'Your outline has been saved.',
@@ -104,6 +106,7 @@ export default function OutlineTab() {
       });
 
       await generateOutline();
+      setActiveTab('editor');
 
       toast({
         title: 'Outline Generated',
@@ -127,8 +130,35 @@ export default function OutlineTab() {
     }
   };
 
+  const autoGenerate = async () => {
+    try {
+      // Save the outline directions first
+      await generateOutline('auto-outline-generation');
+      setActiveTab('editor');
+      toast({
+        title: 'Outline Generated',
+        description: 'Your outline has been generated successfully.',
+      });
+      setShowSuccess(true);
+
+      // Hide the success message after 5 seconds
+      setTimeout(() => {
+        setShowSuccess(false);
+      }, 5000);
+    } catch (error) {
+      toast({
+        title: 'Generation Failed',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to generate outline.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return (
-    <Tabs defaultValue="editor">
+    <Tabs defaultValue="editor" value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="mb-4">
         <TabsTrigger value="editor">Outline Editor</TabsTrigger>
         <TabsTrigger value="wizard">Outline Wizard</TabsTrigger>
@@ -221,10 +251,10 @@ export default function OutlineTab() {
               </Alert>
             )}
           </CardContent>
-          <CardFooter>
+          <CardFooter className="flex justify-between">
             <Button
               onClick={handleGenerateOutline}
-              className="w-full"
+              // className="w-full"
               disabled={isLoading('generateOutline')}
             >
               {isLoading('generateOutline') ? (
@@ -236,6 +266,24 @@ export default function OutlineTab() {
                 <>
                   <List className="mr-2 h-4 w-4" />
                   Generate Outline
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              className="gap-2"
+              disabled={isLoading('autoGenerateOutline')}
+              onClick={autoGenerate}
+            >
+              {isLoading('autoGenerateOutline') ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Auto Generating Outline...
+                </>
+              ) : (
+                <>
+                  <List className="mr-2 h-4 w-4" />
+                  Auto Generate Outline
                 </>
               )}
             </Button>
