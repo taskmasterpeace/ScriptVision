@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const schema = z.object({
+export const chaptersSchema = z.object({
   chapters: z.array(
     z.object({
       title: z.string(),

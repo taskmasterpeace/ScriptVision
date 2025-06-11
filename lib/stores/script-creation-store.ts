@@ -294,13 +294,16 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               videoDuration: searchParams.videoDuration,
             }),
           });
-          const result: YoutubeSearchResult[] = await searchYouTubeAction(query, params.toString());
+          const result: YoutubeSearchResult[] = await searchYouTubeAction(
+            query,
+            params.toString()
+          );
 
           // Get IDs of currently selected transcripts
-          const selectedIds = get().selectedTranscripts.map(t => t.id);
+          const selectedIds = get().selectedTranscripts.map((t) => t.id);
 
           // Update search results while preserving selection state
-          const updatedSearchResults = result.map(item => ({
+          const updatedSearchResults = result.map((item) => ({
             ...item,
             selected: selectedIds.includes(item.id),
           }));
@@ -331,7 +334,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           );
 
           // Get the item being toggled
-          const toggledItem = updatedResults.find(result => result.id === id);
+          const toggledItem = updatedResults.find((result) => result.id === id);
 
           // Start with existing selected transcripts
           let updatedSelected = [...state.selectedTranscripts];
@@ -339,8 +342,9 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           if (toggledItem) {
             if (toggledItem.selected) {
               // Add to selected if not already there
-              if (!updatedSelected.some(item => item.id === id)) {
-                const { id, videoId, snippet, statistics, source, transcript } = toggledItem;
+              if (!updatedSelected.some((item) => item.id === id)) {
+                const { id, videoId, snippet, statistics, source, transcript } =
+                  toggledItem;
                 updatedSelected.push({
                   id,
                   videoId,
@@ -353,10 +357,11 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               }
             } else {
               // Remove from selected if exists
-              updatedSelected = updatedSelected.filter(item => item.id !== id);
+              updatedSelected = updatedSelected.filter(
+                (item) => item.id !== id
+              );
             }
           }
-
 
           return {
             searchResults: updatedResults,
@@ -665,7 +670,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           };
 
           const storyGenerationResponse = await generateJSONResponse(
-            'storyGeneration',
+            'write',
             'story-generation',
             { TRANSCRIPT_OR_DATA: JSON.stringify(promptContext) }
           );
@@ -961,7 +966,14 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       },
 
       generateChapter: async (chapterId) => {
-        const { chapters, storyTheme, storyTitle, storyGenre } = get();
+        const {
+          chapters,
+          storyTheme,
+          storyTitle,
+          storyGenre,
+          selectedTranscripts,
+          outline,
+        } = get();
 
         const chapter = chapters.find((c) => c.id === chapterId);
 
@@ -984,21 +996,40 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             theme: storyTheme,
             title: storyTitle || 'Untitled',
             genre: storyGenre || 'Not specified',
-            chapterTitle: chapter.title,
-            bulletPoints: `- ${selectedBulletPoints}`,
+            chapterTitle: chapter.title || 'Untitled',
+            chapterDescription: `- ${selectedBulletPoints}` || 'Untitled',
+            outline: outline,
+            transcripts: selectedTranscripts
+              .map(
+                (t) =>
+                  `SOURCE: ${t.snippet?.title ?? ''}\nCONTENT: ${t.transcript ?? ''}`
+              )
+              .join('\n\n'),
+            'Insert relevant transcript excerpts here': selectedTranscripts
+              .map(
+                (t) =>
+                  `SOURCE: ${t.snippet?.title ?? ''}\nCONTENT: ${t.transcript ?? ''}`
+              )
+              .join('\n\n'),
           };
 
           // Call the AI service
-          const chapterContent = await generateAIResponse(
-            'Generate a story chapter based on outline',
-            JSON.stringify(promptContext)
+          const chapterContent = await generateResponse(
+            'write',
+            'chapter-expansion',
+            promptContext
           );
+
+          const chapterContentString =
+            typeof chapterContent.content === 'string'
+              ? chapterContent.content
+              : chapterContent.content.map((part: any) => part.text).join('');
 
           // Log the AI response
           useAILogsStore.getState().addLog({
             type: 'response',
             template: 'chapter-generation',
-            content: chapterContent,
+            content: chapterContentString,
           });
 
           // Create the generated chapter
@@ -1006,7 +1037,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             id: uuidv4(),
             chapterId,
             title: chapter.title,
-            content: chapterContent,
+            content: chapterContentString,
             timestamp: new Date().toISOString(),
           };
 

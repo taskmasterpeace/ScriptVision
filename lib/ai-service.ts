@@ -7,7 +7,7 @@ import type { Shot } from '@/lib/types';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { parseAIShotList } from './utils/project';
-import { schema } from './utils/schema';
+import { chaptersSchema } from './utils/schema';
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -29,7 +29,6 @@ export const generateResponse = async (
     const template = useTemplateStore.getState().getTemplate(templateId);
 
     const API_KEY = useModelStore.getState().apiKey;
-    
     const systemTemplate =
       'You are a helpful assistant specialized in visual prompts and film production.';
 
@@ -89,7 +88,7 @@ export const generateJSONResponse = async (
       maxTokens: 2000,
     });
 
-    const structuredOutput = openai.withStructuredOutput(schema);
+    const structuredOutput = openai.withStructuredOutput(chaptersSchema);
 
     const response = await structuredOutput.invoke(promptValue);
     return response;

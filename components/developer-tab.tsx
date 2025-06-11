@@ -194,6 +194,8 @@ export default function DeveloperTab() {
         return 'Shot Suggestions';
       case 'outlineGeneration':
         return 'Outline Generation';
+      case 'write':
+        return 'Write';
       default:
         return category;
     }
@@ -217,6 +219,8 @@ export default function DeveloperTab() {
         return 'bg-orange-500';
       case 'outlineGeneration':
         return 'bg-indigo-500';
+      case 'write':
+        return 'bg-green-500';
       default:
         return 'bg-gray-500';
     }
@@ -454,15 +458,11 @@ export default function DeveloperTab() {
                   </Button>
 
                   <Button
-                    variant={
-                      activeCategory === 'storyGeneration'
-                        ? 'default'
-                        : 'outline'
-                    }
-                    onClick={() => setActiveCategory('storyGeneration')}
+                    variant={activeCategory === 'write' ? 'default' : 'outline'}
+                    onClick={() => setActiveCategory('write')}
                     size="sm"
                   >
-                    Story Generation
+                    Write
                   </Button>
                 </div>
 
@@ -588,6 +588,7 @@ export default function DeveloperTab() {
                                 | 'videoTreatment'
                                 | 'shotSuggestions'
                                 | 'outlineGeneration'
+                                | 'write'
                                 | 'other',
                             })
                           }
@@ -616,6 +617,7 @@ export default function DeveloperTab() {
                             <SelectItem value="outlineGeneration">
                               Outline Generation
                             </SelectItem>
+                            <SelectItem value="write">Write</SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>

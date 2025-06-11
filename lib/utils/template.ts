@@ -1744,7 +1744,7 @@ Now analyze the provided content and automatically generate the optimal outline 
     id: 'story-generation',
     name: 'Story Generation',
     description: 'Story Generation',
-    category: 'storyGeneration',
+    category: 'write',
     template: `Story Generation Prompt
 
 You are an expert biographical storyteller who transforms raw interviews, blogs, notes and scattered information into compelling, engaging narratives that captivate readers from the first sentence to the last.
@@ -1882,6 +1882,66 @@ SOURCE MATERIAL: {TRANSCRIPT_OR_DATA}
         name: 'TRANSCRIPT_OR_DATA',
         description: 'The transcript or data to generate a story from',
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      },
+    ],
+  },
+
+  {
+    id: 'chapter-expansion',
+    name: 'Chapter Expansion',
+    description: 'Chapter Expansion',
+    category: 'write',
+    template: `Expand Chapter Prompt
+      Objective: Expand this chapter but strickly stick to the outline chatper that it is about.
+  {outline}
+  using the original transcript for context.
+  {transcripts}
+
+  Prompt Template:
+
+  Instruction:
+  Expand the following chapter into a detailed narrative segment, incorporating relevant details from the original transcripts.(learn.microsoft.com)
+
+  Chapter Title:
+  "{{chapterTitle}}"
+
+  Chapter Description:
+  "{{chapterDescription}}"
+
+  Transcripts:
+  """
+  {Insert relevant transcript excerpts here}
+  """(anthropic.com)
+
+  Constraints:
+
+  Maintain the narrative's tone and style.
+
+  Ensure coherence with the overall story `,
+    variables: [
+      {
+        name: 'outline',
+        description: 'The outline of the chapter',
+        example: 'Chapter 1',
+        enabled: true,
+      },
+      {
+        name: 'transcripts',
+        description: 'The transcripts of the chapter',
+        example: 'Chapter 1',
+        enabled: true,
+      },
+      {
+        name: 'chapterTitle',
+        description: 'The title of the chapter',
+        example: 'Chapter 1',
+        enabled: true,
+      },
+      {
+        name: 'chapterDescription',
+        description: 'The description of the chapter',
+        example: 'Chapter 1',
         enabled: true,
       },
     ],

@@ -160,7 +160,7 @@ export default function EnhanceTab() {
     });
 
     // Navigate to the script tab
-    setActiveTabStore('script')
+    setActiveTabStore('script');
   };
 
   return (
@@ -270,12 +270,12 @@ export default function EnhanceTab() {
                         onClick={() => setSelectedChapterId(chapter.chapterId)}
                       >
                         <div className="flex items-center gap-2 w-full">
-                          <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-muted text-xs">
+                          <p className="flex-shrink-0 w-6 h-6 flex items-center justify-center rounded-full bg-muted text-xs text-black">
                             {index + 1}
-                          </span>
-                          <span className="text-sm truncate text-left flex-1">
+                          </p>
+                          <p className="text-sm truncate text-left flex-1">
                             {originalChapter?.title}
-                          </span>
+                          </p>
                           {isAnalyzing || isEnhancing ? (
                             <Loader2 className="h-3 w-3 animate-spin" />
                           ) : isEnhanced ? (
