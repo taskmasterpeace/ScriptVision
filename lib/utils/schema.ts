@@ -34,3 +34,14 @@ export const shortListSchema = z.object({
   )
 });
 
+export const subjectSchema = z.object({
+  subjects: z.array(
+    z.object({
+      name: z.string(),
+      category: z.enum(['People', 'Places', 'Props']),
+      description: z.string(),
+      alias: z.string(),
+      active: z.boolean(),
+    })
+  ),
+});

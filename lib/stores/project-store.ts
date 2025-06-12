@@ -19,12 +19,9 @@ import { storage } from '../db';
 // First, import the loading store at the top of the file
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import {
-  parseAIShotList,
   mockDirectorStyles,
-  extractShotDetails,
-  parseAISubjects,
 } from '@/lib/utils/project';
-import { shortListSchema } from '@/lib/utils/schema';
+import { shortListSchema, subjectSchema } from '@/lib/utils/schema';
 import { z } from 'zod';
 
 interface ProjectState {
@@ -327,7 +324,7 @@ export const useProjectStore = create<ProjectState>()(
 
       // Subject actions
       extractSubjects: async () => {
-        const { script } = get();
+        const { script, shotList } = get();
 
         if (!script.trim()) {
           throw new Error('Script is empty');
@@ -336,21 +333,31 @@ export const useProjectStore = create<ProjectState>()(
         useLoadingStore.getState().setLoading('extractSubjects', true);
 
         try {
+          // Process the template with variables
+          const context = {
+            script: script,
+            shot_list: JSON.stringify(shotList) || 'No shot list available'
+          }
+
           // Call the AI service to extract subjects
-          const subjectsText = await generateAIResponse(
-            'Extract subjects (characters, locations, props) from this script',
-            script
+          const response: z.infer<typeof subjectSchema> = await generateJSONResponse(
+            'subjectExtraction',
+            'subject-extraction',
+            context,
+            subjectSchema
           );
-          console.log('Subjects extraction response:', subjectsText);
 
           // Parse the AI response into structured data
-          const subjects = parseAISubjects(subjectsText);
+          const subjects = response.subjects.map((subject) => ({
+            ...subject,
+            id: uuidv4(),
+          }));
 
           // If no subjects were parsed, throw an error
           if (subjects.length === 0) {
             console.error(
               'Failed to parse subjects from AI response:',
-              subjectsText
+              subjects
             );
             throw new Error(
               'Failed to parse subjects from AI response. Please try again.'
