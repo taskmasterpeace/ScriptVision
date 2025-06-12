@@ -1,96 +1,115 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { useProjectStore } from "@/lib/stores/project-store"
-import { Loader2, FileText, List, CheckCircle2, AlertTriangle } from "lucide-react"
-import { useLoadingStore } from "@/lib/stores/loading-store"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from '@/components/ui/card';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { useProjectStore } from '@/lib/stores/project-store';
+import {
+  Loader2,
+  FileText,
+  List,
+  CheckCircle2,
+  AlertTriangle,
+} from 'lucide-react';
+import { useLoadingStore } from '@/lib/stores/loading-store';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function ScriptTab() {
-  const { toast } = useToast()
-  const { script, setScript, generateShotList, shotList } = useProjectStore()
-  const { isLoading } = useLoadingStore()
-  const [localScript, setLocalScript] = useState(script)
-  const [showSuccess, setShowSuccess] = useState(false)
-  const [showError, setShowError] = useState(false)
-  const [errorMessage, setErrorMessage] = useState("")
+  const { toast } = useToast();
+  const { script, setScript, generateShotList, shotList } = useProjectStore();
+  const { isLoading } = useLoadingStore();
+  const [localScript, setLocalScript] = useState(script);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Update local script when the store changes
   useEffect(() => {
-    setLocalScript(script)
-  }, [script])
+    setLocalScript(script);
+  }, [script]);
 
   // Show success message when shot list is generated
   useEffect(() => {
     if (shotList.length > 0) {
-      setShowSuccess(true)
-      setShowError(false)
+      setShowSuccess(true);
+      setShowError(false);
       // Hide the success message after 5 seconds
       const timer = setTimeout(() => {
-        setShowSuccess(false)
-      }, 5000)
-      return () => clearTimeout(timer)
+        setShowSuccess(false);
+      }, 5000);
+      return () => clearTimeout(timer);
     }
-  }, [shotList])
+  }, [shotList]);
 
   const handleSaveScript = () => {
-    setScript(localScript)
+    setScript(localScript);
     toast({
-      title: "Script Saved",
-      description: "Your script has been saved.",
-    })
-  }
+      title: 'Script Saved',
+      description: 'Your script has been saved.',
+    });
+  };
 
   const handleGenerateShotList = async () => {
     if (!localScript.trim()) {
       toast({
-        title: "Script is Empty",
-        description: "Please enter a script before generating a shot list.",
-        variant: "destructive",
-      })
-      return
+        title: 'Script is Empty',
+        description: 'Please enter a script before generating a shot list.',
+        variant: 'destructive',
+      });
+      return;
     }
 
     // Reset error state
-    setShowError(false)
-    setErrorMessage("")
+    setShowError(false);
+    setErrorMessage('');
 
     // Save the script first
-    setScript(localScript)
+    setScript(localScript);
 
     try {
-      await generateShotList()
+      await generateShotList();
       toast({
-        title: "Shot List Generated",
-        description: "Your shot list has been generated successfully. You can now view it in the Shot List tab.",
-      })
-      setShowSuccess(true)
+        title: 'Shot List Generated',
+        description:
+          'Your shot list has been generated successfully. You can now view it in the Shot List tab.',
+      });
+      setShowSuccess(true);
       // Hide the success message after 5 seconds
       setTimeout(() => {
-        setShowSuccess(false)
-      }, 5000)
+        setShowSuccess(false);
+      }, 5000);
     } catch (error) {
-      console.error("Shot list generation error:", error)
-      const errorMsg = error instanceof Error ? error.message : "Failed to generate shot list."
+      console.error('Shot list generation error:', error);
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : 'Failed to generate shot list.';
       toast({
-        title: "Generation Failed",
+        title: 'Generation Failed',
         description: errorMsg,
-        variant: "destructive",
-      })
-      setShowError(true)
-      setErrorMessage(errorMsg)
+        variant: 'destructive',
+      });
+      setShowError(true);
+      setErrorMessage(errorMsg);
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>ScriptVision</CardTitle>
-        <CardDescription>Enter your script or screenplay to generate a shot list</CardDescription>
+        <CardDescription>
+          Enter your script or screenplay to generate a shot list
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Textarea
@@ -103,9 +122,12 @@ export default function ScriptTab() {
         {showSuccess && shotList.length > 0 && (
           <Alert className="mt-4 bg-green-50 border-green-200">
             <CheckCircle2 className="h-4 w-4 text-green-600" />
-            <AlertTitle className="text-green-600">Shot List Generated Successfully</AlertTitle>
+            <AlertTitle className="text-green-600">
+              Shot List Generated Successfully
+            </AlertTitle>
             <AlertDescription>
-              Your shot list has been generated and is ready to view in the Shot List tab.
+              Your shot list has been generated and is ready to view in the Shot
+              List tab.
             </AlertDescription>
           </Alert>
         )}
@@ -115,7 +137,8 @@ export default function ScriptTab() {
             <AlertTriangle className="h-4 w-4 text-red-600" />
             <AlertTitle className="text-red-600">Generation Failed</AlertTitle>
             <AlertDescription>
-              {errorMessage || "There was an error generating the shot list. Please try again."}
+              {errorMessage ||
+                'There was an error generating the shot list. Please try again.'}
             </AlertDescription>
           </Alert>
         )}
@@ -129,9 +152,9 @@ export default function ScriptTab() {
           <Button
             onClick={handleGenerateShotList}
             className="w-full sm:w-auto"
-            disabled={isLoading("generateShotList")}
+            disabled={isLoading('generateShotList')}
           >
-            {isLoading("generateShotList") ? (
+            {isLoading('generateShotList') ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Generating...
@@ -146,5 +169,5 @@ export default function ScriptTab() {
         </div>
       </CardFooter>
     </Card>
-  )
+  );
 }

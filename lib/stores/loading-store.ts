@@ -1,20 +1,23 @@
-"use client"
+'use client';
 
-import { create } from "zustand"
+import { create } from 'zustand';
 
 export type LoadingKey =
-  | "generateShotList"
-  | "extractSubjects"
-  | "generateDirectorsNotes"
-  | "generatePrompt"
-  | "generateTreatment"
-  | "suggestShots"
+  | 'generateShotList'
+  | 'extractSubjects'
+  | 'generateDirectorsNotes'
+  | 'generatePrompt'
+  | 'generateTreatment'
+  | 'suggestShots'
+  | 'generateOutline'
+  | 'autoGenerateOutline'
+  | string;
 
 interface LoadingState {
-  loadingStates: Record<LoadingKey, boolean>
-  setLoading: (key: LoadingKey, isLoading: boolean) => void
-  isLoading: (key: LoadingKey) => boolean
-  anyLoading: () => boolean
+  loadingStates: Record<LoadingKey, boolean>;
+  setLoading: (key: LoadingKey, isLoading: boolean) => void;
+  isLoading: (key: LoadingKey) => boolean;
+  anyLoading: () => boolean;
 }
 
 export const useLoadingStore = create<LoadingState>((set, get) => ({
@@ -25,6 +28,8 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
     generatePrompt: false,
     generateTreatment: false,
     suggestShots: false,
+    generateOutline: false,
+    autoGenerateOutline: false,
   },
 
   setLoading: (key, isLoading) =>
@@ -35,4 +40,4 @@ export const useLoadingStore = create<LoadingState>((set, get) => ({
   isLoading: (key) => get().loadingStates[key],
 
   anyLoading: () => Object.values(get().loadingStates).some(Boolean),
-}))
+}));

@@ -1,15 +1,19 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { useProjectStore } from "@/lib/stores/project-store"
-import { ChevronDown, ChevronUp, Bug } from "lucide-react"
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { useProjectStore } from '@/lib/stores/project-store';
+import { ChevronDown, ChevronUp, Bug } from 'lucide-react';
 
 export default function DebugPanel() {
-  const [isOpen, setIsOpen] = useState(false)
-  const { shotList } = useProjectStore()
+  const [isOpen, setIsOpen] = useState(false);
+  const { shotList } = useProjectStore();
 
   return (
     <Card className="mt-6 border-dashed border-yellow-500">
@@ -20,7 +24,11 @@ export default function DebugPanel() {
               <CardTitle className="text-md flex items-center">
                 <Bug className="h-4 w-4 mr-2" /> Debug Panel
               </CardTitle>
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {isOpen ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent>
@@ -29,7 +37,9 @@ export default function DebugPanel() {
                 <div>
                   <h3 className="text-sm font-medium mb-2">Shot List State</h3>
                   <div className="bg-muted p-3 rounded-md overflow-auto max-h-[300px]">
-                    <pre className="text-xs">{JSON.stringify(shotList, null, 2)}</pre>
+                    <pre className="text-xs">
+                      {JSON.stringify(shotList, null, 2)}
+                    </pre>
                   </div>
                 </div>
 
@@ -38,7 +48,7 @@ export default function DebugPanel() {
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      console.log("Current shot list:", shotList)
+                      console.log('Current shot list:', shotList);
                     }}
                   >
                     Log to Console
@@ -50,5 +60,5 @@ export default function DebugPanel() {
         </Collapsible>
       </CardHeader>
     </Card>
-  )
+  );
 }

@@ -1,35 +1,36 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import ScriptTab from "@/components/script-tab"
-import ShotListTab from "@/components/shot-list-tab"
-import SubjectsTab from "@/components/subjects-tab"
-import StylesTab from "@/components/styles-tab"
-import PromptsTab from "@/components/prompts-tab"
-import ImageGenerationTab from "@/components/image-generation-tab"
-import MusicLabTab from "@/components/music-lab-tab"
-import DeveloperTab from "@/components/developer-tab"
-import ProjectManager from "@/components/project-manager"
-import { EnhancedWorkflowNavigation } from "@/components/enhanced-workflow-navigation"
-import { ProgressJourneyMap } from "@/components/progress-journey-map"
-import { Settings } from "lucide-react"
-import { ScriptVisionLogo } from "@/components/script-vision-logo"
+import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ScriptTab from '@/components/script-tab';
+import ShotListTab from '@/components/shot-list-tab';
+import SubjectsTab from '@/components/subjects-tab';
+import StylesTab from '@/components/styles-tab';
+import PromptsTab from '@/components/prompts-tab';
+import ImageGenerationTab from '@/components/image-generation-tab';
+import MusicLabTab from '@/components/music-lab-tab';
+import DeveloperTab from '@/components/developer-tab';
+import ProjectManager from '@/components/project-manager';
+import { EnhancedWorkflowNavigation } from '@/components/enhanced-workflow-navigation';
+import { ProgressJourneyMap } from '@/components/progress-journey-map';
+import { Settings } from 'lucide-react';
+import { ScriptVisionLogo } from '@/components/script-vision-logo';
 
 // Import new script creation components
-import StoryThemeTab from "@/components/story-theme-tab"
-import ResearchTab from "@/components/research-tab"
-import OutlineTab from "@/components/outline-tab"
-import WriteTab from "@/components/write-tab"
-import EnhanceTab from "@/components/enhance-tab"
+import StoryThemeTab from '@/components/story-theme-tab';
+import ResearchTab from '@/components/research-tab';
+import OutlineTab from '@/components/outline-tab';
+import WriteTab from '@/components/write-tab';
+import EnhanceTab from '@/components/enhance-tab';
+import { useTabsStore } from "@/lib/stores/tabs-store";
 
 export default function Page() {
-  const [activeTab, setActiveTab] = useState("story-theme")
-  const [showWorkflowNav, setShowWorkflowNav] = useState(true)
+  const { activeTab, setActiveTab } = useTabsStore();
+  const [showWorkflowNav, setShowWorkflowNav] = useState(true);
 
   const handleTabChange = (value: string) => {
-    setActiveTab(value)
-  }
+    setActiveTab(value);
+  };
 
   return (
     <div className="container mx-auto py-6 space-y-6">
@@ -48,17 +49,21 @@ export default function Page() {
           onClick={() => setShowWorkflowNav(!showWorkflowNav)}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          Switch to {showWorkflowNav ? "Journey Map" : "Workflow Navigation"}
+          Switch to {showWorkflowNav ? 'Journey Map' : 'Workflow Navigation'}
         </button>
       </div>
 
       {showWorkflowNav ? (
-        <EnhancedWorkflowNavigation activeTab={activeTab} onTabChange={handleTabChange} />
+        <EnhancedWorkflowNavigation />
       ) : (
-        <ProgressJourneyMap activeTab={activeTab} onTabChange={handleTabChange} />
+        <ProgressJourneyMap />
       )}
 
-      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="w-full"
+      >
         <TabsList className="flex flex-wrap w-full">
           <TabsTrigger id="story-theme-tab-trigger" value="story-theme">
             Story Theme
@@ -96,7 +101,11 @@ export default function Page() {
           <TabsTrigger id="musiclab-tab-trigger" value="musiclab">
             Music Lab
           </TabsTrigger>
-          <TabsTrigger id="developer-tab-trigger" value="developer" className="flex items-center gap-1">
+          <TabsTrigger
+            id="developer-tab-trigger"
+            value="developer"
+            className="flex items-center gap-1"
+          >
             <Settings className="h-4 w-4" />
             <span className="hidden sm:inline">Developer</span>
           </TabsTrigger>
@@ -146,5 +155,5 @@ export default function Page() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

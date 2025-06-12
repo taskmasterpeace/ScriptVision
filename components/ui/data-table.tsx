@@ -1,6 +1,6 @@
-"use client"
+'use client';
 
-import { useState } from "react"
+import { useState } from 'react';
 import {
   type ColumnDef,
   flexRender,
@@ -11,18 +11,25 @@ import {
   getSortedRowModel,
   type ColumnFiltersState,
   getFilteredRowModel,
-} from "@tanstack/react-table"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+} from '@tanstack/react-table';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
-  onRowClick?: (row: TData) => void
-  onSelect?: (row: TData) => void
-  searchField?: string
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
+  onRowClick?: (row: TData) => void;
+  onSelect?: (row: TData) => void;
+  searchField?: string;
 }
 
 export function DataTable<TData, TValue>({
@@ -32,8 +39,8 @@ export function DataTable<TData, TValue>({
   onSelect,
   searchField,
 }: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
 
   const table = useReactTable({
     data,
@@ -48,7 +55,7 @@ export function DataTable<TData, TValue>({
       sorting,
       columnFilters,
     },
-  })
+  });
 
   return (
     <div className="space-y-4">
@@ -56,8 +63,12 @@ export function DataTable<TData, TValue>({
         <div className="flex items-center">
           <Input
             placeholder={`Filter by ${searchField}...`}
-            value={(table.getColumn(searchField)?.getFilterValue() as string) ?? ""}
-            onChange={(event) => table.getColumn(searchField)?.setFilterValue(event.target.value)}
+            value={
+              (table.getColumn(searchField)?.getFilterValue() as string) ?? ''
+            }
+            onChange={(event) =>
+              table.getColumn(searchField)?.setFilterValue(event.target.value)
+            }
             className="max-w-sm"
           />
         </div>
@@ -71,9 +82,14 @@ export function DataTable<TData, TValue>({
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id}>
-                      {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
                     </TableHead>
-                  )
+                  );
                 })}
               </TableRow>
             ))}
@@ -83,21 +99,33 @@ export function DataTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
+                  data-state={row.getIsSelected() && 'selected'}
                   onClick={() => {
-                    if (onRowClick) onRowClick(row.original)
-                    if (onSelect) onSelect(row.original)
+                    if (onRowClick) onRowClick(row.original);
+                    if (onSelect) onSelect(row.original);
                   }}
-                  className={onRowClick || onSelect ? "cursor-pointer hover:bg-muted" : ""}
+                  className={
+                    onRowClick || onSelect
+                      ? 'cursor-pointer hover:bg-muted'
+                      : ''
+                  }
                 >
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -107,7 +135,9 @@ export function DataTable<TData, TValue>({
       </div>
 
       <div className="flex items-center justify-end space-x-2">
-        <div className="flex-1 text-sm text-muted-foreground">{table.getFilteredRowModel().rows.length} row(s)</div>
+        <div className="flex-1 text-sm text-muted-foreground">
+          {table.getFilteredRowModel().rows.length} row(s)
+        </div>
         <div className="space-x-2">
           <Button
             variant="outline"
@@ -117,11 +147,16 @@ export function DataTable<TData, TValue>({
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
     </div>
-  )
+  );
 }
