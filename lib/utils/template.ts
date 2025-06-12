@@ -45,7 +45,11 @@ For each subject, provide:
 - Alias (if any)
 
 SCRIPT:
-{{script}}`,
+{script}
+
+SHOT_LIST:
+{shot_list}
+`,
     variables: [
       {
         name: 'script',
@@ -53,6 +57,12 @@ SCRIPT:
         example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
         enabled: true,
       },
+      {
+        name: 'shot_list',
+        description: 'The shot list',
+        example: 'Scene 1: Shot 1',
+        enabled: true,
+      }
     ],
   },
   {
