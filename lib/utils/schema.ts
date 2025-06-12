@@ -12,3 +12,25 @@ export const chaptersSchema = z.object({
     })
   ),
 });
+
+export const shortListSchema = z.object({
+  shots: z.array(
+    z.object({
+      scene: z.string(),
+      shot: z.string(),
+      shot_number: z.string(),
+      reference: z.string(),
+      description: z.string(),
+      people: z.string(),
+      places: z.string(),
+      shotSize: z.string(),
+      action: z.string(),
+      dialogue: z.string(),
+      location: z.string(),
+      specialEffects: z.string(),
+      notes: z.string(),
+      directorsNotes: z.string(),
+    })
+  )
+});
+

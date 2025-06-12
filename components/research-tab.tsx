@@ -285,8 +285,8 @@ export default function ResearchTab() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3  gap-4 mt-4">
                 {searchResults
-                  .filter((r) => r.source === 'youtube')
-                  .map((result, index) => {
+                  ?.filter((r) => r?.source === 'youtube')
+                  ?.map((result, index) => {
                     return (
                       <Card
                         className={`w-[450px] h-[400px] bg-black overflow-hidden relative transition-all duration-300 hover:shadow-xl group  ${
@@ -646,11 +646,13 @@ export default function ResearchTab() {
                       variant="ghost"
                       size="sm"
                       className="h-7 px-2 text-purple-500 hover:text-purple-700 hover:bg-purple-100"
-                      onClick={() => setViewingTranscript({
-                        id: transcript.id,
-                        title: transcript.snippet.title,
-                        content: transcript.transcript 
-                      })}
+                      onClick={() =>
+                        setViewingTranscript({
+                          id: transcript.id,
+                          title: transcript.snippet.title,
+                          content: transcript.transcript,
+                        })
+                      }
                     >
                       View Transcript
                     </Button>
@@ -674,18 +676,24 @@ export default function ResearchTab() {
       </CardContent>
 
       {/* Transcript Viewer Modal */}
-      <Dialog open={!!viewingTranscript} onOpenChange={(open) => !open && setViewingTranscript(null)}>
+      <Dialog
+        open={!!viewingTranscript}
+        onOpenChange={(open) => !open && setViewingTranscript(null)}
+      >
         <DialogContent className="max-w-3xl max-h-[500px] flex flex-col">
           <DialogHeader>
             <DialogTitle>{viewingTranscript?.title}</DialogTitle>
-            <DialogDescription>
-              Transcript Content
-            </DialogDescription>
+            <DialogDescription>Transcript Content</DialogDescription>
           </DialogHeader>
           <ScrollArea className="flex-1 p-4 bg-muted/30 rounded-md text-sm overflow-y-auto">
             <pre className="whitespace-pre-wrap font-sans text-sm">
-              {viewingTranscript?.content ? viewingTranscript.content : <p className="text-muted-foreground text-center">
-                No transcript content available.</p>}
+              {viewingTranscript?.content ? (
+                viewingTranscript.content
+              ) : (
+                <p className="text-muted-foreground text-center">
+                  No transcript content available.
+                </p>
+              )}
             </pre>
           </ScrollArea>
         </DialogContent>

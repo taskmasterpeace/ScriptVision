@@ -75,7 +75,7 @@ export default function WriteTab() {
 
   const selectedChapter = chapters.find((c) => c.id === selectedChapterId);
   const generatedChapter = generatedChapters.find(
-    (c) => c.chapterId === selectedChapterId
+    (c) => c?.chapterId === selectedChapterId
   );
 
   const handleGenerateChapter = async () => {

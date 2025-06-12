@@ -1904,15 +1904,10 @@ SOURCE MATERIAL: {TRANSCRIPT_OR_DATA}
   Expand the following chapter into a detailed narrative segment, incorporating relevant details from the original transcripts.(learn.microsoft.com)
 
   Chapter Title:
-  "{{chapterTitle}}"
+  "{chapterTitle}"
 
   Chapter Description:
-  "{{chapterDescription}}"
-
-  Transcripts:
-  """
-  {Insert relevant transcript excerpts here}
-  """(anthropic.com)
+  "{chapterDescription}"
 
   Constraints:
 
@@ -1942,6 +1937,90 @@ SOURCE MATERIAL: {TRANSCRIPT_OR_DATA}
         name: 'chapterDescription',
         description: 'The description of the chapter',
         example: 'Chapter 1',
+        enabled: true,
+      },
+    ],
+  },
+
+  {
+    id: 'generate-shot-list',
+    name: 'Generate Shot List',
+    description: 'Generate Shot List',
+    category: 'shotList',
+    template: `
+    You are an expert cinematographer tasked with creating a detailed shot list for a film based on a provided script. The script is defined by the variables {{script_theme}} (the thematic tone or genre, e.g., adventure, drama), {{script}} (the narrative text with explicitly named characters), and {{director_style}} (the directing approach, either "cinematic" or "documentary"). The shot list must be generated with strict adherence to the following guardrails, which are critical and must be reiterated: **Do not include camera movements in shot descriptions, as all shots must be static. Exclude stylistic adjectives (e.g., vibrant, moody) from all descriptions. Each shot must stand alone, clearly referencing the people and places involved in the description.**
+    Input Variables:
+    - {script_theme}: The thematic tone or genre of the script (e.g., adventure, romance, sci-fi).
+    - {script}: The narrative text, provided as a sequence of sentences with explicitly named characters.
+    - {director_style}: The directing approach, either "cinematic" (emphasizing dramatic composition and visual storytelling) or "documentary" (emphasizing realism and natural context).
+    - {shot_frequency}: Determines how shots are assigned:
+      - "single_sentence": One shot per sentence.
+      - "pair_sentences": One shot for every two sentences.
+      - "trio_sentences": One shot for every three sentences.
+    Instructions
+    1. **Extract Characters and Elements**: Analyze the {{script}} to identify explicitly named characters (human or animal) and key locations. Use these to populate the shot list’s "People" and "Places" fields. Do not output the extraction process.
+    2. **Determine Shot Frequency**: Based on {{shot_frequency}}, group the script’s sentences to assign shots:
+       - "single_sentence": Create one shot per sentence.
+       - "pair_sentences": Combine two sentences to inform one shot.
+       - "trio_sentences": Combine three sentences to inform one shot.
+    3. **Assign Framing and Director’s Influence**:
+       - Select an appropriate framing type (close-up, medium shot, wide/establishing shot) based on the sentence(s) content and {{director_style}}:
+         - **Cinematic**: Prioritize visually striking compositions, with frequent establishing shots for new locations and inserts for significant objects to enhance dramatic effect.
+         - **Documentary**: Favor naturalistic compositions, with fewer establishing shots (only for major location changes) and inserts for objects critical to the narrative’s realism.
+       - lose-ups:
+         - People: Focus on facial features, expressions, and upper body details.
+         - Animals: Highlight distinguishing features, textures, and expressions.
+         - Objects: Emphasize key details, textures, and defining characteristics.
+         - Places: Zoom in on specific, visually significant elements of the location.
+       - Medium Shots:
+         - People: Describe visible clothing, posture, and general body language.
+         - Animals: Include posture, movement, and notable physical traits.
+         - Objects: Provide an overview of size, shape, and interaction with surroundings.
+         - Places: Capture a portion of the location, showing contextual relationships.
+       - **Wide/Establishing Shots**:
+         - People/Animals: Note placement and actions within the larger scene.
+         - Objects: Describe position and significance within the environment.
+         - Places: Highlight major landmarks, landscapes, or spatial relationships.
+    4. **Incorporate Time of Day**: If the script indicates whether it is daytime or nighttime, explicitly include this in the shot description (e.g., "at night" or "during the day").
+    5. **Generate Shot Descriptions**:
+       - Create a single, concise description for each shot that includes the foreground, middle ground, and background elements without labeling them as such. Ensure the description references the named characters (from the "People" field) and the specific location (from the "Places" field).
+       - Mention the framing type (e.g., close-up, medium shot, wide shot) within the description.
+       - Ensure each shot description is self-contained, providing all necessary details for a director to visualize and execute the shot.
+    6. **Reference the Script**: For each shot, include a reference to the specific sentence(s) from the script that inspired it. Use a concise identifier (e.g., "Sentence 1" or "Sentences 3-4") rather than quoting the full sentence to optimize efficiency.
+    7. **Output Format**: Generate the shot list as a JSON array, where each shot is an object with the following fields:
+       - {{chapter_number}}: The chapter or section of the script (if provided; otherwise, use "1" as default).
+       - {{shot_number}}: Sequential number for the shot (e.g., 1, 2, 3).
+       - {{script_reference}}: The sentence(s) from the script that the shot is based on (e.g., "Sentence 1" or "Sentences 2-3").
+       - {{description}}: A concise, self-contained description of the shot, including framing type, named characters, specific location, time of day (if specified), and visual elements (foreground, middle ground, background combined).
+       - {{people}}: List of explicitly named characters (human or animal) present in the shot.
+       - places: The specific location of the shot (e.g., "kitchen," "forest clearing").
+    8. **Guardrails (Repeated for Emphasis)**: **Do not include camera movements in shot descriptions, as all shots must be static. Exclude stylistic adjectives (e.g., vibrant, moody) from all descriptions. Each shot must stand alone, clearly referencing the people and places involved in the description.** Ensure consistency in terminology and detail level across all shots, adapting descriptions to {{director_style}} and {{script_theme}}.
+        `,
+    variables: [
+      {
+        name: 'script_theme',
+        description: 'The thematic tone or genre of the script',
+        example: 'adventure',
+        enabled: true,
+      },
+      {
+        name: 'script',
+        description:
+          'The narrative text, provided as a sequence of sentences with explicitly named characters',
+        example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+        enabled: true,
+      },
+      {
+        name: 'director_style',
+        description:
+          'The directing approach, either "cinematic" or "documentary"',
+        example: 'cinematic',
+        enabled: true,
+      },
+      {
+        name: 'shot_frequency',
+        description: 'Determines how shots are assigned',
+        example: 'single_sentence',
         enabled: true,
       },
     ],

@@ -7,7 +7,7 @@ import type { Shot } from '@/lib/types';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { v4 as uuidv4 } from 'uuid';
 import { parseAIShotList } from './utils/project';
-import { chaptersSchema } from './utils/schema';
+import { z, ZodSchema } from 'zod';
 
 // Helper function to check if we're in a preview environment
 const isPreviewEnvironment = () => {
@@ -61,8 +61,9 @@ export const generateResponse = async (
 export const generateJSONResponse = async (
   phase: ApplicationPhase,
   templateId: string,
-  context: Record<string, string>
-) => {
+  context: Record<string, string>,
+  outputSchema: ZodSchema
+): Promise<z.infer<typeof outputSchema>> => {
   try {
     const model = useModelStore.getState().getModelForPhase(phase);
     const provider = useModelStore.getState().selectedProviders[phase];
@@ -88,7 +89,7 @@ export const generateJSONResponse = async (
       maxTokens: 2000,
     });
 
-    const structuredOutput = openai.withStructuredOutput(chaptersSchema);
+    const structuredOutput = openai.withStructuredOutput(outputSchema);
 
     const response = await structuredOutput.invoke(promptValue);
     return response;

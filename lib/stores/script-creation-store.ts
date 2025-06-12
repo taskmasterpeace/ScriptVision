@@ -24,6 +24,7 @@ import {
   StoryOutlineType,
 } from '@/lib/types/script.type';
 import { searchYouTubeAction } from '@/app/action';
+import { chaptersSchema } from '@/lib/utils/schema';
 
 interface State {
   outline?: string; // Store outline per project
@@ -672,7 +673,8 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           const storyGenerationResponse = await generateJSONResponse(
             'write',
             'story-generation',
-            { TRANSCRIPT_OR_DATA: JSON.stringify(promptContext) }
+            { TRANSCRIPT_OR_DATA: JSON.stringify(promptContext) },
+            chaptersSchema
           );
 
           // Log the AI response
@@ -968,9 +970,6 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       generateChapter: async (chapterId) => {
         const {
           chapters,
-          storyTheme,
-          storyTitle,
-          storyGenre,
           selectedTranscripts,
           outline,
         } = get();
@@ -993,19 +992,10 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             .join('\n- ');
 
           const promptContext = {
-            theme: storyTheme,
-            title: storyTitle || 'Untitled',
-            genre: storyGenre || 'Not specified',
             chapterTitle: chapter.title || 'Untitled',
             chapterDescription: `- ${selectedBulletPoints}` || 'Untitled',
             outline: outline,
             transcripts: selectedTranscripts
-              .map(
-                (t) =>
-                  `SOURCE: ${t.snippet?.title ?? ''}\nCONTENT: ${t.transcript ?? ''}`
-              )
-              .join('\n\n'),
-            'Insert relevant transcript excerpts here': selectedTranscripts
               .map(
                 (t) =>
                   `SOURCE: ${t.snippet?.title ?? ''}\nCONTENT: ${t.transcript ?? ''}`
@@ -1043,20 +1033,25 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
           // Add to or update the generated chapters
           set((state) => {
-            const existingIndex = state.generatedChapters.findIndex(
+            
+            // If any generated chapter which is not in current existing chapters remove it.
+            const chapterIds = chapters.map((c) => c.id);
+            const generatedChapters = state.generatedChapters.filter(
+              (c) => c && chapterIds.includes(c.chapterId)
+            );
+            const existingIndex = generatedChapters.findIndex(
               (c) => c.chapterId === chapterId
             );
-
             if (existingIndex !== -1) {
               // Update existing chapter
-              const updatedChapters = [...state.generatedChapters];
+              const updatedChapters = [...generatedChapters];
               updatedChapters[existingIndex] = generatedChapter;
               return { generatedChapters: updatedChapters };
             } else {
               // Add new chapter
               return {
                 generatedChapters: [
-                  ...state.generatedChapters,
+                  ...generatedChapters,
                   generatedChapter,
                 ],
               };

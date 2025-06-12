@@ -13,7 +13,7 @@ import type {
   CameraSettings,
   MusicLabFormData,
 } from '@/lib/types';
-import { generateAIResponse } from '@/lib/ai-service';
+import { generateAIResponse, generateJSONResponse } from '@/lib/ai-service';
 import { storage } from '../db';
 
 // First, import the loading store at the top of the file
@@ -24,6 +24,8 @@ import {
   extractShotDetails,
   parseAISubjects,
 } from '@/lib/utils/project';
+import { shortListSchema } from '@/lib/utils/schema';
+import { z } from 'zod';
 
 interface ProjectState {
   projectName: string;
@@ -208,30 +210,36 @@ export const useProjectStore = create<ProjectState>()(
       // Shot list actions
       generateShotList: async () => {
         const { script } = get();
-
         if (!script.trim()) {
-          throw new Error('Script is empty');
         }
 
         useLoadingStore.getState().setLoading('generateShotList', true);
 
         try {
-          // Use the new structured output function
-          const { generateStructuredShotList } = await import(
-            '@/lib/ai-service'
+          // TODO: replace this with actual variable
+          const promptContext = {
+            script_theme: 'drama',
+            script: script,
+            director_style: 'cinematic',
+            shot_frequency: 'single_sentence',
+          };
+
+          // Output should be type of shortListSchema
+          const response: z.infer<typeof shortListSchema> = await generateJSONResponse(
+            'shotListGeneration',
+            'generate-shot-list',
+            promptContext,
+            shortListSchema
           );
-          const shots = await generateStructuredShotList(script);
 
-          console.log('Structured shots:', shots);
-
-          // If no shots were parsed, throw an error
-          if (!shots || shots.length === 0) {
-            throw new Error('Failed to generate shot list. Please try again.');
-          }
-
+          const shots = response.shots;
           const workflowProgress = get().workflowProgress;
+          
           set({
-            shotList: shots,
+            shotList: shots.map((shot) => ({
+              id: uuidv4(),
+              ...shot,
+            })),
             workflowProgress: {
               ...workflowProgress,
               shotListCompleted: true,
