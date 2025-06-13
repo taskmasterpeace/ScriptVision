@@ -25,6 +25,7 @@ import {
 } from '@/lib/types/script.type';
 import { searchYouTubeAction } from '@/app/action';
 import { chaptersSchema } from '@/lib/utils/schema';
+import { z } from 'zod';
 
 interface State {
   outline?: string; // Store outline per project
@@ -469,158 +470,23 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           // In a real implementation, we would parse the AI's JSON response
           // For now, we'll create mock chapters
 
-          const mockChapters: Chapter[] = [
-            {
+          const { chapters }: z.infer<typeof chaptersSchema> = await generateJSONResponse(
+            'videoTreatment',
+            'chapter-generation',
+            { TRANSCRIPT_OR_DATA: JSON.stringify(promptContext), OUTLINE: outlineResponseString },
+            chaptersSchema
+          );
+
+          const mockChapters: Chapter[] = chapters.map((chapter) => ({
+            ...chapter,
+            id: uuidv4(),
+            expanded: true,
+            bulletPoints: chapter?.bulletPoints.map((bp) => ({
+              ...bp,
               id: uuidv4(),
-              title: 'Introduction to the World',
-              expanded: true,
-              bulletPoints: [
-                {
-                  id: uuidv4(),
-                  text: 'Establish the setting and time period',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'Introduce the protagonist and their normal life',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'Hint at the central conflict or theme',
-                  selected: true,
-                },
-              ],
-            },
-            {
-              id: uuidv4(),
-              title: 'The Inciting Incident',
-              expanded: true,
-              bulletPoints: [
-                {
-                  id: uuidv4(),
-                  text: "Something disrupts the protagonist's normal life",
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'The protagonist is forced to make a choice',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'Introduction of the main conflict',
-                  selected: true,
-                },
-              ],
-            },
-            {
-              id: uuidv4(),
-              title: 'Rising Action',
-              expanded: true,
-              bulletPoints: [
-                {
-                  id: uuidv4(),
-                  text: 'Protagonist begins their journey',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'Introduction of allies and enemies',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'A series of escalating challenges',
-                  selected: true,
-                },
-              ],
-            },
-            {
-              id: uuidv4(),
-              title: 'The Midpoint',
-              expanded: true,
-              bulletPoints: [
-                {
-                  id: uuidv4(),
-                  text: 'A major revelation or reversal',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'The stakes are raised significantly',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'The protagonist commits fully to their goal',
-                  selected: true,
-                },
-              ],
-            },
-            {
-              id: uuidv4(),
-              title: 'Complications and Higher Stakes',
-              expanded: true,
-              bulletPoints: [
-                { id: uuidv4(), text: 'New obstacles emerge', selected: true },
-                {
-                  id: uuidv4(),
-                  text: 'Relationships are tested',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'The protagonist faces their biggest setback',
-                  selected: true,
-                },
-              ],
-            },
-            {
-              id: uuidv4(),
-              title: 'Climax',
-              expanded: true,
-              bulletPoints: [
-                {
-                  id: uuidv4(),
-                  text: 'The final confrontation',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: "The protagonist must use everything they've learned",
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'The main conflict reaches its peak',
-                  selected: true,
-                },
-              ],
-            },
-            {
-              id: uuidv4(),
-              title: 'Resolution',
-              expanded: true,
-              bulletPoints: [
-                {
-                  id: uuidv4(),
-                  text: 'The aftermath of the climax',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'Character arcs are completed',
-                  selected: true,
-                },
-                {
-                  id: uuidv4(),
-                  text: 'The new normal is established',
-                  selected: true,
-                },
-              ],
-            },
-          ];
+              selected: true,
+            })),
+          }));
 
           set({ chapters: mockChapters });
         } catch (error) {

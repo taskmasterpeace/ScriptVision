@@ -649,124 +649,152 @@ Ensure the outline follows the {{structureType}} structure while maintaining nar
     name: 'Chapter Generation',
     description: 'Template used to generate individual chapters or scenes',
     category: 'videoTreatment',
-    template: `Generate a detailed chapter/scene based on the following parameters:
+    template: `Story Generation Prompt
 
-TITLE: {{title}}
-CHAPTER POSITION: {{chapterPosition}}
-PREVIOUS CHAPTER SUMMARY: {{previousChapterSummary}}
-CHARACTERS PRESENT: {{charactersPresent}}
-LOCATION: {{location}}
-TIME OF DAY: {{timeOfDay}}
-WEATHER/ATMOSPHERE: {{atmosphere}}
-KEY PLOT POINTS TO COVER: {{plotPoints}}
-EMOTIONAL TONE: {{emotionalTone}}
-DESIRED LENGTH: {{desiredLength}}
-
-Create a fully realized chapter/scene that includes:
-
-1. SETTING DESCRIPTION: Vivid, sensory details that establish the location and atmosphere
-2. CHARACTER INTRODUCTIONS: How characters appear and their initial state of mind
-3. DIALOGUE: Natural, character-specific conversations that reveal personality and advance the plot
-4. ACTION: Clear description of what happens in the scene
-5. INTERNAL THOUGHTS: Character perspectives and reactions where appropriate
-6. SENSORY DETAILS: Sights, sounds, smells, textures that make the scene immersive
-7. EMOTIONAL BEATS: Key emotional moments and shifts
-8. ENDING: How the scene concludes and transitions to the next
-
-Writing style guidelines:
-- POV: {{pointOfView}}
-- TENSE: {{tense}}
-- STYLE: {{writingStyle}}
-- PACING: {{pacing}}
-
-Ensure the chapter advances the overall narrative while standing as a compelling scene in its own right.`,
-    variables: [
-      {
-        name: 'title',
-        description: 'Title of the chapter/scene',
-        example: 'The Forgotten Memory',
-        enabled: true,
-      },
-      {
-        name: 'chapterPosition',
-        description: 'Position in the overall story',
-        example: 'Opening chapter',
-        enabled: true,
-      },
-      {
-        name: 'previousChapterSummary',
-        description: 'Summary of previous events',
-        example: "Maya discovered a corrupted memory file that shouldn't exist",
-        enabled: true,
-      },
-      {
-        name: 'charactersPresent',
-        description: 'Characters in the scene',
-        example: 'Maya Chen, Dr. Elias Vorn, Security Guard #1',
-        enabled: true,
-      },
-      {
-        name: 'location',
-        description: 'Location of the scene',
-        example: "MemoryCorp's underground lab, Level 3",
-        enabled: true,
-      },
-      {
-        name: 'timeOfDay',
-        description: 'Time of day',
-        example: 'Late night, around 2 AM',
-        enabled: true,
-      },
-      {
-        name: 'atmosphere',
-        description: 'Weather and atmosphere',
-        example: 'Sterile, cold, with humming machinery and flickering lights',
-        enabled: true,
-      },
-      {
-        name: 'plotPoints',
-        description: 'Key plot points to cover',
-        example:
-          'Maya confronts Elias, discovers the truth about the memory files, narrowly escapes security',
-        enabled: true,
-      },
-      {
-        name: 'emotionalTone',
-        description: 'Emotional tone of the scene',
-        example: 'Tense, paranoid, with underlying dread',
-        enabled: true,
-      },
-      {
-        name: 'desiredLength',
-        description: 'Desired length',
-        example: '1500-2000 words',
-        enabled: true,
-      },
-      {
-        name: 'pointOfView',
-        description: 'Point of view',
-        example: "Third person limited (Maya's perspective)",
-        enabled: true,
-      },
-      {
-        name: 'tense',
-        description: 'Tense',
-        example: 'Present tense',
-        enabled: true,
-      },
-      {
-        name: 'writingStyle',
-        description: 'Writing style',
-        example: 'Terse, noir-inspired prose with technical jargon',
-        enabled: true,
-      },
-      {
-        name: 'pacing',
-        description: 'Pacing',
-        example: 'Quick, urgent pacing with short paragraphs',
-        enabled: true,
-      },
-    ],
+    You are an expert biographical storyteller who transforms raw interviews, blogs, notes and scattered information into compelling, engaging narratives that captivate readers from the first sentence to the last.
+    
+    ## YOUR MISSION
+    Transform this raw material into a **compelling, interesting, and engaging story** that reads like a professionally crafted feature article. Create a narrative that makes readers think "I can't put this down" and leaves them inspired or intrigured by the subject's journey. It must be compelling interesting and engaging.
+    
+    ## WRITING STANDARDS
+    - **Length Target:** 2,500-4,000 words (substantial, immersive read)
+    - **Tone:** Cinematic and dramatic, yet authentic and grounded
+    - **Style:** Blend of literary narrative with journalistic precision
+    - **Engagement Level:** Every paragraph should propel the reader forward
+    
+    ## STRUCTURAL REQUIREMENTS
+    
+    ### Opening Hook (150-200 words)
+    - Start with a vivid scene, striking detail, or provocative statement
+    - Introduce the subject in an unexpected or compelling way
+    - Create immediate intrigue about what makes this person remarkable
+    - Avoid generic biographical openings
+    
+    ### Story Architecture
+    Choose the most compelling framework from the source material:
+    - **Hero's Journey:** If transformation/overcoming odds is central
+    - **David vs. Goliath:** If fighting systems/underdogs is prominent  
+    - **Innovation Story:** If creating something new is the focus
+    - **Redemption Arc:** If comeback/second chances drive the narrative
+    - **Trailblazer Tale:** If breaking barriers/being first is key
+    
+    ### Narrative Techniques to Deploy
+    1. **Scene Setting:** Paint vivid pictures of key moments
+    2. **Character Development:** Show personality through actions and dialogue
+    3. **Tension Building:** Create anticipation and stakes
+    4. **Conflict Emphasis:** Highlight obstacles and opposition
+    5. **Emotional Resonance:** Connect struggles to universal themes
+    6. **Momentum Maintenance:** Each section should end with forward pull
+    
+    ## CONTENT EXTRACTION GUIDELINES
+    
+    ### From Interview Transcripts, Extract:
+    - **Personality Markers:** Speech patterns, humor, attitude, values
+    - **Pivotal Moments:** Turning points, crises, breakthroughs
+    - **Specific Details:** Names, places, dates, quotes, anecdotes
+    - **Hidden Gems:** Throwaway comments that reveal character depth
+    - **Conflict Points:** Tensions, opposition, difficult decisions
+    - **Unique Angles:** What makes this story different/special
+    
+    ### Transform Scattered Information Into:
+    - **Coherent Timeline:** Even if non-linear presentation
+    - **Character Depth:** Internal motivations and external pressures
+    - **Stakes Clarity:** What was at risk and why it mattered
+    - **Resolution Impact:** How outcomes changed everything
+    
+    ## WRITING EXECUTION STANDARDS
+    
+    ### Paragraph Crafting
+    - **Opening Sentences:** Hook readers with intrigue or revelation
+    - **Middle Development:** Build tension, provide context, advance plot
+    - **Closing Sentences:** Create momentum toward next section
+    
+    ### Dialogue Integration
+    - Use direct quotes to reveal personality and key moments
+    - Clean up transcript language while preserving authentic voice
+    - Balance dialogue with narrative description
+    
+    ### Pacing Control
+    - **Fast Pacing:** Action sequences, conflict moments, breakthroughs
+    - **Slow Pacing:** Character development, background, reflection
+    - **Rhythm Variation:** Mix short punchy paragraphs with longer descriptive ones
+    
+    ### Emotional Architecture
+    - **Early:** Curiosity and connection
+    - **Middle:** Investment and tension
+    - **Climax:** High stakes and resolution
+    - **End:** Satisfaction and inspiration
+    
+    ## QUALITY MARKERS
+    
+    ### Compelling Elements
+    - Reader can visualize scenes clearly
+    - Personality emerges through actions, not just description
+    - Stakes feel real and significant
+    - Obstacles seem genuinely challenging
+    - Victories feel earned and meaningful
+    
+    ### Interesting Factors
+    - Unexpected angles or revelations
+    - Unique details that surprise readers
+    - Fresh perspective on familiar themes
+    - Insider insights into specific worlds/industries
+    - Human moments that create connection
+    
+    ### Engaging Techniques
+    - Cliffhangers between sections
+    - Questions that demand answers
+    - Emotional investment in outcomes
+    - Relatable struggles despite unique circumstances
+    - Forward momentum that prevents stopping
+    
+    ## SECTION DEVELOPMENT TEMPLATE
+    
+    ### Section Opening Pattern
+    "[Compelling scene or revelation] + [Context that raises stakes] + [Forward momentum toward resolution/conflict]"
+    
+    ### Section Content Structure
+    1. **Hook:** Immediate engagement
+    2. **Context:** Necessary background woven naturally
+    3. **Development:** Character growth or plot advancement
+    4. **Conflict:** Tension or obstacle introduction
+    5. **Transition:** Bridge to next section with intrigue
+    
+    ### Section Closing Pattern
+    "[Resolution of immediate tension] + [New question or challenge raised] + [Hint at what's coming next without a spoiler]"
+    
+    ## FINAL REQUIREMENTS
+    
+    - **Title:** Create a compelling title that captures the essence
+    - **Subheadings:** Use 4-6 evocative section headers (not generic)
+    - **Length:** Substantial enough for deep immersion
+    - **Authenticity:** Stay true to facts while maximizing narrative impact
+    - **Universality:** Connect specific journey to broader human themes
+    
+    ## EXECUTION COMMAND
+    
+    Analyze the provided source material and create a compelling, interesting, and engaging story that transforms raw information into a narrative readers won't be able to put down. Focus on the most dramatic, inspiring, and unique elements while maintaining authenticity and emotional truth.
+    
+    The story should read like a feature article from a top-tier publication - professionally crafted, deeply engaging, and impossible to stop reading once started.
+    
+    Outline: {OUTLINE}
+    SOURCE MATERIAL: {TRANSCRIPT_OR_DATA}
+    `,
+    
+        variables: [
+          {
+            name: 'OUTLINE',
+            description: 'The outline to generate a story from',
+            example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+            enabled: true,
+          },
+          {
+            name: 'TRANSCRIPT_OR_DATA',
+            description: 'The transcript or data to generate a story from',
+            example: 'EXT. CITY STREET - DAY\n\nJOHN walks down the busy street...',
+            enabled: true,
+          },
+        ],
   },
 
   // Chapter Enhancement Template
