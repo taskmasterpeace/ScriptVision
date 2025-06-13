@@ -23,7 +23,7 @@ import {
   YoutubeSearchResult,
   StoryOutlineType,
 } from '@/lib/types/script.type';
-import { searchYouTubeAction } from '@/app/action';
+import { fetchVideoTranscript, searchYouTubeAction } from '@/app/action';
 import { chaptersSchema } from '@/lib/utils/schema';
 import { z } from 'zod';
 
@@ -111,6 +111,9 @@ interface ScriptCreationState {
   // Actions
   setStoryTheme: (theme: string) => void;
   setStoryTitle: (title: string) => void;
+  setSelectedTranscripts: (transcripts: YoutubeSearchResult[]) => void;
+  setSearchQuery: (query: string) => void;
+  setSearchResults: (results: YoutubeSearchResult[]) => void;
   setStoryGenre: (genre: string) => void;
   setTargetAudience: (audience: string) => void;
   skipOutlineGeneration: () => Promise<void>;
@@ -148,9 +151,12 @@ interface ScriptCreationState {
     title: string,
     transcript: string
   ) => void;
+  fetchTranscript: (videoId: string) => Promise<string>;
   deleteTranscript: (id: string) => void;
   setOutline: (outline: string) => void;
 
+  // load project based on id
+  loadState: (projectId: string) => void;
   // Add this new action
   setOutlineDirections: (
     directions: Partial<ScriptCreationState['outlineDirections']>
@@ -243,6 +249,22 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
         set({ storyTheme: theme });
         get().setKeytoState('storyTheme', theme);
       },
+      
+      setSearchQuery: (query: string) => {
+        set({ searchQuery: query });
+        get().setKeytoState('searchQuery', query);
+      },
+
+      setSearchResults: (results: YoutubeSearchResult[]) => {
+        set({ searchResults: results });
+        get().setKeytoState('searchResults', results);
+      },
+
+      setSelectedTranscripts: (transcripts: YoutubeSearchResult[]) => {
+        set({ selectedTranscripts: transcripts });
+        get().setKeytoState('selectedTranscripts', transcripts);
+      },
+
       setStoryTitle: (title) => {
         set({ storyTitle: title });
         get().setKeytoState('storyTitle', title);
@@ -1295,6 +1317,65 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             selectedTranscripts: updatedSelected,
           };
         });
+      },
+
+      // fetch transcript with videoId
+      fetchTranscript: async (videoId: string) => {
+        useLoadingStore.getState().setLoading(`fetchTranscript-${videoId}`, true);
+        try {
+          const transcript = await fetchVideoTranscript(videoId);
+          
+          // Update the search results
+          set((state) => ({
+            searchResults: state.searchResults.map((item) =>
+              item.id === videoId ? { ...item, transcript } : item
+            ),
+            // Also update selected transcripts if this video is selected
+            selectedTranscripts: state.selectedTranscripts.map((item) =>
+              item.id === videoId ? { ...item, transcript } : item
+            ),
+          }));
+
+          return transcript;
+        } catch (error) {
+          console.error('Failed to fetch transcript:', error);
+          throw error;
+        } finally {
+          useLoadingStore.getState().setLoading(`fetchTranscript-${videoId}`, false);
+        }
+      },
+
+      // Load all project state
+      loadState: (projectId: string) => {       
+        // Find the project in the state array that matches the projectId
+        const states = get().state;
+        const projectState = states?.find(s => s.projectId === projectId);
+        if (projectState) {
+          // set load all initial state with projectState
+          set({
+            outline: projectState.outline || '',
+            storyTheme: projectState.storyTheme || '',
+            storyTitle: projectState.storyTitle || '',
+            storyGenre: projectState.storyGenre || '',
+            targetAudience: projectState.targetAudience || '',
+            searchQuery: projectState.searchQuery || '',
+            searchResults: projectState.searchResults || [],
+            selectedTranscripts: projectState.selectedTranscripts || [],
+            chapters: projectState.chapters || [],
+            chapterSuggestions: projectState.chapterSuggestions || [],
+            outlineDirections: projectState.outlineDirections || {
+              outlineType: 'linear-framework-simple-complexity',
+              storyStructure: 'three-act',
+              perspective: 'third-person',
+              tone: 'neutral',
+              additionalNotes: '',
+              customPrompt: ''
+            },
+            generatedChapters: projectState.generatedChapters || [],
+            enhancedChapters: projectState.enhancedChapters || [],
+            emotionalSuggestions: projectState.emotionalSuggestions || []
+          });
+        }
       },
 
       deleteTranscript: (id) => {
