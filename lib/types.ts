@@ -1,3 +1,5 @@
+import { YoutubeSearchResult } from "./types/script.type";
+
 export interface Shot {
   id: string;
   timestamp?: string;
@@ -66,6 +68,7 @@ export interface Project {
   shotList: Shot[];
   subjects: Subject[];
   generatedPrompts: GeneratedPrompt[];
+  selectedTranscripts?: YoutubeSearchResult[];
 }
 
 // Model type for phase-model mapping

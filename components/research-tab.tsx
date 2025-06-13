@@ -61,6 +61,7 @@ export default function ResearchTab() {
     searchResults,
     selectedTranscripts,
     searchYouTube,
+    fetchTranscript,
     toggleTranscriptSelection,
     removeSelectedTranscript,
     addCustomTranscript,
@@ -642,20 +643,52 @@ export default function ResearchTab() {
                     {transcript.snippet.title}
                   </span>
                   <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 px-2 text-purple-500 hover:text-purple-700 hover:bg-purple-100"
-                      onClick={() =>
-                        setViewingTranscript({
-                          id: transcript.id,
-                          title: transcript.snippet.title,
-                          content: transcript.transcript,
-                        })
-                      }
-                    >
-                      View Transcript
-                    </Button>
+                    {!transcript.transcript ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-3"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          try {
+                            await fetchTranscript(transcript.id);
+                            toast({
+                              title: 'Transcript Fetched',
+                              description: 'The transcript has been successfully fetched.',
+                            });
+                          } catch (error) {
+                            toast({
+                              title: 'Failed to fetch transcript',
+                              description: error instanceof Error ? error.message : 'An error occurred',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                        disabled={isLoading(`fetchTranscript-${transcript.id}`)}
+                      >
+                        {isLoading(`fetchTranscript-${transcript.id}`) ? (
+                          <>
+                          <Loader2 className="mr-2 h-3 w-4 animate-spin" />
+                          Fetching...
+                          </>
+                        ) : "Fetch Transcript"}
+                      </Button>
+                    ) : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 px-3 text-purple-500 hover:text-purple-700 hover:bg-purple-100"  
+                        onClick={() =>
+                          setViewingTranscript({
+                            id: transcript.id,
+                            title: transcript.snippet.title,
+                            content: transcript.transcript,
+                          })
+                        }
+                      >
+                        View Transcript
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="sm"

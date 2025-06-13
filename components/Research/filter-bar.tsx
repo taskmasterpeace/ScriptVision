@@ -115,9 +115,9 @@ const YoutubeFilterBar = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="any">Any</SelectItem>
-            <SelectItem value="short">Short</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="long">Long</SelectItem>
+            <SelectItem value="short">Short (Under 4 minutes)</SelectItem>
+            <SelectItem value="medium">Medium (4 - 20 minutes)</SelectItem>
+            <SelectItem value="long">Long (Over 20 minutes)</SelectItem>
           </SelectContent>
         </Select>
       </div>
