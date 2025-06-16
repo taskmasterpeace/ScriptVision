@@ -35,6 +35,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { useTabsStore } from '@/lib/stores/tabs-store';
+import { useProjectStore } from '@/lib/stores/project-store';
 
 export default function EnhanceTab() {
   const { setActiveTab: setActiveTabStore } = useTabsStore();
@@ -51,10 +52,12 @@ export default function EnhanceTab() {
     applySelectedEmotionalSuggestions,
     finalizeScript,
   } = useScriptCreationStore();
+  const { script } = useProjectStore();
 
   const [selectedChapterId, setSelectedChapterId] = useState<string | null>(
     null
   );
+  const [clickButton, setClickButton] = useState(false);
   const [activeTab, setActiveTab] = useState<'original' | 'enhanced'>(
     'original'
   );
@@ -151,6 +154,7 @@ export default function EnhanceTab() {
   };
 
   const handleFinalizeScript = () => {
+    setClickButton(true);
     finalizeScript();
 
     toast({
@@ -160,7 +164,6 @@ export default function EnhanceTab() {
     });
 
     // Navigate to the script tab
-    setActiveTabStore('script');
   };
 
   return (
@@ -176,7 +179,9 @@ export default function EnhanceTab() {
           <div className="flex gap-2">
             <Button
               onClick={handleFinalizeScript}
-              disabled={generatedChapters.length === 0}
+              disabled={
+                generatedChapters.length === 0 || clickButton || script !== ''
+              }
               className="gap-2"
             >
               <Check className="h-4 w-4" />
@@ -545,7 +550,7 @@ export default function EnhanceTab() {
           variant="outline"
           className="gap-2"
           onClick={() => {
-            handleFinalizeScript();
+            setActiveTabStore('script');
           }}
         >
           Next: Script <ArrowRight className="h-4 w-4" />

@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
 import { Loader2, FileText, List, CheckCircle2 } from 'lucide-react';
@@ -63,8 +62,6 @@ export default function OutlineTab() {
   const [localOutline, setLocalOutline] = useState(outline);
   const [outlineDirectionsLocal, setOutlineDirectionsLocal] =
     useState(outlineDirections);
-  const [activeTab, setActiveTab] = useState('editor');
-
   const [showSuccess, setShowSuccess] = useState(false);
 
   // Update local outline when the store changes
@@ -106,7 +103,6 @@ export default function OutlineTab() {
       });
 
       await generateOutline();
-      setActiveTab('editor');
 
       toast({
         title: 'Outline Generated',
@@ -134,7 +130,6 @@ export default function OutlineTab() {
     try {
       // Save the outline directions first
       await generateOutline('auto-outline-generation');
-      setActiveTab('editor');
       toast({
         title: 'Outline Generated',
         description: 'Your outline has been generated successfully.',
@@ -158,20 +153,19 @@ export default function OutlineTab() {
   };
 
   return (
-    <Tabs defaultValue="editor" value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="mb-4">
-        <TabsTrigger value="editor">Outline Editor</TabsTrigger>
-        <TabsTrigger value="wizard">Outline Wizard</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="editor">
-        <Card>
-          <CardHeader>
-            <CardTitle>Story Outline</CardTitle>
-            <CardDescription>
-              Create or edit your story outline with chapters and bullet points
-            </CardDescription>
-          </CardHeader>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {localOutline && localOutline.trim() !== '' ? "Story Outline" : "Outline Wizard"}
+        </CardTitle>
+        <CardDescription>
+          {localOutline && localOutline.trim() !== '' ?
+            "Create or edit your story outline with chapters and bullet points"
+            : "Generate an outline based on your preferences"}
+        </CardDescription>
+      </CardHeader>
+      {localOutline && localOutline.trim() !== '' ?
+        <>
           <CardContent>
             <Textarea
               placeholder="Enter your outline here..."
@@ -200,17 +194,9 @@ export default function OutlineTab() {
               </Button>
             </div>
           </CardFooter>
-        </Card>
-      </TabsContent>
-
-      <TabsContent value="wizard">
-        <Card>
-          <CardHeader>
-            <CardTitle>Outline Wizard</CardTitle>
-            <CardDescription>
-              Generate an outline based on your preferences
-            </CardDescription>
-          </CardHeader>
+        </>
+        :
+        <>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -288,8 +274,8 @@ export default function OutlineTab() {
               )}
             </Button>
           </CardFooter>
-        </Card>
-      </TabsContent>
-    </Tabs>
+        </>
+      }
+    </Card>
   );
 }
