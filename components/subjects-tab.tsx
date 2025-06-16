@@ -45,7 +45,7 @@ import {
 import { useLoadingStore } from '@/lib/stores/loading-store';
 import type { Subject } from '@/lib/types';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useTabsStore } from "@/lib/stores/tabs-store";
+import { useTabsStore } from '@/lib/stores/tabs-store';
 
 export default function SubjectsTab() {
   const { setActiveTab } = useTabsStore();
