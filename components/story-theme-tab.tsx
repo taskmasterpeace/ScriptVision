@@ -24,10 +24,13 @@ import { useToast } from '@/hooks/use-toast';
 import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
 import { ArrowRight } from 'lucide-react';
 import { useTabsStore } from '@/lib/stores/tabs-store';
+import { useProjectStore } from '@/lib/stores/project-store';
 
 export default function StoryThemeTab() {
   const { setActiveTab } = useTabsStore();
   const { toast } = useToast();
+  const { projectName, setProjectName, saveProject, projects } =
+    useProjectStore();
   const {
     storyTheme,
     storyTitle,
@@ -44,7 +47,7 @@ export default function StoryThemeTab() {
   const [localGenre, setLocalGenre] = useState('');
   const [localAudience, setLocalAudience] = useState('');
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!localTheme.trim()) {
       toast({
         title: 'Story Theme Required',
@@ -58,6 +61,12 @@ export default function StoryThemeTab() {
     setStoryTitle(localTitle);
     setStoryGenre(localGenre);
     setTargetAudience(localAudience);
+
+    if (!projectName || !projects.some((p) => p.name === projectName)) {
+      const newName = localTitle + ' - ' + projects.length;
+      setProjectName(newName);
+      await saveProject();
+    }
 
     toast({
       title: 'Story Details Saved',

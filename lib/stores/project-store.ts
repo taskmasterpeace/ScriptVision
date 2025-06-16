@@ -15,12 +15,11 @@ import type {
 } from '@/lib/types';
 import { generateAIResponse, generateJSONResponse } from '@/lib/ai-service';
 import { storage } from '../db';
+import { useScriptCreationStore } from '@/lib/stores/script-creation-store';
 
 // First, import the loading store at the top of the file
 import { useLoadingStore } from '@/lib/stores/loading-store';
-import {
-  mockDirectorStyles,
-} from '@/lib/utils/project';
+import { mockDirectorStyles } from '@/lib/utils/project';
 import { shortListSchema, subjectSchema } from '@/lib/utils/schema';
 import { z } from 'zod';
 
@@ -47,7 +46,7 @@ interface ProjectState {
   setProjectName: (name: string) => void;
   setScript: (script: string) => void;
   saveProject: () => Promise<void>;
-  loadProject: (name: string) => Promise<void>;
+  loadProject: (projectId: string) => Promise<void>;
   deleteProject: (name: string) => Promise<void>;
   listProjects: () => Promise<Project[]>;
   projects: Project[];
@@ -82,6 +81,11 @@ interface ProjectState {
 
   // Music Lab actions
   generateVideoTreatment: (formData: MusicLabFormData) => Promise<string>;
+
+  setKeytoState: <K extends keyof ProjectState>(
+    key: K,
+    value: ProjectState[K]
+  ) => void;
 }
 
 export const useProjectStore = create<ProjectState>()(
@@ -123,6 +127,23 @@ export const useProjectStore = create<ProjectState>()(
         stylesCompleted: false,
       },
 
+      setKeytoState: <K extends keyof ProjectState>(
+        key: K,
+        value: ProjectState[K]
+      ) => {
+        const { projectName, projects } = get();
+        const current = projects.find((p) => p.name === projectName);
+        if (!current) return;
+
+        set({
+          projects: projects.map((p) =>
+            p.id === current.id
+              ? { ...p, [key]: value, lastModified: new Date().toISOString() }
+              : p
+          ),
+        });
+      },
+
       // Project actions
       setProjectName: (name) => set({ projectName: name }),
 
@@ -158,10 +179,10 @@ export const useProjectStore = create<ProjectState>()(
 
         set({ projects: newProjectList });
       },
-
-      loadProject: async (name) => {
+      loadProject: async (projectId) => {
         const projects = get().projects;
-        const project = projects.find((p) => p.name === name);
+        let project = projects.find((p) => p.id === projectId); // prefer ID
+        if (!project) project = projects.find((p) => p.name === projectId); // fallback
 
         if (project) {
           set({
@@ -180,6 +201,10 @@ export const useProjectStore = create<ProjectState>()(
               stylesCompleted: false,
             },
           });
+          get().setKeytoState('shotList', project.shotList);
+          get().setKeytoState('subjects', project.subjects);
+          get().setKeytoState('generatedPrompts', project.generatedPrompts);
+          useScriptCreationStore.getState().loadProject(project.id);
           return;
         }
       },
@@ -222,16 +247,17 @@ export const useProjectStore = create<ProjectState>()(
           };
 
           // Output should be type of shortListSchema
-          const response: z.infer<typeof shortListSchema> = await generateJSONResponse(
-            'shotListGeneration',
-            'generate-shot-list',
-            promptContext,
-            shortListSchema
-          );
+          const response: z.infer<typeof shortListSchema> =
+            await generateJSONResponse(
+              'shotListGeneration',
+              'generate-shot-list',
+              promptContext,
+              shortListSchema
+            );
 
           const shots = response.shots;
           const workflowProgress = get().workflowProgress;
-          
+
           set({
             shotList: shots.map((shot) => ({
               id: uuidv4(),
@@ -336,16 +362,17 @@ export const useProjectStore = create<ProjectState>()(
           // Process the template with variables
           const context = {
             script: script,
-            shot_list: JSON.stringify(shotList) || 'No shot list available'
-          }
+            shot_list: JSON.stringify(shotList) || 'No shot list available',
+          };
 
           // Call the AI service to extract subjects
-          const response: z.infer<typeof subjectSchema> = await generateJSONResponse(
-            'subjectExtraction',
-            'subject-extraction',
-            context,
-            subjectSchema
-          );
+          const response: z.infer<typeof subjectSchema> =
+            await generateJSONResponse(
+              'subjectExtraction',
+              'subject-extraction',
+              context,
+              subjectSchema
+            );
 
           // Parse the AI response into structured data
           const subjects = response.subjects.map((subject) => ({
@@ -365,6 +392,7 @@ export const useProjectStore = create<ProjectState>()(
           }
 
           set({ proposedSubjects: subjects });
+          get().setKeytoState('subjects', subjects);
         } catch (error) {
           console.error('Failed to extract subjects:', error);
           throw error;
@@ -390,6 +418,7 @@ export const useProjectStore = create<ProjectState>()(
             subjectsCompleted: updatedSubjects.length > 0,
           },
         });
+        get().setKeytoState('subjects', updatedSubjects);
       },
 
       updateSubject: (updatedSubject) => {
@@ -402,6 +431,7 @@ export const useProjectStore = create<ProjectState>()(
           );
 
           set({ subjects: updatedSubjects });
+          get().setKeytoState('subjects', updatedSubjects);
         }
         // Check if the subject is in the proposed subjects list
         else if (proposedSubjects.some((s) => s.id === updatedSubject.id)) {
@@ -430,6 +460,7 @@ export const useProjectStore = create<ProjectState>()(
               subjectsCompleted: updatedSubjects.length > 0,
             },
           });
+          get().setKeytoState('subjects', updatedSubjects);
         }
         // Check if the subject is in the proposed subjects list
         else if (proposedSubjects.some((s) => s.id === id)) {
@@ -438,6 +469,10 @@ export const useProjectStore = create<ProjectState>()(
               (subject) => subject.id !== id
             ),
           });
+          get().setKeytoState(
+            'proposedSubjects',
+            proposedSubjects.filter((subject) => subject.id !== id)
+          );
         }
       },
 
@@ -463,6 +498,7 @@ export const useProjectStore = create<ProjectState>()(
             subjectsCompleted: updatedSubjects.length > 0,
           },
         });
+        get().setKeytoState('subjects', updatedSubjects);
       },
 
       // Style actions
@@ -579,6 +615,7 @@ export const useProjectStore = create<ProjectState>()(
               promptsCompleted: true,
             },
           });
+          get().setKeytoState('generatedPrompts', updatedPrompts);
         } catch (error) {
           console.error('Failed to generate prompt:', error);
           throw error;

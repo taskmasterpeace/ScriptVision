@@ -68,6 +68,7 @@ export default function ResearchTab() {
     updateCustomTranscript,
     deleteTranscript,
     skipOutlineGeneration,
+    setSearchQuery,
   } = useScriptCreationStore();
 
   const [localSearchQuery, setLocalSearchQuery] = useState(
@@ -103,6 +104,7 @@ export default function ResearchTab() {
 
     try {
       await searchYouTube(localSearchQuery);
+      setSearchQuery(localSearchQuery);
       toast({
         title: 'Search Complete',
         description: 'YouTube search results have been loaded.',
@@ -654,12 +656,16 @@ export default function ResearchTab() {
                             await fetchTranscript(transcript.id);
                             toast({
                               title: 'Transcript Fetched',
-                              description: 'The transcript has been successfully fetched.',
+                              description:
+                                'The transcript has been successfully fetched.',
                             });
                           } catch (error) {
                             toast({
                               title: 'Failed to fetch transcript',
-                              description: error instanceof Error ? error.message : 'An error occurred',
+                              description:
+                                error instanceof Error
+                                  ? error.message
+                                  : 'An error occurred',
                               variant: 'destructive',
                             });
                           }
@@ -668,16 +674,18 @@ export default function ResearchTab() {
                       >
                         {isLoading(`fetchTranscript-${transcript.id}`) ? (
                           <>
-                          <Loader2 className="mr-2 h-3 w-4 animate-spin" />
-                          Fetching...
+                            <Loader2 className="mr-2 h-3 w-4 animate-spin" />
+                            Fetching...
                           </>
-                        ) : "Fetch Transcript"}
+                        ) : (
+                          'Fetch Transcript'
+                        )}
                       </Button>
                     ) : (
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 px-3 text-purple-500 hover:text-purple-700 hover:bg-purple-100"  
+                        className="h-7 px-3 text-purple-500 hover:text-purple-700 hover:bg-purple-100"
                         onClick={() =>
                           setViewingTranscript({
                             id: transcript.id,

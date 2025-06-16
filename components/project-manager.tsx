@@ -32,9 +32,10 @@ export default function ProjectManager() {
 
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoadDialogOpen, setIsLoadDialogOpen] = useState(false);
-  const [selectedProjectToLoad, setSelectedProjectToLoad] = useState<
-    string | null
-  >(null);
+  const [selectedProjectToLoad, setSelectedProjectToLoad] = useState<{
+    name: string;
+    id: string;
+  } | null>(null);
   const [selectedProjectToDelete, setSelectedProjectToDelete] = useState<
     string | null
   >(null);
@@ -97,11 +98,11 @@ export default function ProjectManager() {
 
     setIsLoading(true);
     try {
-      await loadProject(selectedProjectToLoad);
+      await loadProject(selectedProjectToLoad.id);
       setIsLoadDialogOpen(false);
       toast({
         title: 'Project Loaded',
-        description: `Project "${selectedProjectToLoad}" has been loaded.`,
+        description: `Project "${selectedProjectToLoad.name}" has been loaded.`,
       });
     } catch (error) {
       toast({
@@ -138,7 +139,7 @@ export default function ProjectManager() {
 
   const handleProjectRowClick = (project: any) => {
     if (isLoadDialogOpen) {
-      setSelectedProjectToLoad(project.name);
+      setSelectedProjectToLoad({ name: project.name, id: project.id });
     } else if (isDeleteDialogOpen) {
       setSelectedProjectToDelete(project.name);
     }
@@ -208,7 +209,10 @@ export default function ProjectManager() {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
             <DialogTrigger asChild>
               <Button
                 variant="outline"
@@ -225,7 +229,9 @@ export default function ProjectManager() {
             <DialogContent className="max-w-3xl">
               <DialogHeader>
                 <DialogTitle>Delete Project</DialogTitle>
-                <DialogDescription>Select a project to delete</DialogDescription>
+                <DialogDescription>
+                  Select a project to delete
+                </DialogDescription>
               </DialogHeader>
 
               <div className="py-4">
@@ -241,7 +247,6 @@ export default function ProjectManager() {
                   </div>
                 )}
               </div>
-
 
               <DialogFooter>
                 <Button
@@ -270,7 +275,6 @@ export default function ProjectManager() {
           </Dialog>
         </div>
       </CardContent>
-
     </Card>
   );
 }

@@ -26,7 +26,6 @@ import {
 import { fetchVideoTranscript, searchYouTubeAction } from '@/app/action';
 import { chaptersSchema } from '@/lib/utils/schema';
 import { z } from 'zod';
-
 interface State {
   outline?: string; // Store outline per project
   projectId: string;
@@ -50,6 +49,15 @@ interface State {
   generatedChapters?: GeneratedChapter[];
   enhancedChapters?: EmotionalEnhancement[];
   emotionalSuggestions?: EmotionalSuggestion[];
+  searchParams?: {
+    publishedAfter: string;
+    publishedBefore: string;
+    relevanceLanguage: string;
+    regionCode: string;
+    order: string;
+    videoDuration: string;
+    maxResults: string;
+  };
 }
 
 interface ScriptCreationState {
@@ -116,6 +124,7 @@ interface ScriptCreationState {
   setSearchResults: (results: YoutubeSearchResult[]) => void;
   setStoryGenre: (genre: string) => void;
   setTargetAudience: (audience: string) => void;
+  setChapters: (chapters: Chapter[]) => void;
   skipOutlineGeneration: () => Promise<void>;
   searchYouTube: (query: string) => Promise<void>;
   toggleTranscriptSelection: (id: string) => void;
@@ -157,6 +166,7 @@ interface ScriptCreationState {
 
   // load project based on id
   loadState: (projectId: string) => void;
+  loadProject: (projectId: string) => void;
   // Add this new action
   setOutlineDirections: (
     directions: Partial<ScriptCreationState['outlineDirections']>
@@ -207,6 +217,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
       enhancedChapters: [],
       emotionalSuggestions: [],
+
       setKeytoState: (key: keyof State, value: State[keyof State]) => {
         const currentProject = useProjectStore
           .getState()
@@ -249,7 +260,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
         set({ storyTheme: theme });
         get().setKeytoState('storyTheme', theme);
       },
-      
+
       setSearchQuery: (query: string) => {
         set({ searchQuery: query });
         get().setKeytoState('searchQuery', query);
@@ -281,6 +292,11 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       setOutline: (outline) => {
         set({ outline });
         get().setKeytoState('outline', outline);
+      },
+
+      setChapters: (chapters) => {
+        set({ chapters });
+        get().setKeytoState('chapters', chapters);
       },
 
       // Update the searchYouTube function to include the source field
@@ -336,6 +352,8 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             searchQuery: query,
             searchResults: updatedSearchResults,
           });
+          get().setKeytoState('searchQuery', query);
+          get().setKeytoState('searchResults', updatedSearchResults);
         } catch (error) {
           console.error('Failed to search YouTube:', error);
           throw error;
@@ -346,6 +364,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
       setSearchParams(params) {
         set({ searchParams: params });
+        get().setKeytoState('searchParams', params);
       },
 
       // Update the toggleTranscriptSelection function to include the source field
@@ -386,7 +405,8 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               );
             }
           }
-
+          get().setKeytoState('searchResults', updatedResults);
+          get().setKeytoState('selectedTranscripts', updatedSelected);
           return {
             searchResults: updatedResults,
             selectedTranscripts: updatedSelected,
@@ -407,6 +427,8 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             (item) => item.id !== id
           );
 
+          get().setKeytoState('searchResults', updatedResults);
+          get().setKeytoState('selectedTranscripts', updatedSelected);
           return {
             searchResults: updatedResults,
             selectedTranscripts: updatedSelected,
@@ -492,12 +514,16 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           // In a real implementation, we would parse the AI's JSON response
           // For now, we'll create mock chapters
 
-          const { chapters }: z.infer<typeof chaptersSchema> = await generateJSONResponse(
-            'videoTreatment',
-            'chapter-generation',
-            { TRANSCRIPT_OR_DATA: JSON.stringify(promptContext), OUTLINE: outlineResponseString },
-            chaptersSchema
-          );
+          const { chapters }: z.infer<typeof chaptersSchema> =
+            await generateJSONResponse(
+              'videoTreatment',
+              'chapter-generation',
+              {
+                TRANSCRIPT_OR_DATA: JSON.stringify(promptContext),
+                OUTLINE: outlineResponseString,
+              },
+              chaptersSchema
+            );
 
           const mockChapters: Chapter[] = chapters.map((chapter) => ({
             ...chapter,
@@ -511,6 +537,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
           }));
 
           set({ chapters: mockChapters });
+          get().setChapters(mockChapters);
         } catch (error) {
           console.error('Failed to generate outline:', error);
           throw error;
@@ -542,7 +569,10 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
         try {
           // Prepare the context for the AI
           const transcriptsText = selectedTranscripts
-            .map((t) => `SOURCE: ${t.snippet.title}\nCONTENT: ${t.transcript}`)
+            .map(
+              (t) =>
+                `SOURCE: ${t.snippet?.title ?? ''}\nCONTENT: ${t.transcript ?? ''}`
+            )
             .join('\n\n');
 
           const promptContext = {
@@ -856,11 +886,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
       },
 
       generateChapter: async (chapterId) => {
-        const {
-          chapters,
-          selectedTranscripts,
-          outline,
-        } = get();
+        const { chapters, selectedTranscripts, outline } = get();
 
         const chapter = chapters.find((c) => c.id === chapterId);
 
@@ -921,7 +947,6 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
           // Add to or update the generated chapters
           set((state) => {
-            
             // If any generated chapter which is not in current existing chapters remove it.
             const chapterIds = chapters.map((c) => c.id);
             const generatedChapters = state.generatedChapters.filter(
@@ -938,10 +963,7 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
             } else {
               // Add new chapter
               return {
-                generatedChapters: [
-                  ...generatedChapters,
-                  generatedChapter,
-                ],
+                generatedChapters: [...generatedChapters, generatedChapter],
               };
             }
           });
@@ -1231,6 +1253,8 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
         // Set the script in the project store
         projectStore.setScript(finalScript);
+        // Ensure the script is also persisted on the current project inside `projects` array
+        projectStore.setKeytoState('script', finalScript);
       },
 
       resetScriptCreation: () => {
@@ -1321,10 +1345,12 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
 
       // fetch transcript with videoId
       fetchTranscript: async (videoId: string) => {
-        useLoadingStore.getState().setLoading(`fetchTranscript-${videoId}`, true);
+        useLoadingStore
+          .getState()
+          .setLoading(`fetchTranscript-${videoId}`, true);
         try {
           const transcript = await fetchVideoTranscript(videoId);
-          
+
           // Update the search results
           set((state) => ({
             searchResults: state.searchResults.map((item) =>
@@ -1335,21 +1361,22 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               item.id === videoId ? { ...item, transcript } : item
             ),
           }));
-
           return transcript;
         } catch (error) {
           console.error('Failed to fetch transcript:', error);
           throw error;
         } finally {
-          useLoadingStore.getState().setLoading(`fetchTranscript-${videoId}`, false);
+          useLoadingStore
+            .getState()
+            .setLoading(`fetchTranscript-${videoId}`, false);
         }
       },
 
       // Load all project state
-      loadState: (projectId: string) => {       
+      loadState: (projectId: string) => {
         // Find the project in the state array that matches the projectId
         const states = get().state;
-        const projectState = states?.find(s => s.projectId === projectId);
+        const projectState = states?.find((s) => s.projectId === projectId);
         if (projectState) {
           // set load all initial state with projectState
           set({
@@ -1369,13 +1396,42 @@ export const useScriptCreationStore = create<ScriptCreationState>()(
               perspective: 'third-person',
               tone: 'neutral',
               additionalNotes: '',
-              customPrompt: ''
+              customPrompt: '',
             },
             generatedChapters: projectState.generatedChapters || [],
             enhancedChapters: projectState.enhancedChapters || [],
-            emotionalSuggestions: projectState.emotionalSuggestions || []
+            emotionalSuggestions: projectState.emotionalSuggestions || [],
+          });
+        } else {
+          // No saved snapshot – reset to defaults
+          set({
+            outline: '',
+            storyTheme: '',
+            storyTitle: '',
+            storyGenre: '',
+            targetAudience: '',
+            searchQuery: '',
+            searchResults: [],
+            selectedTranscripts: [],
+            chapters: [],
+            chapterSuggestions: [],
+            outlineDirections: {
+              outlineType: 'linear-framework-simple-complexity',
+              storyStructure: 'three-act',
+              perspective: 'third-person',
+              tone: 'neutral',
+              additionalNotes: '',
+              customPrompt: '',
+            },
+            generatedChapters: [],
+            enhancedChapters: [],
+            emotionalSuggestions: [],
           });
         }
+      },
+
+      loadProject: (projectId) => {
+        get().loadState(projectId);
       },
 
       deleteTranscript: (id) => {
